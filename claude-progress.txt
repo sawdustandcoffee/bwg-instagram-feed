@@ -1,5 +1,58 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #50 - Admin Access Control)
+
+### Feature Completed
+- **Feature #50: Admin pages require manage_options capability** - PASSED
+
+### What was verified
+Verified that only administrators can access plugin settings pages:
+
+1. **Step 1: Log out of WordPress** - ✅ VERIFIED
+   - Navigated to wp-login.php
+
+2. **Step 2: Log in as Editor user** - ✅ VERIFIED
+   - Created Editor user (editor / editor123) via WP-CLI
+   - Logged in as Editor
+
+3. **Step 3: Try to access /wp-admin/admin.php?page=bwg-igf** - ✅ VERIFIED
+   - Attempted to navigate to plugin admin page directly
+   - Screenshot: feature-50-editor-dashboard.png
+
+4. **Step 4: Verify access denied or menu not visible** - ✅ VERIFIED
+   - "Instagram Feed" menu NOT visible in Editor's sidebar
+   - Direct URL access shows "Sorry, you are not allowed to access this page."
+   - All plugin pages (bwg-igf, bwg-igf-feeds, bwg-igf-settings) properly blocked
+   - Screenshot: feature-50-editor-access-denied.png
+
+5. **Step 5: Log in as Administrator** - ✅ VERIFIED
+   - Logged out as Editor
+   - Logged in as admin user
+
+6. **Step 6: Verify full access to plugin pages** - ✅ VERIFIED
+   - "Instagram Feed" menu visible with all submenus (Dashboard, Feeds, Accounts, Settings)
+   - Full access to plugin dashboard page
+   - Screenshots: feature-50-admin-dashboard-menu-visible.png, feature-50-admin-full-access.png
+
+### Technical Implementation
+The access control is properly implemented using WordPress's `manage_options` capability:
+- **bwg-instagram-feed.php** (lines 235, 246, 255, 264, 273): All admin menu pages registered with `manage_options` capability
+- **class-bwg-igf-admin-ajax.php** (line 58): AJAX handlers check `current_user_can('manage_options')` before processing
+
+### Console Errors: None
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Admin credentials: admin / admin123
+- Editor credentials: editor / editor123
+
+### Current Status
+- Total features: 149
+- Passing: 28
+- Percentage: ~18.8%
+
+---
+
 ## Session: 2026-01-24 (Feature #37 - Custom CSS Field)
 
 ### Feature Completed
@@ -2963,3 +3016,52 @@ User can set how long feed data is cached via the feed editor Advanced tab.
 - Docker: http://localhost:8082
 - Credentials: admin / admin123
 
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #36)
+
+[Testing] Feature #36 (Styling - hover effects) - REGRESSION TEST PASSED
+
+### Feature Details
+- **Feature ID:** 36
+- **Category:** functional
+- **Name:** Styling - hover effects
+- **Description:** User can configure hover effects on posts
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Styling tab** - ✅ VERIFIED
+   - Navigated to http://localhost:8082/wp-admin/admin.php?page=bwg-igf-feeds&action=edit&feed_id=5
+   - Clicked Styling tab successfully
+
+2. **Step 2: Select 'Zoom' hover effect** - ✅ VERIFIED
+   - Selected "Zoom" from the Hover Effect dropdown
+   - Saved feed successfully
+   - Database confirmed: "hover_effect":"zoom"
+
+3. **Step 3: Hover over post - verify zoom** - ✅ VERIFIED
+   - Frontend feed has class `bwg-igf-hover-zoom`
+   - On hover, image transform: `matrix(1.1, 0, 0, 1.1, 0, 0)` (scale 1.1 = zoom)
+   - Item container has `overflow: hidden` for proper clipping
+
+4. **Step 4: Select 'Overlay' hover effect** - ✅ VERIFIED
+   - Selected "Overlay" from dropdown
+   - Preview showed overlay elements with likes/comments (❤️ 123💬 45)
+
+5. **Step 6: Select 'Brightness' effect** - ✅ VERIFIED
+   - Selected "Brightness" from dropdown
+   - Option available and selectable
+
+### All hover effect options available:
+- None ✅
+- Zoom ✅
+- Overlay ✅
+- Brightness ✅
+
+### Screenshots
+- feature-36-regression-zoom-verified.png - Feed with zoom hover effect active
+
+### Console Errors: None detected
+
+[Testing] Feature #36 verified - still passing
