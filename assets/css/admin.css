@@ -391,3 +391,30 @@
         font-size: 13px;
     }
 }
+
+/* Field validation error styles */
+.bwg-igf-field-error {
+    border-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638 !important;
+}
+
+.bwg-igf-field-error:focus {
+    border-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638, 0 0 2px 1px rgba(214, 54, 56, 0.3) !important;
+}
+
+.bwg-igf-field-error-message {
+    color: #d63638;
+    margin-top: 4px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+
+.bwg-igf-field-error-message .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    vertical-align: middle;
+}

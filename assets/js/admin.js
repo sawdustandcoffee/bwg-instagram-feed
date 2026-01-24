@@ -21,6 +21,7 @@
             this.initCacheDurationWarning();
             this.initLayoutTypeToggle();
             this.initAutoplaySpeedToggle();
+            this.initPostCountValidation();
         },
 
         bindEvents: function() {
@@ -158,6 +159,131 @@
 
             // Check on change
             $autoplay.on('change', toggleAutoplaySpeed);
+        },
+
+        initPostCountValidation: function() {
+            var $postCount = $('#bwg-igf-post-count');
+            var minValue = 1;
+            var maxValue = 50;
+
+            if (!$postCount.length) {
+                return;
+            }
+
+            // Validate on blur (when user leaves the field)
+            $postCount.on('blur', function() {
+                var value = parseInt($(this).val(), 10);
+
+                // Handle empty or non-numeric values
+                if (isNaN(value) || value < minValue) {
+                    $(this).val(minValue);
+                    BWGIGFAdmin.showPostCountWarning('Post count set to minimum (' + minValue + ')');
+                } else if (value > maxValue) {
+                    $(this).val(maxValue);
+                    BWGIGFAdmin.showPostCountWarning('Post count limited to maximum (' + maxValue + ')');
+                }
+            });
+
+            // Validate on input (real-time as user types)
+            $postCount.on('input', function() {
+                var value = parseInt($(this).val(), 10);
+                var $field = $(this).closest('.bwg-igf-field');
+                var $warning = $field.find('.bwg-igf-post-count-warning');
+
+                // Remove existing warning
+                $warning.remove();
+
+                // Show warning if value is out of range
+                if (!isNaN(value)) {
+                    if (value < minValue) {
+                        BWGIGFAdmin.showPostCountInlineWarning($field, 'Minimum is ' + minValue);
+                    } else if (value > maxValue) {
+                        BWGIGFAdmin.showPostCountInlineWarning($field, 'Maximum is ' + maxValue);
+                    }
+                }
+            });
+        },
+
+        showPostCountWarning: function(message) {
+            // Show a brief notice that the value was auto-corrected
+            var $notice = $('<div class="notice notice-warning is-dismissible bwg-igf-post-count-notice"><p>' + message + '</p></div>');
+            $('.wrap h1').first().after($notice);
+
+            // Auto-dismiss after 3 seconds
+            setTimeout(function() {
+                $notice.fadeOut(function() {
+                    $(this).remove();
+                });
+            }, 3000);
+        },
+
+        showPostCountInlineWarning: function($field, message) {
+            var $warning = $('<span class="bwg-igf-post-count-warning" style="color: #d63638; margin-left: 10px; font-size: 12px;"><span class="dashicons dashicons-warning" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle;"></span> ' + message + '</span>');
+            $field.find('input').after($warning);
+        },
+
+        initColumnCountValidation: function() {
+            var $columns = $('#bwg-igf-columns');
+            var minValue = 1;
+            var maxValue = 6;
+
+            if (!$columns.length) {
+                return;
+            }
+
+            // Validate on blur (when user leaves the field)
+            $columns.on('blur', function() {
+                var value = parseInt($(this).val(), 10);
+
+                // Handle empty or non-numeric values
+                if (isNaN(value) || value < minValue) {
+                    $(this).val(minValue);
+                    BWGIGFAdmin.showColumnCountWarning('Columns set to minimum (' + minValue + ')');
+                } else if (value > maxValue) {
+                    $(this).val(maxValue);
+                    BWGIGFAdmin.showColumnCountWarning('Columns limited to maximum (' + maxValue + ')');
+                }
+
+                // Update preview after correction
+                BWGIGFAdmin.updatePreview();
+            });
+
+            // Validate on input (real-time as user types)
+            $columns.on('input', function() {
+                var value = parseInt($(this).val(), 10);
+                var $field = $(this).closest('.bwg-igf-field');
+                var $warning = $field.find('.bwg-igf-column-count-warning');
+
+                // Remove existing warning
+                $warning.remove();
+
+                // Show warning if value is out of range
+                if (!isNaN(value)) {
+                    if (value < minValue) {
+                        BWGIGFAdmin.showColumnCountInlineWarning($field, 'Minimum is ' + minValue);
+                    } else if (value > maxValue) {
+                        BWGIGFAdmin.showColumnCountInlineWarning($field, 'Maximum is ' + maxValue);
+                    }
+                }
+            });
+        },
+
+        showColumnCountWarning: function(message) {
+            // Show a brief notice that the value was auto-corrected
+            var $notice = $('<div class="notice notice-warning is-dismissible bwg-igf-column-count-notice"><p>' + message + '</p></div>');
+            $('.wrap h1').first().after($notice);
+
+            // Auto-dismiss after 3 seconds
+            setTimeout(function() {
+                $notice.fadeOut(function() {
+                    $(this).remove();
+                });
+            }, 3000);
+        },
+
+        showColumnCountInlineWarning: function($field, message) {
+            var $warning = $('<span class="bwg-igf-column-count-warning" style="color: #d63638; margin-left: 10px; font-size: 12px;"><span class="dashicons dashicons-warning" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle;"></span> ' + message + '</span>');
+            $field.find('input').after($warning);
         },
 
         initLivePreview: function() {
@@ -298,6 +424,20 @@
             var $button = $form.find('button[type="submit"]');
             var originalText = $button.text();
 
+            // Client-side validation for required feed name
+            var $nameField = $form.find('#bwg-igf-name');
+            var feedName = $nameField.val().trim();
+
+            // Clear any existing validation error styling
+            BWGIGFAdmin.clearFieldError($nameField);
+
+            if (!feedName) {
+                // Show error message and highlight the field
+                BWGIGFAdmin.showFieldError($nameField, bwgIgfAdmin.i18n.feedNameRequired || 'Feed name is required.');
+                $nameField.focus();
+                return;
+            }
+
             $button.prop('disabled', true).text(bwgIgfAdmin.i18n.saving);
 
             $.ajax({
@@ -326,9 +466,21 @@
                         BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
                     }
                 },
-                error: function() {
+                error: function(xhr) {
                     $button.text(originalText).prop('disabled', false);
-                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+
+                    // Try to parse the error response from wp_send_json_error
+                    var errorMessage = bwgIgfAdmin.i18n.error;
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response && response.data && response.data.message) {
+                            errorMessage = response.data.message;
+                        }
+                    } catch (e) {
+                        // If parsing fails, use the default error message
+                    }
+
+                    BWGIGFAdmin.showNotice('error', errorMessage);
                 }
             });
         },
@@ -451,6 +603,31 @@
                     $(this).remove();
                 });
             }, 5000);
+        },
+
+        showFieldError: function($field, message) {
+            // Add error class to the field
+            $field.addClass('bwg-igf-field-error');
+
+            // Create or update error message below the field
+            var $parent = $field.closest('.bwg-igf-field');
+            var $errorMsg = $parent.find('.bwg-igf-field-error-message');
+
+            if (!$errorMsg.length) {
+                $errorMsg = $('<p class="bwg-igf-field-error-message" style="color: #d63638; margin-top: 4px; font-size: 13px;"></p>');
+                $field.after($errorMsg);
+            }
+
+            $errorMsg.html('<span class="dashicons dashicons-warning" style="font-size: 16px; width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"></span>' + message);
+        },
+
+        clearFieldError: function($field) {
+            // Remove error class from the field
+            $field.removeClass('bwg-igf-field-error');
+
+            // Remove error message
+            var $parent = $field.closest('.bwg-igf-field');
+            $parent.find('.bwg-igf-field-error-message').remove();
         },
 
         handleConnectAccount: function(e) {

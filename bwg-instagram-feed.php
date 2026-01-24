@@ -23,9 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Plugin constants.
 define( 'BWG_IGF_VERSION', '1.0.0' );
-
-// Temporary: Include auth test
-require_once __DIR__ . '/test_ajax_auth.php';
 define( 'BWG_IGF_PLUGIN_FILE', __FILE__ );
 define( 'BWG_IGF_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BWG_IGF_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -323,10 +320,11 @@ final class BWG_Instagram_Feed {
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( 'bwg_igf_admin_nonce' ),
                 'i18n'    => array(
-                    'confirmDelete' => __( 'Are you sure you want to delete this feed?', 'bwg-instagram-feed' ),
-                    'saving'        => __( 'Saving...', 'bwg-instagram-feed' ),
-                    'saved'         => __( 'Saved!', 'bwg-instagram-feed' ),
-                    'error'         => __( 'An error occurred. Please try again.', 'bwg-instagram-feed' ),
+                    'confirmDelete'    => __( 'Are you sure you want to delete this feed?', 'bwg-instagram-feed' ),
+                    'saving'           => __( 'Saving...', 'bwg-instagram-feed' ),
+                    'saved'            => __( 'Saved!', 'bwg-instagram-feed' ),
+                    'error'            => __( 'An error occurred. Please try again.', 'bwg-instagram-feed' ),
+                    'feedNameRequired' => __( 'Feed name is required.', 'bwg-instagram-feed' ),
                 ),
             )
         );
