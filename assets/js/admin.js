@@ -22,6 +22,7 @@
             this.initLayoutTypeToggle();
             this.initAutoplaySpeedToggle();
             this.initPostCountValidation();
+            this.initColumnCountValidation();
         },
 
         bindEvents: function() {
@@ -51,6 +52,9 @@
 
             // Verify token encryption
             $(document).on('click', '.bwg-igf-verify-encryption', this.handleVerifyEncryption);
+
+            // Clear validation errors on input (Feature #88)
+            $(document).on('input', '.bwg-igf-field-error', this.handleClearValidationOnInput);
         },
 
         initTabs: function() {
@@ -628,6 +632,16 @@
             // Remove error message
             var $parent = $field.closest('.bwg-igf-field');
             $parent.find('.bwg-igf-field-error-message').remove();
+        },
+
+        handleClearValidationOnInput: function() {
+            var $field = $(this);
+            var fieldValue = $field.val().trim();
+
+            // If the field now has a value, clear the error
+            if (fieldValue) {
+                BWGIGFAdmin.clearFieldError($field);
+            }
         },
 
         handleConnectAccount: function(e) {

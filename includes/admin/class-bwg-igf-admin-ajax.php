@@ -201,6 +201,8 @@ class BWG_IGF_Admin_Ajax {
         // Get layout settings.
         $layout_type = isset( $_POST['layout_type'] ) ? sanitize_text_field( wp_unslash( $_POST['layout_type'] ) ) : 'grid';
         $columns = isset( $_POST['columns'] ) ? absint( $_POST['columns'] ) : 3;
+        // Enforce column count range: minimum 1, maximum 6.
+        $columns = max( 1, min( 6, $columns ) );
         $gap = isset( $_POST['gap'] ) ? absint( $_POST['gap'] ) : 10;
 
         // Get slider-specific settings.
@@ -214,6 +216,8 @@ class BWG_IGF_Admin_Ajax {
 
         // Get display settings.
         $post_count = isset( $_POST['post_count'] ) ? absint( $_POST['post_count'] ) : 9;
+        // Enforce post count range: minimum 1, maximum 50.
+        $post_count = max( 1, min( 50, $post_count ) );
         $show_likes = isset( $_POST['show_likes'] ) ? 1 : 0;
         $show_comments = isset( $_POST['show_comments'] ) ? 1 : 0;
         $show_caption = isset( $_POST['show_caption'] ) ? 1 : 0;
