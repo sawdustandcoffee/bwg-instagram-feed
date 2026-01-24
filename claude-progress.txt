@@ -9337,3 +9337,74 @@ The admin CSS already includes proper responsive styling:
 - Percentage: 47.7%
 
 [Feature #94 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Feature #92 - Loading state on save button)
+
+### Feature Completed
+- **Feature #92: Loading state on save button** - PASSED
+
+### Feature Details
+- **Category:** feedback
+- **Name:** Loading state on save button
+- **Description:** Save button shows loading state during save
+
+### Implementation
+
+**1. JavaScript Changes (assets/js/admin.js)**
+- Modified handleSaveFeed function to show spinner during save
+- Added spinner HTML with WordPress spinner class
+- Button gets disabled and adds .bwg-igf-saving class during save
+- Button is restored to original state after save completes (success or error)
+- Uses originalHtml instead of originalText to properly restore button content
+
+**2. CSS Changes (assets/css/admin.css)**
+- Added .bwg-igf-saving class for loading state styling
+- Cursor set to wait during save
+- Opacity reduced to 0.7 for visual feedback
+- Spinner visibility and alignment styles
+
+### Verification Steps Completed
+
+1. **Step 1: Edit feed settings** - VERIFIED
+   - Navigated to feed editor (feed_id=1)
+   - Page loaded successfully
+
+2. **Step 2: Click Save button** - VERIFIED
+   - Clicked Save Changes button
+
+3. **Step 3: Verify button shows loading/disabled state** - VERIFIED
+   - Button state captured via JavaScript evaluation:
+     - disabled: true
+     - hasSpinnerClass: true (bwg-igf-saving class applied)
+     - hasSpinnerElement: true
+     - html contains spinner span element
+
+4. **Step 4: Verify button re-enables after save completes** - VERIFIED
+   - On success: Button shows Saved! then restores to Save Changes
+   - On error: Button immediately restores to Save Changes
+   - Button disabled state: false
+   - Spinner class removed
+
+### Screenshots
+- feature-92-initial-state.png - Feed editor before save
+- feature-92-before-save.png - Save button in initial state
+- feature-92-after-save-attempt.png - Button after error (restored to original)
+- feature-92-saved-state.png - Button after successful save
+
+### Console Errors
+- None
+
+### Commit
+968da8b - Implement Feature #92: Loading state on save button
+
+### Current Status
+- Feature #92 marked as passing
+- Total features: 149
+- Passing: 74
+- In Progress: 3
+- Percentage: 49.7%
+
+[Feature #92 completed and verified]
