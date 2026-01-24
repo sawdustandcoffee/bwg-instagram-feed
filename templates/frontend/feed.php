@@ -46,16 +46,74 @@ $columns = isset( $layout_settings['columns'] ) ? absint( $layout_settings['colu
 $gap = isset( $layout_settings['gap'] ) ? absint( $layout_settings['gap'] ) : 10;
 $hover_effect = isset( $styling_settings['hover_effect'] ) ? $styling_settings['hover_effect'] : 'none';
 $border_radius = isset( $styling_settings['border_radius'] ) ? absint( $styling_settings['border_radius'] ) : 0;
+$background_color = isset( $styling_settings['background_color'] ) ? $styling_settings['background_color'] : '';
 $popup_enabled = isset( $popup_settings['enabled'] ) ? $popup_settings['enabled'] : true;
 
-// Get cached posts (placeholder for now)
-$posts = array(); // TODO: Implement cache retrieval
+// Get cached posts
+global $wpdb;
+$cache_data = $wpdb->get_var( $wpdb->prepare(
+    "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
+    $feed->id
+) );
+
+if ( $cache_data ) {
+    $posts = json_decode( $cache_data, true ) ?: array();
+} else {
+    $posts = array();
+}
+
+// Demo mode: If no cached posts and feed has demo_mode enabled or username is 'demo', show sample posts
+$show_demo = empty( $posts ) && ( ! empty( $feed->instagram_usernames ) );
+if ( $show_demo ) {
+    // Generate sample demo posts for testing popup navigation
+    $demo_images = array(
+        'https://picsum.photos/seed/bwg1/640/640',
+        'https://picsum.photos/seed/bwg2/640/640',
+        'https://picsum.photos/seed/bwg3/640/640',
+        'https://picsum.photos/seed/bwg4/640/640',
+        'https://picsum.photos/seed/bwg5/640/640',
+        'https://picsum.photos/seed/bwg6/640/640',
+        'https://picsum.photos/seed/bwg7/640/640',
+        'https://picsum.photos/seed/bwg8/640/640',
+        'https://picsum.photos/seed/bwg9/640/640',
+    );
+
+    $demo_captions = array(
+        'Exploring nature\'s beauty 🌿 #nature #photography',
+        'City lights and late nights ✨ #cityscape #urban',
+        'Coffee and good vibes ☕ #coffee #lifestyle',
+        'Adventure awaits! 🏔️ #travel #adventure',
+        'Sunset magic 🌅 #sunset #golden',
+        'Simple moments, big joy 💫 #minimalist',
+        'Weekend getaway 🚗 #roadtrip #explore',
+        'Art in everyday life 🎨 #creative #design',
+        'Fresh start, fresh perspective 🌱 #motivation',
+    );
+
+    $post_count = min( absint( $feed->post_count ) ?: 9, 9 );
+    for ( $i = 0; $i < $post_count; $i++ ) {
+        $posts[] = array(
+            'thumbnail'  => $demo_images[ $i ],
+            'full_image' => str_replace( '640/640', '1080/1080', $demo_images[ $i ] ),
+            'caption'    => $demo_captions[ $i ],
+            'likes'      => rand( 100, 5000 ),
+            'comments'   => rand( 5, 200 ),
+            'link'       => 'https://instagram.com/p/demo' . ( $i + 1 ),
+        );
+    }
+}
 
 // Custom styles
 $custom_styles = array(
     '--bwg-igf-gap: ' . $gap . 'px',
     '--bwg-igf-border-radius: ' . $border_radius . 'px',
 );
+
+if ( ! empty( $background_color ) ) {
+    $custom_styles[] = 'background-color: ' . esc_attr( $background_color );
+    $custom_styles[] = 'padding: 15px';
+    $custom_styles[] = 'border-radius: 8px';
+}
 
 if ( isset( $styling_settings['overlay_color'] ) ) {
     $custom_styles[] = '--bwg-igf-overlay-color: ' . $styling_settings['overlay_color'];
