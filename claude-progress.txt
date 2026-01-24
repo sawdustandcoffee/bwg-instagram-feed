@@ -9211,3 +9211,129 @@ Feature #85 PASSES regression test. Public feed username validation is working c
 - Percentage: 47.7%
 
 [Feature #93 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #87 Regression Test)
+
+### Feature Tested
+- **Feature #87: Column count within valid range** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** form
+- **Description:** Grid columns validated between 1-6
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Layout tab** - ✅ VERIFIED
+   - Navigated to Edit Feed page for Test Feed
+   - Clicked Layout tab
+   - Changed Layout Type to Grid to reveal Columns field
+
+2. **Step 2: Try to set columns to 0** - ✅ VERIFIED
+   - Entered '0' in Columns field
+
+3. **Step 3: Verify minimum of 1 enforced** - ✅ VERIFIED
+   - Error message displayed: 'Minimum is 1'
+   - Red warning icon shown
+
+4. **Step 4: Try to set columns to 10** - ✅ VERIFIED
+   - Entered '10' in Columns field
+
+5. **Step 5: Verify maximum of 6 enforced** - ✅ VERIFIED
+   - Error message displayed: 'Maximum is 6'
+   - Red warning icon shown
+
+### Additional Verification
+- Valid value (4) shows no error message - ✅ VERIFIED
+- No console errors - ✅ VERIFIED
+
+### Screenshots
+- feature-87-columns-max-validation.png - Shows max validation error with value 10
+
+### Result
+Feature #87 PASSES regression test. Column count validation is working correctly:
+- Minimum of 1 enforced with clear error message
+- Maximum of 6 enforced with clear error message
+- Valid values (1-6) accepted without error
+
+[Testing] Feature #87 verified - still passing
+[Testing] Session complete - Feature #87 regression test passed
+
+
+
+---
+
+## Session: 2026-01-24 (Feature #94 - Admin pages work on tablet viewport)
+
+### Feature Completed
+- **Feature #94: Admin pages work on tablet viewport** - PASSED ✅
+
+### Feature Details
+- **Category:** responsive
+- **Name:** Admin pages work on tablet viewport
+- **Description:** Admin interface usable at tablet width
+
+### Verification Steps Completed
+
+1. **Step 1: Resize browser to 768px width** - ✅ VERIFIED
+   - Browser viewport set to 768x1024 (standard tablet size)
+
+2. **Step 2: Navigate through all admin pages** - ✅ VERIFIED
+   - Dashboard page - widgets display in responsive 2-column grid
+   - Feeds list page - table displays all columns, actions accessible
+   - Feed Editor page - tabs work, form fields full-width, preview below form
+   - Settings page - all sections and options visible and usable
+   - Accounts page - content readable and accessible
+   - Create New Feed page - form and preview work correctly
+
+3. **Step 3: Verify content readable and usable** - ✅ VERIFIED
+   - All text is readable
+   - Form fields are properly sized
+   - Tables display correctly with all columns visible
+
+4. **Step 4: Verify no horizontal scrolling needed** - ✅ VERIFIED
+   - Document width (768px) equals viewport width (768px)
+   - No horizontal scroll detected via JavaScript evaluation
+
+5. **Step 5: Verify all buttons accessible** - ✅ VERIFIED
+   - Tab buttons (Source, Layout, Display, Styling, Popup, Advanced)
+   - Save/Create buttons
+   - Cancel buttons
+   - Edit, Duplicate, Delete action buttons
+   - Copy shortcode buttons
+   - Add New Feed button
+
+### Implementation Details
+The admin CSS already includes proper responsive styling:
+- Breakpoint at 782px (covers tablet viewport)
+- `.bwg-igf-editor` switches to single column grid
+- `.bwg-igf-preview` becomes static instead of sticky
+- `.bwg-igf-editor-tabs` wraps with flex-wrap
+- Tab buttons are flexible width with centered text
+
+### Screenshots
+- feature-94-step1-dashboard-768px.png - Dashboard at tablet width
+- feature-94-step2-feeds-list-768px.png - Feeds list at tablet width
+- feature-94-step2-feed-editor-768px.png - Feed editor at tablet width
+- feature-94-step2-layout-tab-768px.png - Layout tab at tablet width
+- feature-94-step2-styling-tab-768px.png - Styling tab at tablet width
+- feature-94-step2-settings-page-768px.png - Settings page at tablet width
+- feature-94-step2-accounts-page-768px.png - Accounts page at tablet width
+- feature-94-step2-new-feed-768px.png - New feed form at tablet width
+- feature-94-step5-feeds-list-buttons-768px.png - Buttons accessible at tablet width
+
+### Console Errors
+- None
+
+### Commit
+1f53040 - Verify Feature #94: Admin pages work on tablet viewport
+
+### Current Status
+- Feature #94 marked as passing
+- Total features: 149
+- Passing: 71
+- Percentage: 47.7%
+
+[Feature #94 completed and verified]
