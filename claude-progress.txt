@@ -8323,3 +8323,73 @@ Feature #81 PASSES regression test. Empty state is working correctly:
 
 [Testing] Feature #81 verified - still passing
 
+
+---
+
+## Session: 2026-01-24 (Feature #86 - Post Count Validation)
+
+### Feature Completed
+- **Feature #86: Post count within valid range** - PASSED
+
+### Feature Details
+- **Category:** form
+- **Name:** Post count within valid range
+- **Description:** Post count validated between min and max
+
+### Implementation
+
+**1. Server-Side Validation** (includes/admin/class-bwg-igf-admin-ajax.php)
+- Added validation after absint() conversion
+- Pattern: $post_count = max( 1, min( 50, $post_count ) );
+- Ensures value is always between 1 and 50 inclusive
+
+**2. Client-Side JavaScript Validation** (assets/js/admin.js)
+- Added initPostCountValidation() function
+- Real-time inline warning as user types
+- Auto-correction on blur (field loses focus)
+- Toast notification for auto-corrections
+- Warning messages:
+  - "Minimum is 1" (inline)
+  - "Maximum is 50" (inline)
+  - "Post count set to minimum (1)" (toast)
+  - "Post count limited to maximum (50)" (toast)
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Display tab** - VERIFIED
+   - Navigated to Edit Feed page for Test Feed (ID: 1)
+   - Clicked Display tab
+
+2. **Step 2: Set post count to 0** - VERIFIED
+   - Entered "0" in Number of Posts field
+
+3. **Step 3: Verify error or auto-correction** - VERIFIED
+   - Value auto-corrected to 1
+   - Toast notification: "Post count set to minimum (1)"
+   - Inline warning: "Minimum is 1"
+
+4. **Step 4: Set post count to 100** - VERIFIED
+   - Entered "100" in Number of Posts field
+   - Inline warning appeared: "Maximum is 50"
+
+5. **Step 5: Verify max limit enforced** - VERIFIED
+   - On blur, value auto-corrected to 50
+   - Toast notification: "Post count limited to maximum (50)"
+
+### Screenshots
+- feature-86-min-validation.png - Minimum value enforcement
+- feature-86-max-validation.png - Maximum value enforcement
+- feature-86-final-verification.png - Final state after verification
+
+### Console Errors
+- None (after fresh page load)
+
+### Files Modified
+- includes/admin/class-bwg-igf-admin-ajax.php - Server-side validation
+- assets/js/admin.js - Client-side validation
+
+### Commit
+9d49cbf - Implement Feature #86: Post count validation within valid range
+
+[Feature #86 completed and verified]
+
