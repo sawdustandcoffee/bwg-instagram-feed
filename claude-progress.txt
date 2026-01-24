@@ -1443,3 +1443,73 @@ Implemented and verified Boston Web Group branding in the plugin header area.
 - Docker: http://localhost:8082
 - Credentials: admin / password123
 
+
+---
+
+## Session: 2026-01-24 (Feature #10 - Plugin Deactivation)
+
+### Feature Completed
+- **Feature #10: Plugin deactivates without errors** - PASSED
+
+### What was verified
+Tested the complete plugin deactivation workflow to ensure clean deactivation without data loss.
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Plugins page** - ✅ VERIFIED
+   - Logged into WordPress admin at http://localhost:8082
+   - Navigated to Plugins > Installed Plugins
+   - BWG Instagram Feed was active (showing "Deactivate" link)
+   - Screenshot: feature-10-before-deactivation.png
+
+2. **Step 2: Click 'Deactivate' on BWG Instagram Feed** - ✅ VERIFIED
+   - Clicked the "Deactivate" link under BWG Instagram Feed
+   - Plugin deactivation completed successfully
+
+3. **Step 3: Verify no PHP errors during deactivation** - ✅ VERIFIED
+   - No PHP errors displayed on the page
+   - Success message "Plugin deactivated." displayed
+   - No JavaScript console errors
+
+4. **Step 4: Verify plugin shows as deactivated** - ✅ VERIFIED
+   - BWG Instagram Feed now shows "Activate | Delete" links (deactivated state)
+   - Active plugins count changed from "Active (2)" to "Active (1)"
+   - Screenshot: feature-10-after-deactivation.png
+
+5. **Step 5: Verify admin menu is removed** - ✅ VERIFIED
+   - "Instagram Feed" menu item no longer appears in WordPress admin sidebar
+   - Only remaining menu items between Comments and Appearance are the separator
+
+6. **Step 6: Verify database tables are NOT deleted on deactivation** - ✅ VERIFIED
+   - Ran database query: SHOW TABLES LIKE 'wp_bwg_igf%'
+   - All 3 tables still exist:
+     - wp_bwg_igf_accounts ✅
+     - wp_bwg_igf_cache ✅  
+     - wp_bwg_igf_feeds ✅
+   - Feed data preserved (1 feed still exists in database)
+
+### Plugin Re-activation
+- Plugin was re-activated for other agents to continue their work
+- Verified plugin active again with "Deactivate" link showing
+- "Instagram Feed" menu restored in sidebar
+- Screenshot: feature-10-plugin-reactivated.png
+
+### Screenshots
+- feature-10-before-deactivation.png - Plugin active state before test
+- feature-10-after-deactivation.png - Plugin deactivated state showing success message
+- feature-10-plugin-reactivated.png - Plugin re-activated for other agents
+
+### Current Status
+- Total features: 149
+- Passing: 16 (Features #1, #2, #3, #4, #5, #6, #7, #9, #10, #11, #12, #18, #43, #46, #47 + others)
+- Percentage: ~10.7%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / admin123 (password reset during session)
+
+### Notes
+- The deactivation hook does NOT delete database tables (by design)
+- Tables are only deleted via the uninstall.php file when user deletes the plugin
+- This preserves user data if they temporarily deactivate the plugin
+
