@@ -12,7 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 <div class="wrap">
     <div class="bwg-igf-header">
-        <h1><?php esc_html_e( 'BWG Instagram Feed', 'bwg-instagram-feed' ); ?></h1>
+        <div class="bwg-igf-logo">
+            <span class="bwg-igf-logo-icon dashicons dashicons-instagram"></span>
+        </div>
+        <div class="bwg-igf-branding">
+            <h1><?php esc_html_e( 'BWG Instagram Feed', 'bwg-instagram-feed' ); ?></h1>
+            <span class="bwg-igf-brand-tagline"><?php esc_html_e( 'by Boston Web Group', 'bwg-instagram-feed' ); ?></span>
+        </div>
     </div>
 
     <div class="bwg-igf-dashboard-widgets">
