@@ -1,0 +1,83 @@
+/**
+ * BWG Instagram Feed Block Editor Styles.
+ *
+ * @package BWG_Instagram_Feed
+ */
+
+/* Block placeholder styling */
+.wp-block-bwg-igf-instagram-feed .components-placeholder {
+    background: #f8f9fa;
+    border: 1px dashed #c3c4c7;
+    border-radius: 4px;
+}
+
+.wp-block-bwg-igf-instagram-feed .components-placeholder__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wp-block-bwg-igf-instagram-feed .components-placeholder__label svg {
+    width: 24px;
+    height: 24px;
+}
+
+.wp-block-bwg-igf-instagram-feed .components-placeholder__fieldset {
+    flex-direction: column;
+    max-width: 300px;
+}
+
+.wp-block-bwg-igf-instagram-feed .components-placeholder__fieldset .components-select-control {
+    width: 100%;
+}
+
+/* Feed selector dropdown */
+.wp-block-bwg-igf-instagram-feed .components-select-control__input {
+    width: 100%;
+    min-width: 200px;
+}
+
+/* Preview container */
+.wp-block-bwg-igf-instagram-feed .bwg-igf-feed {
+    pointer-events: none;
+}
+
+/* Loading state */
+.wp-block-bwg-igf-instagram-feed .components-spinner {
+    margin: 0 auto;
+}
+
+/* Create feed link button */
+.wp-block-bwg-igf-instagram-feed .components-placeholder .components-button.is-primary {
+    margin-top: 10px;
+}
+
+/* Block alignment support */
+.wp-block-bwg-igf-instagram-feed.alignwide,
+.wp-block-bwg-igf-instagram-feed.alignfull {
+    width: 100%;
+}
+
+/* Inspector controls */
+.editor-sidebar .components-panel__body-title .components-button {
+    font-weight: 500;
+}
+
+/* Server-side render wrapper */
+.wp-block-bwg-igf-instagram-feed .block-editor-server-side-render {
+    width: 100%;
+}
+
+/* Empty feed state in editor */
+.wp-block-bwg-igf-instagram-feed .bwg-igf-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border: 1px dashed #c3c4c7;
+    border-radius: 4px;
+}
+
+.wp-block-bwg-igf-instagram-feed .bwg-igf-empty-state p {
+    margin: 0;
+    color: #757575;
+}

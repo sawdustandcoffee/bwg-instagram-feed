@@ -107,7 +107,15 @@ final class BWG_Instagram_Feed {
      * Initialize plugin.
      */
     public function init() {
-        // Initialize components here.
+        // Load Gutenberg block.
+        $this->load_gutenberg_block();
+    }
+
+    /**
+     * Load Gutenberg block.
+     */
+    private function load_gutenberg_block() {
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/blocks/class-bwg-igf-instagram-feed-block.php';
     }
 
     /**
