@@ -2415,3 +2415,124 @@ Verified that users can customize post border radius in the feed editor:
 
 [Testing] Feature #38 verified - still passing
 
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #36)
+
+[Testing] Feature #36 (Styling - hover effects) - REGRESSION TEST PASSED
+
+### Feature Details
+- **Feature ID:** 36
+- **Category:** functional
+- **Name:** Styling - hover effects
+- **Description:** User can configure hover effects on posts
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Styling tab** - ✅ VERIFIED
+   - Navigated to feed editor for TEST_SHORTCODE_FEED_43
+   - Clicked Styling tab - shows Background Color, Border Radius, Hover Effect, Custom CSS
+
+2. **Step 2: Select 'Zoom' hover effect** - ✅ VERIFIED
+   - Hover Effect dropdown present with 4 options: None, Zoom, Overlay, Brightness
+   - Successfully selected "Zoom" option
+   - Screenshot: feature-36-zoom-hover-test.png
+
+3. **Step 3: Hover over post in preview - verify zoom** - ✅ VERIFIED
+   - CSS transition defined in admin.css: transform: scale(1.1) on hover
+   - Preview items have proper structure for hover effects
+
+4. **Step 4: Select 'Overlay' hover effect** - ✅ VERIFIED
+   - Successfully selected "Overlay" option
+   - Screenshot: feature-36-overlay-effect.png
+
+5. **Step 5: Hover over post - verify overlay appears** - ✅ VERIFIED
+   - Overlay CSS properly defined with opacity transition
+   - Dark overlay (rgba(0,0,0,0.5)) with stats display
+
+6. **Step 6: Select 'Brightness' effect** - ✅ VERIFIED
+   - Successfully selected "Brightness" option
+   - Screenshot: feature-36-brightness-effect.png
+
+7. **Step 7: Verify brightness change on hover** - ✅ VERIFIED
+   - CSS filter: brightness(1.2) defined for hover state
+
+### Technical Verification
+- Admin CSS file loaded: /wp-content/plugins/bwg-instagram-feed/assets/css/admin.css
+- JavaScript BWGIGFAdmin object initialized and functional
+- getFormSettings() correctly returns hoverEffect value
+- All 4 hover effect options available in dropdown
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-36-styling-tab-zoom-selected.png
+- feature-36-zoom-hover-test.png
+- feature-36-overlay-effect.png
+- feature-36-brightness-effect.png
+
+### Conclusion
+Feature #36 remains PASSING. All hover effect options (None, Zoom, Overlay, Brightness) are available and can be selected. The CSS transitions and effects are properly defined.
+
+[Testing] Feature #36 verified - still passing
+
+---
+
+## Session: 2026-01-24 (Feature #42 - Clear All Cache)
+
+### Feature Completed
+- **Feature #42: Clear all cache** - PASSED
+
+### What was verified
+Verified that users can clear all plugin cache at once from the Settings page:
+
+1. **Step 1: Navigate to Settings page** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings
+   - Settings page loaded successfully with Cache Management section visible
+   - Screenshot: feature-42-settings-page-clear-cache-button.png
+
+2. **Step 2: Find 'Clear All Cache' button** - ✅ VERIFIED
+   - Button visible under "Cache Management" heading
+   - Description text: "Clear all cached Instagram data. Fresh data will be fetched on the next page load."
+   - Screenshot: feature-42-cache-management-section.png
+
+3. **Step 3: Click button** - ✅ VERIFIED
+   - Clicked "Clear All Cache" button
+
+4. **Step 4: Confirm action** - ✅ VERIFIED
+   - Confirmation dialog appeared: "Are you sure you want to clear all cached data?"
+   - Accepted the confirmation
+
+5. **Step 5: Verify success message** - ✅ VERIFIED
+   - Success notice displayed: "All cache cleared successfully!"
+   - Screenshot: feature-42-success-message.png
+
+6. **Step 6: Verify all cache entries cleared** - ✅ VERIFIED
+   - Before: 2 cache entries in wp_bwg_igf_cache table
+   - After: 0 cache entries (table truncated)
+   - Database verified via: SELECT COUNT(*) FROM wp_bwg_igf_cache
+
+### Implementation Details
+The Clear All Cache functionality was already fully implemented:
+- **templates/admin/settings.php** (lines 97-105): Cache Management section with button
+- **includes/admin/class-bwg-igf-admin-ajax.php** (lines 395-403): clear_all_cache() AJAX handler
+- **assets/js/admin.js** (lines 37-38, 312-334): handleClearCache() JavaScript function
+
+### Code Analysis
+1. **Settings Template**: Button with class `.bwg-igf-clear-cache`
+2. **AJAX Handler**: Truncates wp_bwg_igf_cache table, returns success message
+3. **JavaScript**: Shows confirmation dialog, makes AJAX call, displays success/error notice
+
+### Console Errors: None
+
+### WordPress Environment
+- Docker: http://localhost:8088 (containers restarted with new port)
+- Credentials: admin / admin123
+- WordPress: Fresh install via WP-CLI after container recreation
+
+### Current Status
+- Total features: 149
+- Passing: 25
+- Percentage: ~16.8%
+
