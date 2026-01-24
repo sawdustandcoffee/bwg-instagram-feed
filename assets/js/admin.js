@@ -55,8 +55,16 @@
         initColorPickers: function() {
             if ($.fn.wpColorPicker) {
                 $('.bwg-igf-color-picker').wpColorPicker({
-                    change: function() {
-                        BWGIGFAdmin.updatePreview();
+                    change: function(event, ui) {
+                        // Small delay to allow the color picker to update the input value
+                        setTimeout(function() {
+                            BWGIGFAdmin.updatePreview();
+                        }, 10);
+                    },
+                    clear: function() {
+                        setTimeout(function() {
+                            BWGIGFAdmin.updatePreview();
+                        }, 10);
                     }
                 });
             }
@@ -64,9 +72,17 @@
 
         initLivePreview: function() {
             // Update preview on setting changes
-            $('.bwg-igf-editor-content input, .bwg-igf-editor-content select').on('change input', function() {
+            $('.bwg-igf-editor-content input, .bwg-igf-editor-content select, .bwg-igf-editor-content textarea').on('change input', function() {
                 BWGIGFAdmin.updatePreview();
             });
+
+            // Create style element for custom CSS preview
+            if (!$('#bwg-igf-custom-css-preview').length) {
+                $('head').append('<style id="bwg-igf-custom-css-preview" type="text/css"></style>');
+            }
+
+            // Initial preview update
+            this.updatePreview();
         },
 
         updatePreview: function() {
@@ -76,22 +92,63 @@
             // Apply settings to preview
             var $preview = $('.bwg-igf-preview-content');
 
-            // Update columns
-            $preview.attr('class', 'bwg-igf-preview-content bwg-igf-grid bwg-igf-grid-' + settings.columns);
+            // Build classes array
+            var classes = ['bwg-igf-preview-content', 'bwg-igf-grid', 'bwg-igf-grid-' + settings.columns];
+
+            // Add hover effect class if not 'none'
+            if (settings.hoverEffect && settings.hoverEffect !== 'none') {
+                classes.push('bwg-igf-hover-' + settings.hoverEffect);
+            }
+
+            // Update classes
+            $preview.attr('class', classes.join(' '));
 
             // Update gap
             $preview.css('--bwg-igf-gap', settings.gap + 'px');
 
             // Update border radius
             $preview.find('.bwg-igf-item').css('border-radius', settings.borderRadius + 'px');
+
+            // Handle overlay effect - add/remove overlay elements
+            if (settings.hoverEffect === 'overlay') {
+                $preview.find('.bwg-igf-item').each(function() {
+                    if (!$(this).find('.bwg-igf-overlay').length) {
+                        $(this).append('<div class="bwg-igf-overlay"><div class="bwg-igf-overlay-content"><div class="bwg-igf-stats"><span class="bwg-igf-stat">❤️ 123</span><span class="bwg-igf-stat">💬 45</span></div></div></div>');
+                    }
+                });
+            } else {
+                $preview.find('.bwg-igf-overlay').remove();
+            }
+
+            // Update background color
+            if (settings.backgroundColor) {
+                $preview.css('background-color', settings.backgroundColor);
+                $preview.css('padding', '15px');
+                $preview.css('border-radius', '8px');
+            } else {
+                $preview.css('background-color', '');
+                $preview.css('padding', '');
+                $preview.css('border-radius', '');
+            }
+
+            // Apply custom CSS to preview
+            var customCSS = settings.customCSS || '';
+            // Replace .bwg-igf-feed with .bwg-igf-preview-content for admin preview
+            var previewCSS = customCSS.replace(/\.bwg-igf-feed/g, '.bwg-igf-preview-content');
+            $('#bwg-igf-custom-css-preview').text(previewCSS);
         },
 
         getFormSettings: function() {
+            // Get background color from color picker (may need to check the hidden input)
+            var bgColor = $('#bwg-igf-background-color').val();
+
             return {
                 columns: $('#bwg-igf-columns').val() || 3,
                 gap: $('#bwg-igf-gap').val() || 10,
                 borderRadius: $('#bwg-igf-border-radius').val() || 0,
-                hoverEffect: $('#bwg-igf-hover-effect').val() || 'none'
+                hoverEffect: $('#bwg-igf-hover-effect').val() || 'none',
+                backgroundColor: bgColor || '',
+                customCSS: $('#bwg-igf-custom-css').val() || ''
             };
         },
 

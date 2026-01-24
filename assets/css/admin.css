@@ -224,6 +224,57 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* Preview hover effects */
+.bwg-igf-preview-content.bwg-igf-hover-zoom .bwg-igf-item:hover img {
+    transform: scale(1.1);
+}
+
+.bwg-igf-preview-content.bwg-igf-hover-brightness .bwg-igf-item:hover img {
+    filter: brightness(1.2);
+}
+
+/* Preview overlay effect */
+.bwg-igf-preview .bwg-igf-item {
+    position: relative;
+}
+
+.bwg-igf-preview .bwg-igf-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.bwg-igf-preview .bwg-igf-item:hover .bwg-igf-overlay {
+    opacity: 1;
+}
+
+.bwg-igf-preview .bwg-igf-overlay-content {
+    color: #fff;
+    text-align: center;
+}
+
+.bwg-igf-preview .bwg-igf-stats {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.bwg-igf-preview .bwg-igf-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
 }
 
 /* Validation indicator */
