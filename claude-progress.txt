@@ -4011,3 +4011,103 @@ Feature #3 remains PASSING. No regression detected.
 - Credentials: admin / admin123
 
 [Feature #60 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Feature #61 - Accounts Submenu Navigation)
+
+### Feature Completed
+- **Feature #61: Accounts submenu navigates correctly** - PASSED
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Accounts submenu navigates correctly
+- **Description:** Clicking Accounts submenu loads accounts page
+
+### Verification Steps Completed
+
+1. **Step 1: Click Accounts submenu item** - ✅ VERIFIED
+   - Navigated to Feeds page first (http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds)
+   - Clicked "Accounts" link in the Instagram Feed submenu
+   - Link successfully navigated to accounts page
+
+2. **Step 2: Verify accounts page loads** - ✅ VERIFIED
+   - Page Title: "Connected Accounts ‹ BWG Instagram Test — WordPress"
+   - Main heading: "Connected Instagram Accounts"
+   - Content includes:
+     - "Connect an Account" section with instructions
+     - "Go to Settings" link for Instagram App credentials
+     - "Connected Accounts" section showing "No accounts connected yet."
+
+3. **Step 3: Verify correct URL** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-accounts
+   - Correct page query parameter: page=bwg-igf-accounts
+
+### Screenshots
+- feature-61-accounts-navigation.png - Accounts page after clicking submenu link
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #61 PASSES. The Accounts submenu item correctly navigates to the accounts management page:
+- Submenu link is accessible and clickable
+- Page loads correctly with proper content
+- URL matches expected format (admin.php?page=bwg-igf-accounts)
+- No JavaScript or console errors
+
+### Current Status
+- Total features: 149
+- Passing: 38 (updated)
+- Percentage: ~25.5%
+
+
+---
+
+## Session: 2026-01-24 (Feature #59 - Feeds Submenu Navigation)
+
+### Feature Completed
+- **Feature #59: Feeds submenu navigates correctly** - PASSED
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Feeds submenu navigates correctly
+- **Description:** Clicking Feeds submenu loads feeds list
+
+### Verification Steps Completed
+
+1. **Step 1: Click Feeds submenu item** - ✅ VERIFIED
+   - Started from WordPress Dashboard (http://localhost:8082/wp-admin/)
+   - Clicked on the "Feeds" submenu link under "Instagram Feed" menu
+   - Navigation triggered successfully
+
+2. **Step 2: Verify feeds list page loads** - ✅ VERIFIED
+   - Page loaded successfully
+   - Page title: "All Feeds ‹ BWG Instagram Test — WordPress"
+   - Heading displays "Instagram Feeds" with "Add New Feed" button
+
+3. **Step 3: Verify correct URL** - ✅ VERIFIED
+   - URL: http://localhost:8082/wp-admin/admin.php?page=bwg-igf-feeds
+   - Matches expected URL pattern for the feeds page
+
+4. **Step 4: Verify page content is correct** - ✅ VERIFIED
+   - Page displays "Instagram Feeds" heading
+   - Table with columns: Name, Type, Status, Shortcode, Actions
+   - 5 feeds displayed in the table
+   - Each feed has Edit, Duplicate, Delete actions
+   - Submenu highlights "Feeds" as current page in sidebar
+
+### Screenshots
+- feature-59-feeds-submenu-navigation.png - Feeds list page after navigation
+
+### Console Errors: None detected
+
+### Current Status
+- Total features: 149
+- Passing: 38 (updated after marking feature #59)
+- Percentage: ~25.5%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / admin123
+
+[Feature #59 completed and verified]
