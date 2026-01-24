@@ -415,3 +415,280 @@ All verification steps passed:
 - Total features: 149
 - Passing: 5 (Features #1, #5, #11, #43, #46, #47)
 - Percentage: ~3.4%
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #11)
+
+[Testing] Feature #11 (Create new public feed form displays) - REGRESSION TEST PASSED
+
+### Initial Observation
+- First attempt showed error 'Sorry, you are not allowed to access this page' (403 Forbidden)
+- Investigation revealed plugin was temporarily deactivated by another browser session
+- After confirming plugin was active, re-tested successfully
+
+### Verification Steps Completed
+1. ✅ Navigated to Feeds page (admin.php?page=bwg-igf-feeds)
+2. ✅ Clicked 'Add New Feed' button - page loaded successfully
+3. ✅ Feed Name field present (textbox visible)
+4. ✅ Feed Type selector shows Public/Connected options
+5. ✅ Instagram Username(s) field visible for public type
+6. ✅ Layout Type shows Grid/Slider options
+7. ✅ 'Create Feed' button present
+
+### Results
+- No JavaScript console errors
+- All form fields and tabs functional
+- Screenshot: feature-11-regression-test-verified.png
+
+### Root Cause of Initial Failure
+- Transient issue: Plugin was temporarily deactivated by concurrent browser session
+- Not a code regression - plugin working correctly when active
+
+[Testing] Feature #11 verified - still passing
+
+---
+
+## Session: 2026-01-24 (Feature #2)
+
+### Feature Completed
+- **Feature #2: Plugin creates database tables on activation** - PASSED
+
+### What was accomplished
+Verified that all three custom database tables are created correctly when the plugin is activated.
+
+### Database Tables Verified
+
+#### 1. wp_bwg_igf_feeds (19 columns)
+- id (bigint UNSIGNED, PRIMARY KEY, AUTO_INCREMENT)
+- name (varchar(255))
+- slug (varchar(100), UNIQUE INDEX)
+- feed_type (enum: public, connected)
+- instagram_usernames (text)
+- connected_account_id (bigint UNSIGNED)
+- layout_type (enum: grid, slider)
+- layout_settings (longtext)
+- display_settings (longtext)
+- styling_settings (longtext)
+- filter_settings (longtext)
+- popup_settings (longtext)
+- post_count (int, default 9)
+- ordering (enum: newest, oldest, random, most_liked, most_commented)
+- cache_duration (int, default 3600)
+- status (enum: active, inactive, error)
+- error_message (text)
+- created_at (datetime, CURRENT_TIMESTAMP)
+- updated_at (datetime, on update CURRENT_TIMESTAMP)
+- **Indexes**: PRIMARY(id), UNIQUE(slug), INDEX(feed_type), INDEX(status)
+
+#### 2. wp_bwg_igf_accounts (11 columns)
+- id (bigint UNSIGNED, PRIMARY KEY, AUTO_INCREMENT)
+- instagram_user_id (bigint UNSIGNED, UNIQUE INDEX)
+- username (varchar(100))
+- access_token (text)
+- token_type (varchar(50))
+- expires_at (datetime)
+- account_type (enum: basic, business, creator)
+- profile_picture_url (text)
+- connected_at (datetime, CURRENT_TIMESTAMP)
+- last_refreshed (datetime)
+- status (enum: active, expired, revoked)
+- **Indexes**: PRIMARY(id), UNIQUE(instagram_user_id), INDEX(status)
+
+#### 3. wp_bwg_igf_cache (6 columns)
+- id (bigint UNSIGNED, PRIMARY KEY, AUTO_INCREMENT)
+- feed_id (bigint UNSIGNED, INDEX)
+- cache_key (varchar(255), INDEX)
+- cache_data (longtext)
+- created_at (datetime, CURRENT_TIMESTAMP)
+- expires_at (datetime, INDEX)
+- **Indexes**: PRIMARY(id), INDEX(feed_id), INDEX(cache_key), INDEX(expires_at)
+
+### Verification Method
+1. Accessed phpMyAdmin at http://localhost:8081
+2. Connected with credentials: root / rootpassword
+3. Navigated to wordpress database
+4. Inspected Structure tab for each BWG IGF table
+5. Verified all columns, data types, defaults, and indexes match spec
+
+### Screenshots
+- feature-2-feeds-table-structure.png
+- feature-2-cache-table-structure.png
+
+### Code Location
+- Table creation: `bwg-instagram-feed.php` → `create_tables()` method (lines 136-209)
+- Uses WordPress `dbDelta()` function for safe table creation/updates
+- Sets option `bwg_igf_db_version` to track schema version
+
+### Current Status
+- Total features: 149
+- Passing: 7 (Features #1, #2, #5, #11, #43, #46, #47)
+- Percentage: ~4.7%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- phpMyAdmin: http://localhost:8081
+- WordPress credentials: admin / password123
+- Database credentials: root / rootpassword
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #1)
+
+[Testing] Feature #1 (Plugin activates without errors) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Plugin files present at wp-content/plugins/bwg-instagram-feed/
+2. ✅ Navigated to WordPress admin Plugins page
+3. ✅ Performed deactivate/reactivate cycle
+4. ✅ Plugin deactivated cleanly - 'Plugin deactivated.' message shown
+5. ✅ Plugin activated cleanly - 'Plugin activated.' message shown
+6. ✅ No PHP errors or warnings displayed during activation
+7. ✅ Plugin appears as activated (shows 'Deactivate' link)
+8. ✅ Admin menu 'Instagram Feed' appears with submenus (Dashboard, Feeds, Accounts, Settings)
+9. ✅ No console errors detected
+
+### Plugin Details Verified
+- Name: BWG Instagram Feed
+- Version: 1.0.0
+- Author: Boston Web Group
+- Description: Display Instagram feeds on your WordPress website with customizable layouts, styling, and both public and connected account support.
+
+### Screenshots
+- feature-1-regression-test-plugins-page.png (initial state)
+- feature-1-regression-test-activated.png (after reactivation)
+
+### Notes
+- Clean deactivation/reactivation cycle completed successfully
+- No regressions detected
+
+[Testing] Feature #1 verified - still passing
+
+## Testing Session: 2026-01-24 12:38 (Regression Testing - Feature #11)
+
+[Testing] Feature #11 (Create new public feed form displays) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Navigate to Feeds page - Page loaded at admin.php?page=bwg-igf-feeds
+2. ✅ Click 'Add New Feed' button - Form displayed at action=new
+3. ✅ Feed Name field present - textbox visible
+4. ✅ Feed Type selector shows Public/Connected options
+5. ✅ Instagram Username(s) field visible for public type
+6. ✅ Layout Type options show Grid/Slider in Layout tab
+7. ✅ Create Feed button present
+
+### Additional Checks
+- No console errors detected
+- All form tabs functional (Source, Layout, Display, Styling, Popup, Advanced)
+- Preview grid displays placeholder images
+
+### Screenshot
+- feature-11-regression-test-20260124-session2.png
+
+[Testing] Feature #11 verified - still passing
+
+---
+
+---
+
+## Session: 2026-01-24 (Feature #12)
+
+### Feature Completed
+- **Feature #12: Create feed with single username** - PASSED
+
+### What was accomplished
+1. Created comprehensive AJAX handler class (`includes/admin/class-bwg-igf-admin-ajax.php`):
+   - `save_feed()` - Create or update feed with full validation
+   - `delete_feed()` - Delete feed and associated cache
+   - `duplicate_feed()` - Clone existing feed
+   - `validate_username()` - Basic username format validation
+   - `refresh_cache()` - Clear cache for specific feed
+   - `clear_all_cache()` - Clear all plugin cache
+   
+2. All handlers include:
+   - Nonce verification for security
+   - Capability checks (manage_options required)
+   - Input sanitization
+   - Prepared database queries
+
+3. Updated main plugin file to load AJAX handlers on init
+
+4. Enhanced admin.js to redirect to feeds list after successful feed creation
+
+### Verification Steps (All Passed)
+1. ✅ Navigate to Add New Feed page
+2. ✅ Enter feed name 'TEST_FEED_12_SINGLE'
+3. ✅ Select 'Public' feed type (default)
+4. ✅ Enter Instagram username 'natgeo'
+5. ✅ Select Grid layout (default)
+6. ✅ Click Create Feed button
+7. ✅ Success message "Feed created successfully!" appeared
+8. ✅ Feed appeared in feeds list with:
+   - Name: TEST_FEED_12_SINGLE
+   - Type: Public
+   - Status: Active
+   - Shortcode: [bwg_igf id="2"]
+9. ✅ Shortcode was generated
+
+### Additional Testing
+- Delete functionality also verified working
+- No JavaScript console errors
+- All data properly sanitized and stored in database
+
+### Files Changed
+- `bwg-instagram-feed.php` - Added load_admin_ajax() method
+- `assets/js/admin.js` - Enhanced handleSaveFeed with redirect support
+- `includes/admin/class-bwg-igf-admin-ajax.php` - New file (420 lines)
+
+### Git Commit
+- `c38f6db` - Implement feed creation AJAX handler - Feature #12
+
+### Screenshot
+- feature-12-feed-created-verified.png
+
+### Current Status
+- Total features: 149
+- Passing: 6 (Features #5, #11, #12, #43, #46, #47)
+- Percentage: ~4.0%
+
+### Notes
+- Docker environment: http://localhost:8082
+- WordPress credentials: admin / password123
+- This feature enables creation of public feeds with single Instagram username
+- The AJAX handlers support all feed CRUD operations needed for subsequent features
+
+---
+
+## Session: 2026-01-24 (Feature #3)
+
+### Feature Completed
+- **Feature #3: Admin menu appears after activation** - PASSED
+
+### Verification Steps Completed
+1. ✅ Logged in as WordPress administrator (admin / password123)
+2. ✅ Verified "Instagram Feed" menu item appears in WordPress admin sidebar
+3. ✅ Verified menu has correct Instagram-style icon (circular camera dashicon)
+4. ✅ Verified all four submenu items are present:
+   - Dashboard → admin.php?page=bwg-igf
+   - Feeds → admin.php?page=bwg-igf-feeds
+   - Accounts → admin.php?page=bwg-igf-accounts
+   - Settings → admin.php?page=bwg-igf-settings
+
+### Screenshots
+- feature-3-admin-menu-verification.png - Shows menu item in sidebar
+- feature-3-admin-menu-hover-submenu.png - Shows all submenu items when hovering
+
+### Notes
+- No console errors detected
+- All submenu items are visible when hovering over Instagram Feed menu
+- Plugin is activated and properly registered with WordPress admin menu system
+
+### Current Status
+- Total features: 149
+- Passing: 8 (Features #1, #2, #3, #5, #11, #43, #46, #47)
+- Percentage: ~5.4%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / password123
+
