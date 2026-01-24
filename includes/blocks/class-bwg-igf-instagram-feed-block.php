@@ -77,11 +77,20 @@ class BWG_IGF_Instagram_Feed_Block {
             return;
         }
 
-        // Register block using block.json for proper REST API support.
+        // Register block without block.json - let JavaScript handle the full registration.
+        // This ensures JavaScript's registerBlockType() works correctly.
         register_block_type(
-            __DIR__ . '/block.json',
+            'bwg-igf/instagram-feed',
             array(
+                'editor_script'   => 'bwg-igf-block-editor',
+                'editor_style'    => 'bwg-igf-block-editor-style',
                 'render_callback' => array( $this, 'render_block' ),
+                'attributes'      => array(
+                    'feedId' => array(
+                        'type'    => 'string',
+                        'default' => '',
+                    ),
+                ),
             )
         );
     }
