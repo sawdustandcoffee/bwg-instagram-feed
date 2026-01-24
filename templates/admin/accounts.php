@@ -93,6 +93,11 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 ?>
                             </td>
                             <td>
+                                <a href="#" class="bwg-igf-verify-encryption" data-account-id="<?php echo esc_attr( $account->id ); ?>">
+                                    <?php esc_html_e( 'Verify Encryption', 'bwg-instagram-feed' ); ?>
+                                </a>
+                                <span class="bwg-igf-encryption-result" style="display: none; margin-left: 10px;"></span>
+                                <br>
                                 <a href="#" class="bwg-igf-disconnect-account" data-account-id="<?php echo esc_attr( $account->id ); ?>" style="color: #a00;">
                                     <?php esc_html_e( 'Disconnect', 'bwg-instagram-feed' ); ?>
                                 </a>

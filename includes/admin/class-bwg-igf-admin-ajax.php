@@ -274,6 +274,18 @@ class BWG_IGF_Admin_Ajax {
             wp_send_json_error( array( 'message' => __( 'Invalid feed ID.', 'bwg-instagram-feed' ) ) );
         }
 
+        // Check if feed exists first.
+        $feed_exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d",
+                $feed_id
+            )
+        );
+
+        if ( ! $feed_exists ) {
+            wp_send_json_error( array( 'message' => __( 'Feed not found.', 'bwg-instagram-feed' ) ) );
+        }
+
         // Delete feed.
         $result = $wpdb->delete(
             $wpdb->prefix . 'bwg_igf_feeds',
@@ -381,6 +393,18 @@ class BWG_IGF_Admin_Ajax {
             wp_send_json_error( array( 'message' => __( 'Invalid feed ID.', 'bwg-instagram-feed' ) ) );
         }
 
+        // Check if feed exists.
+        $feed_exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d",
+                $feed_id
+            )
+        );
+
+        if ( ! $feed_exists ) {
+            wp_send_json_error( array( 'message' => __( 'Feed not found.', 'bwg-instagram-feed' ) ) );
+        }
+
         // Delete existing cache for this feed.
         $wpdb->delete(
             $wpdb->prefix . 'bwg_igf_cache',
@@ -415,6 +439,195 @@ class BWG_IGF_Admin_Ajax {
         );
 
         wp_send_json_success( array( 'message' => __( 'All cache cleared successfully!', 'bwg-instagram-feed' ) ) );
+    }
+
+    /**
+     * Connect Instagram account.
+     *
+     * In a real implementation, this would be called after the OAuth callback
+     * with the access token from Instagram. For testing, we simulate this process.
+     */
+    public function connect_account() {
+        $this->verify_request();
+
+        global $wpdb;
+
+        // Get the access token from the request.
+        // In production, this comes from Instagram OAuth callback.
+        $access_token = isset( $_POST['access_token'] ) ? sanitize_text_field( wp_unslash( $_POST['access_token'] ) ) : '';
+        $instagram_user_id = isset( $_POST['instagram_user_id'] ) ? absint( $_POST['instagram_user_id'] ) : 0;
+        $username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
+        $account_type = isset( $_POST['account_type'] ) ? sanitize_text_field( wp_unslash( $_POST['account_type'] ) ) : 'basic';
+
+        // Validate required fields.
+        if ( empty( $access_token ) ) {
+            wp_send_json_error( array( 'message' => __( 'Access token is required.', 'bwg-instagram-feed' ) ) );
+        }
+
+        if ( empty( $instagram_user_id ) ) {
+            wp_send_json_error( array( 'message' => __( 'Instagram user ID is required.', 'bwg-instagram-feed' ) ) );
+        }
+
+        if ( empty( $username ) ) {
+            wp_send_json_error( array( 'message' => __( 'Username is required.', 'bwg-instagram-feed' ) ) );
+        }
+
+        // Check if encryption is available.
+        if ( ! BWG_IGF_Encryption::is_encryption_available() ) {
+            // Log warning but continue with fallback.
+            error_log( 'BWG Instagram Feed: OpenSSL encryption not available. Using fallback encoding.' );
+        }
+
+        // Encrypt the access token before storing.
+        $encrypted_token = BWG_IGF_Encryption::encrypt( $access_token );
+
+        if ( false === $encrypted_token ) {
+            wp_send_json_error( array( 'message' => __( 'Failed to encrypt access token.', 'bwg-instagram-feed' ) ) );
+        }
+
+        // Calculate expiration (Instagram Basic Display API tokens expire in 60 days).
+        $expires_at = gmdate( 'Y-m-d H:i:s', time() + ( 60 * DAY_IN_SECONDS ) );
+
+        // Check if this Instagram account is already connected.
+        $existing = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}bwg_igf_accounts WHERE instagram_user_id = %d",
+                $instagram_user_id
+            )
+        );
+
+        if ( $existing ) {
+            // Update existing account.
+            $result = $wpdb->update(
+                $wpdb->prefix . 'bwg_igf_accounts',
+                array(
+                    'username'       => $username,
+                    'access_token'   => $encrypted_token,
+                    'token_type'     => 'bearer',
+                    'expires_at'     => $expires_at,
+                    'account_type'   => $account_type,
+                    'last_refreshed' => current_time( 'mysql' ),
+                    'status'         => 'active',
+                ),
+                array( 'instagram_user_id' => $instagram_user_id ),
+                array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' ),
+                array( '%d' )
+            );
+
+            if ( false === $result ) {
+                wp_send_json_error( array( 'message' => __( 'Failed to update account.', 'bwg-instagram-feed' ) ) );
+            }
+
+            wp_send_json_success( array(
+                'message'    => __( 'Instagram account reconnected successfully!', 'bwg-instagram-feed' ),
+                'account_id' => $existing->id,
+            ) );
+        } else {
+            // Insert new account.
+            $result = $wpdb->insert(
+                $wpdb->prefix . 'bwg_igf_accounts',
+                array(
+                    'instagram_user_id' => $instagram_user_id,
+                    'username'          => $username,
+                    'access_token'      => $encrypted_token,
+                    'token_type'        => 'bearer',
+                    'expires_at'        => $expires_at,
+                    'account_type'      => $account_type,
+                    'connected_at'      => current_time( 'mysql' ),
+                    'status'            => 'active',
+                ),
+                array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
+            );
+
+            if ( false === $result ) {
+                wp_send_json_error( array( 'message' => __( 'Failed to connect account.', 'bwg-instagram-feed' ) ) );
+            }
+
+            $new_account_id = $wpdb->insert_id;
+
+            wp_send_json_success( array(
+                'message'    => __( 'Instagram account connected successfully!', 'bwg-instagram-feed' ),
+                'account_id' => $new_account_id,
+            ) );
+        }
+    }
+
+    /**
+     * Disconnect Instagram account.
+     */
+    public function disconnect_account() {
+        $this->verify_request();
+
+        global $wpdb;
+
+        $account_id = isset( $_POST['account_id'] ) ? absint( $_POST['account_id'] ) : 0;
+
+        if ( ! $account_id ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid account ID.', 'bwg-instagram-feed' ) ) );
+        }
+
+        // Delete the account.
+        $result = $wpdb->delete(
+            $wpdb->prefix . 'bwg_igf_accounts',
+            array( 'id' => $account_id ),
+            array( '%d' )
+        );
+
+        if ( false === $result ) {
+            wp_send_json_error( array( 'message' => __( 'Failed to disconnect account.', 'bwg-instagram-feed' ) ) );
+        }
+
+        wp_send_json_success( array( 'message' => __( 'Account disconnected successfully!', 'bwg-instagram-feed' ) ) );
+    }
+
+    /**
+     * Verify token encryption status for an account.
+     *
+     * This is used by administrators and for testing to verify that
+     * OAuth tokens are properly encrypted in the database.
+     */
+    public function verify_token_encryption() {
+        $this->verify_request();
+
+        global $wpdb;
+
+        $account_id = isset( $_POST['account_id'] ) ? absint( $_POST['account_id'] ) : 0;
+
+        if ( ! $account_id ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid account ID.', 'bwg-instagram-feed' ) ) );
+        }
+
+        // Get the account.
+        $account = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT id, username, access_token FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d",
+                $account_id
+            )
+        );
+
+        if ( ! $account ) {
+            wp_send_json_error( array( 'message' => __( 'Account not found.', 'bwg-instagram-feed' ) ) );
+        }
+
+        // Verify the token encryption status.
+        $verification = BWG_IGF_Encryption::verify_encrypted( $account->access_token );
+
+        // Determine the raw token format for display (show first/last few chars only).
+        $token_preview = '';
+        if ( strlen( $account->access_token ) > 20 ) {
+            $token_preview = substr( $account->access_token, 0, 15 ) . '...' . substr( $account->access_token, -5 );
+        } else {
+            $token_preview = $account->access_token;
+        }
+
+        wp_send_json_success( array(
+            'account_id'        => $account->id,
+            'username'          => $account->username,
+            'token_preview'     => $token_preview,
+            'is_encrypted'      => $verification['is_encrypted'],
+            'encryption_method' => $verification['encryption_method'],
+            'is_plaintext'      => $verification['is_plaintext'],
+        ) );
     }
 }
 

@@ -39,6 +39,15 @@
 
             // Validate username
             $(document).on('blur', '#bwg-igf-username', this.handleValidateUsername);
+
+            // Connect Instagram account (test mode)
+            $(document).on('click', '.bwg-igf-connect-account', this.handleConnectAccount);
+
+            // Disconnect Instagram account
+            $(document).on('click', '.bwg-igf-disconnect-account', this.handleDisconnectAccount);
+
+            // Verify token encryption
+            $(document).on('click', '.bwg-igf-verify-encryption', this.handleVerifyEncryption);
         },
 
         initTabs: function() {
@@ -372,6 +381,132 @@
                     $(this).remove();
                 });
             }, 5000);
+        },
+
+        handleConnectAccount: function(e) {
+            e.preventDefault();
+
+            // For testing purposes, we'll prompt for test data
+            // In production, this would initiate the OAuth flow with Instagram
+            var username = prompt('Enter Instagram username (for testing):');
+            if (!username) {
+                return;
+            }
+
+            // Generate test data
+            var testData = {
+                username: username,
+                instagram_user_id: Math.floor(Math.random() * 9000000000) + 1000000000,
+                access_token: 'IGQVJWZADJLazNHUm1jM2' + BWGIGFAdmin.generateRandomString(100),
+                account_type: 'basic'
+            };
+
+            $.ajax({
+                url: bwgIgfAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'bwg_igf_connect_account',
+                    nonce: bwgIgfAdmin.nonce,
+                    username: testData.username,
+                    instagram_user_id: testData.instagram_user_id,
+                    access_token: testData.access_token,
+                    account_type: testData.account_type
+                },
+                success: function(response) {
+                    if (response.success) {
+                        BWGIGFAdmin.showNotice('success', response.data.message);
+                        // Reload page to see new account
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
+                    }
+                },
+                error: function() {
+                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+                }
+            });
+        },
+
+        handleDisconnectAccount: function(e) {
+            e.preventDefault();
+
+            if (!confirm('Are you sure you want to disconnect this Instagram account?')) {
+                return;
+            }
+
+            var $button = $(this);
+            var accountId = $button.data('account-id');
+
+            $.ajax({
+                url: bwgIgfAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'bwg_igf_disconnect_account',
+                    nonce: bwgIgfAdmin.nonce,
+                    account_id: accountId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        BWGIGFAdmin.showNotice('success', response.data.message);
+                        $button.closest('tr').fadeOut(function() {
+                            $(this).remove();
+                        });
+                    } else {
+                        BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
+                    }
+                },
+                error: function() {
+                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+                }
+            });
+        },
+
+        handleVerifyEncryption: function(e) {
+            e.preventDefault();
+
+            var $button = $(this);
+            var accountId = $button.data('account-id');
+            var $result = $button.siblings('.bwg-igf-encryption-result');
+
+            $.ajax({
+                url: bwgIgfAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'bwg_igf_verify_token_encryption',
+                    nonce: bwgIgfAdmin.nonce,
+                    account_id: accountId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        var data = response.data;
+                        var html = '<div class="bwg-igf-encryption-info">';
+                        html += '<strong>Token Preview:</strong> ' + data.token_preview + '<br>';
+                        html += '<strong>Encrypted:</strong> ' + (data.is_encrypted ? '<span style="color:green;">✓ Yes</span>' : '<span style="color:red;">✗ No</span>') + '<br>';
+                        html += '<strong>Method:</strong> ' + data.encryption_method + '<br>';
+                        if (data.is_plaintext) {
+                            html += '<span style="color:red;">⚠ Warning: Token appears to be stored in plaintext!</span>';
+                        }
+                        html += '</div>';
+                        $result.html(html).show();
+                    } else {
+                        BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
+                    }
+                },
+                error: function() {
+                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+                }
+            });
+        },
+
+        generateRandomString: function(length) {
+            var result = '';
+            var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            for (var i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
         }
     };
 
