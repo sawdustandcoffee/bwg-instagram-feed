@@ -19,6 +19,8 @@
             this.initColorPickers();
             this.initLivePreview();
             this.initCacheDurationWarning();
+            this.initLayoutTypeToggle();
+            this.initAutoplaySpeedToggle();
         },
 
         bindEvents: function() {
@@ -106,6 +108,58 @@
             $select.on('change', updateWarning);
         },
 
+        initLayoutTypeToggle: function() {
+            var $layoutType = $('#bwg-igf-layout-type');
+            var $gridOptions = $('.bwg-igf-grid-options');
+            var $sliderOptions = $('.bwg-igf-slider-options');
+
+            if (!$layoutType.length) {
+                return;
+            }
+
+            function toggleLayoutOptions() {
+                var value = $layoutType.val();
+                if (value === 'slider') {
+                    $gridOptions.slideUp(200);
+                    $sliderOptions.slideDown(200);
+                } else {
+                    $gridOptions.slideDown(200);
+                    $sliderOptions.slideUp(200);
+                }
+                // Update preview
+                BWGIGFAdmin.updatePreview();
+            }
+
+            // Check on page load
+            toggleLayoutOptions();
+
+            // Check on change
+            $layoutType.on('change', toggleLayoutOptions);
+        },
+
+        initAutoplaySpeedToggle: function() {
+            var $autoplay = $('#bwg-igf-autoplay');
+            var $speedField = $('.bwg-igf-autoplay-speed-field');
+
+            if (!$autoplay.length) {
+                return;
+            }
+
+            function toggleAutoplaySpeed() {
+                if ($autoplay.is(':checked')) {
+                    $speedField.slideDown(200);
+                } else {
+                    $speedField.slideUp(200);
+                }
+            }
+
+            // Check on page load
+            toggleAutoplaySpeed();
+
+            // Check on change
+            $autoplay.on('change', toggleAutoplaySpeed);
+        },
+
         initLivePreview: function() {
             // Update preview on setting changes
             $('.bwg-igf-editor-content input, .bwg-igf-editor-content select, .bwg-igf-editor-content textarea').on('change input', function() {
@@ -128,8 +182,16 @@
             // Apply settings to preview
             var $preview = $('.bwg-igf-preview-content');
 
-            // Build classes array
-            var classes = ['bwg-igf-preview-content', 'bwg-igf-grid', 'bwg-igf-grid-' + settings.columns];
+            // Build classes array based on layout type
+            var classes = ['bwg-igf-preview-content'];
+
+            if (settings.layoutType === 'slider') {
+                classes.push('bwg-igf-slider-preview');
+                classes.push('bwg-igf-slider-' + settings.slidesToShow);
+            } else {
+                classes.push('bwg-igf-grid');
+                classes.push('bwg-igf-grid-' + settings.columns);
+            }
 
             // Add hover effect class if not 'none'
             if (settings.hoverEffect && settings.hoverEffect !== 'none') {
@@ -179,8 +241,16 @@
             var bgColor = $('#bwg-igf-background-color').val();
 
             return {
+                layoutType: $('#bwg-igf-layout-type').val() || 'grid',
                 columns: $('#bwg-igf-columns').val() || 3,
                 gap: $('#bwg-igf-gap').val() || 10,
+                slidesToShow: $('#bwg-igf-slides-to-show').val() || 3,
+                slidesToScroll: $('#bwg-igf-slides-to-scroll').val() || 1,
+                autoplay: $('#bwg-igf-autoplay').is(':checked'),
+                autoplaySpeed: $('#bwg-igf-autoplay-speed').val() || 3000,
+                showArrows: $('#bwg-igf-show-arrows').is(':checked'),
+                showDots: $('#bwg-igf-show-dots').is(':checked'),
+                infiniteLoop: $('#bwg-igf-infinite-loop').is(':checked'),
                 borderRadius: $('#bwg-igf-border-radius').val() || 0,
                 hoverEffect: $('#bwg-igf-hover-effect').val() || 'none',
                 backgroundColor: bgColor || '',

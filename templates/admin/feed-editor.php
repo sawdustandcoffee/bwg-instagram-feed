@@ -116,22 +116,86 @@ $is_new = empty( $feed );
 
                     <!-- Layout Tab -->
                     <div id="bwg-igf-tab-layout" class="bwg-igf-tab-content">
+                        <?php
+                        // Get layout settings from feed
+                        $layout_settings = $feed && ! empty( $feed->layout_settings ) ? json_decode( $feed->layout_settings, true ) : array();
+                        $layout_type = $feed ? $feed->layout_type : 'grid';
+                        $columns = isset( $layout_settings['columns'] ) ? $layout_settings['columns'] : 3;
+                        $gap = isset( $layout_settings['gap'] ) ? $layout_settings['gap'] : 10;
+                        $slides_to_show = isset( $layout_settings['slides_to_show'] ) ? $layout_settings['slides_to_show'] : 3;
+                        $slides_to_scroll = isset( $layout_settings['slides_to_scroll'] ) ? $layout_settings['slides_to_scroll'] : 1;
+                        $autoplay = isset( $layout_settings['autoplay'] ) ? $layout_settings['autoplay'] : false;
+                        $autoplay_speed = isset( $layout_settings['autoplay_speed'] ) ? $layout_settings['autoplay_speed'] : 3000;
+                        $show_arrows = isset( $layout_settings['show_arrows'] ) ? $layout_settings['show_arrows'] : true;
+                        $show_dots = isset( $layout_settings['show_dots'] ) ? $layout_settings['show_dots'] : true;
+                        $infinite_loop = isset( $layout_settings['infinite_loop'] ) ? $layout_settings['infinite_loop'] : true;
+                        ?>
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-layout-type"><?php esc_html_e( 'Layout Type', 'bwg-instagram-feed' ); ?></label>
                             <select id="bwg-igf-layout-type" name="layout_type">
-                                <option value="grid"><?php esc_html_e( 'Grid', 'bwg-instagram-feed' ); ?></option>
-                                <option value="slider"><?php esc_html_e( 'Slider', 'bwg-instagram-feed' ); ?></option>
+                                <option value="grid" <?php selected( $layout_type, 'grid' ); ?>><?php esc_html_e( 'Grid', 'bwg-instagram-feed' ); ?></option>
+                                <option value="slider" <?php selected( $layout_type, 'slider' ); ?>><?php esc_html_e( 'Slider', 'bwg-instagram-feed' ); ?></option>
                             </select>
                         </div>
 
-                        <div class="bwg-igf-field">
-                            <label for="bwg-igf-columns"><?php esc_html_e( 'Columns', 'bwg-instagram-feed' ); ?></label>
-                            <input type="number" id="bwg-igf-columns" name="columns" value="3" min="1" max="6">
+                        <!-- Grid-specific options -->
+                        <div class="bwg-igf-grid-options">
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-columns"><?php esc_html_e( 'Columns', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-columns" name="columns" value="<?php echo esc_attr( $columns ); ?>" min="1" max="6">
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-gap"><?php esc_html_e( 'Gap (px)', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-gap" name="gap" value="<?php echo esc_attr( $gap ); ?>" min="0" max="50">
+                            </div>
                         </div>
 
-                        <div class="bwg-igf-field">
-                            <label for="bwg-igf-gap"><?php esc_html_e( 'Gap (px)', 'bwg-instagram-feed' ); ?></label>
-                            <input type="number" id="bwg-igf-gap" name="gap" value="10" min="0" max="50">
+                        <!-- Slider-specific options -->
+                        <div class="bwg-igf-slider-options" style="display: none;">
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-slides-to-show"><?php esc_html_e( 'Slides to Show', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-slides-to-show" name="slides_to_show" value="<?php echo esc_attr( $slides_to_show ); ?>" min="1" max="5">
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-slides-to-scroll"><?php esc_html_e( 'Slides to Scroll', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-slides-to-scroll" name="slides_to_scroll" value="<?php echo esc_attr( $slides_to_scroll ); ?>" min="1" max="5">
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" id="bwg-igf-autoplay" name="autoplay" value="1" <?php checked( $autoplay, true ); ?>>
+                                    <?php esc_html_e( 'Enable Autoplay', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
+
+                            <div class="bwg-igf-field bwg-igf-autoplay-speed-field">
+                                <label for="bwg-igf-autoplay-speed"><?php esc_html_e( 'Autoplay Speed (ms)', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-autoplay-speed" name="autoplay_speed" value="<?php echo esc_attr( $autoplay_speed ); ?>" min="1000" max="10000" step="500">
+                                <p class="description"><?php esc_html_e( 'Time between slides in milliseconds (1000ms = 1 second)', 'bwg-instagram-feed' ); ?></p>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" id="bwg-igf-show-arrows" name="show_arrows" value="1" <?php checked( $show_arrows, true ); ?>>
+                                    <?php esc_html_e( 'Show Navigation Arrows', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" id="bwg-igf-show-dots" name="show_dots" value="1" <?php checked( $show_dots, true ); ?>>
+                                    <?php esc_html_e( 'Show Pagination Dots', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" id="bwg-igf-infinite-loop" name="infinite_loop" value="1" <?php checked( $infinite_loop, true ); ?>>
+                                    <?php esc_html_e( 'Infinite Loop', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
