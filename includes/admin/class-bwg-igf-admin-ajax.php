@@ -397,7 +397,13 @@ class BWG_IGF_Admin_Ajax {
 
         global $wpdb;
 
-        $wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}bwg_igf_cache" );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- TRUNCATE is intentional for cache clearing
+        $wpdb->query(
+            $wpdb->prepare(
+                'TRUNCATE TABLE %i',
+                $wpdb->prefix . 'bwg_igf_cache'
+            )
+        );
 
         wp_send_json_success( array( 'message' => __( 'All cache cleared successfully!', 'bwg-instagram-feed' ) ) );
     }

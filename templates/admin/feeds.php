@@ -30,7 +30,13 @@ if ( 'edit' === $action || 'new' === $action ) {
 
     <?php
     global $wpdb;
-    $feeds = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds ORDER BY created_at DESC" );
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin list needs fresh data
+    $feeds = $wpdb->get_results(
+        $wpdb->prepare(
+            'SELECT * FROM %i ORDER BY created_at DESC',
+            $wpdb->prefix . 'bwg_igf_feeds'
+        )
+    );
     ?>
 
     <?php if ( empty( $feeds ) ) : ?>

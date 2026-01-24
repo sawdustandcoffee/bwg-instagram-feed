@@ -43,7 +43,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
         <?php
         global $wpdb;
-        $accounts = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}bwg_igf_accounts ORDER BY connected_at DESC" );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin list needs fresh data
+        $accounts = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT * FROM %i ORDER BY connected_at DESC',
+                $wpdb->prefix . 'bwg_igf_accounts'
+            )
+        );
         ?>
 
         <?php if ( empty( $accounts ) ) : ?>

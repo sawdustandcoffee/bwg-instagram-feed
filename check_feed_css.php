@@ -9,7 +9,13 @@ require_once('/var/www/html/wp-load.php');
 global $wpdb;
 
 // Get feed 1 styling settings
-$feed = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = 1");
+$feed = $wpdb->get_row(
+    $wpdb->prepare(
+        'SELECT * FROM %i WHERE id = %d',
+        $wpdb->prefix . 'bwg_igf_feeds',
+        1
+    )
+);
 
 echo "Current styling_settings for feed 1:\n";
 echo $feed->styling_settings . "\n\n";

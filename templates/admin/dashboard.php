@@ -27,8 +27,21 @@ if ( ! defined( 'ABSPATH' ) ) {
             <h2><?php esc_html_e( 'Quick Stats', 'bwg-instagram-feed' ); ?></h2>
             <?php
             global $wpdb;
-            $feeds_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}bwg_igf_feeds" );
-            $accounts_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}bwg_igf_accounts WHERE status = 'active'" );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simple count query, caching not needed for admin stats
+            $feeds_count = $wpdb->get_var(
+                $wpdb->prepare(
+                    'SELECT COUNT(*) FROM %i',
+                    $wpdb->prefix . 'bwg_igf_feeds'
+                )
+            );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Simple count query, caching not needed for admin stats
+            $accounts_count = $wpdb->get_var(
+                $wpdb->prepare(
+                    'SELECT COUNT(*) FROM %i WHERE status = %s',
+                    $wpdb->prefix . 'bwg_igf_accounts',
+                    'active'
+                )
+            );
             ?>
             <p><strong><?php esc_html_e( 'Total Feeds:', 'bwg-instagram-feed' ); ?></strong> <?php echo esc_html( $feeds_count ); ?></p>
             <p><strong><?php esc_html_e( 'Connected Accounts:', 'bwg-instagram-feed' ); ?></strong> <?php echo esc_html( $accounts_count ); ?></p>

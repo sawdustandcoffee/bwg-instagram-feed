@@ -40,8 +40,32 @@ class BWG_IGF_Instagram_Feed_Block {
      * Constructor.
      */
     private function __construct() {
+        add_action( 'init', array( $this, 'register_block_assets' ), 9 );
         add_action( 'init', array( $this, 'register_block' ) );
         add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_assets' ) );
+    }
+
+    /**
+     * Register block assets before block registration.
+     * This is required for the REST API block-renderer endpoint to work.
+     */
+    public function register_block_assets() {
+        // Register editor script (required for block.json editorScript).
+        wp_register_script(
+            'bwg-igf-block-editor',
+            BWG_IGF_PLUGIN_URL . 'assets/js/block-editor.js',
+            array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n', 'wp-server-side-render' ),
+            BWG_IGF_VERSION,
+            true
+        );
+
+        // Register editor style (required for block.json editorStyle).
+        wp_register_style(
+            'bwg-igf-block-editor-style',
+            BWG_IGF_PLUGIN_URL . 'assets/css/block-editor.css',
+            array( 'wp-edit-blocks' ),
+            BWG_IGF_VERSION
+        );
     }
 
     /**
@@ -63,25 +87,12 @@ class BWG_IGF_Instagram_Feed_Block {
     }
 
     /**
-     * Enqueue block editor assets.
+     * Enqueue block editor assets and localize script data.
      */
     public function enqueue_block_editor_assets() {
-        // Block editor script.
-        wp_enqueue_script(
-            'bwg-igf-block-editor',
-            BWG_IGF_PLUGIN_URL . 'assets/js/block-editor.js',
-            array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n', 'wp-server-side-render' ),
-            BWG_IGF_VERSION,
-            true
-        );
-
-        // Block editor styles.
-        wp_enqueue_style(
-            'bwg-igf-block-editor-style',
-            BWG_IGF_PLUGIN_URL . 'assets/css/block-editor.css',
-            array( 'wp-edit-blocks' ),
-            BWG_IGF_VERSION
-        );
+        // Enqueue the already-registered scripts and styles.
+        wp_enqueue_script( 'bwg-igf-block-editor' );
+        wp_enqueue_style( 'bwg-igf-block-editor-style' );
 
         // Get available feeds for the block editor.
         $feeds = $this->get_feeds_for_editor();
@@ -125,8 +136,13 @@ class BWG_IGF_Instagram_Feed_Block {
             return array();
         }
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Editor needs fresh data for feed selection
         $results = $wpdb->get_results(
-            "SELECT id, name, slug FROM {$table_name} WHERE status = 'active' ORDER BY name ASC",
+            $wpdb->prepare(
+                'SELECT id, name, slug FROM %i WHERE status = %s ORDER BY name ASC',
+                $table_name,
+                'active'
+            ),
             ARRAY_A
         );
 
