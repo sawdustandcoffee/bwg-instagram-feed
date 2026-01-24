@@ -1,0 +1,629 @@
+<project_specification>
+  <project_name>BWG IGF (Boston Web Group Instagram Feed)</project_name>
+
+  <overview>
+    A professional WordPress plugin for displaying Instagram feeds on WordPress websites. Supports both public feeds (no authentication required) and connected Instagram accounts via OAuth for enhanced features. Site administrators can create multiple feed configurations with customizable layouts (grid/slider), styling options, content filtering, and display them via shortcode or Gutenberg block. Built to WordPress Plugin Directory standards with GitHub-based update distribution.
+  </overview>
+
+  <technology_stack>
+    <platform>
+      <type>WordPress Plugin</type>
+      <minimum_wp_version>5.8</minimum_wp_version>
+      <minimum_php_version>7.4</minimum_php_version>
+    </platform>
+    <backend>
+      <language>PHP</language>
+      <standards>WordPress Coding Standards (WPCS)</standards>
+      <database>WordPress $wpdb with custom tables</database>
+      <api>WordPress REST API</api>
+    </backend>
+    <frontend>
+      <admin>WordPress native admin UI with minimal enhancements</admin>
+      <public>Vanilla JavaScript (no heavy dependencies)</public>
+      <styling>CSS with WordPress admin style compatibility</styling>
+    </frontend>
+    <external_apis>
+      <instagram_basic_display_api>For connected accounts</instagram_basic_display_api>
+      <instagram_graph_api>For business/creator accounts</instagram_graph_api>
+      <public_scraping>For public feeds without authentication</public_scraping>
+    </external_apis>
+    <updates>
+      <method>GitHub Releases</method>
+      <integration>WordPress Plugin Update API via GitHub updater</integration>
+    </updates>
+  </technology_stack>
+
+  <prerequisites>
+    <environment_setup>
+      - WordPress 5.8+ installation
+      - PHP 7.4+ with cURL extension
+      - MySQL 5.7+ or MariaDB 10.3+
+      - Instagram App credentials (for connected accounts feature)
+      - GitHub repository for releases
+    </environment_setup>
+  </prerequisites>
+
+  <feature_count>140</feature_count>
+
+  <branding>
+    <plugin_name>BWG Instagram Feed</plugin_name>
+    <brand>Boston Web Group</brand>
+    <brand_website>https://bostonwebgroup.com</brand_website>
+    <logo_concept>Combination of BWG logo with Instagram logo elements</logo_concept>
+  </branding>
+
+  <security_and_access_control>
+    <user_roles>
+      <role name="administrator">
+        <permissions>
+          - Full access to all plugin settings
+          - Create, edit, delete feeds
+          - Connect/disconnect Instagram accounts
+          - Manage OAuth tokens
+          - Configure caching settings
+          - Access documentation
+        </permissions>
+        <protected_routes>
+          - /wp-admin/admin.php?page=bwg-igf (main admin page)
+          - /wp-admin/admin.php?page=bwg-igf-settings (settings)
+          - /wp-admin/admin.php?page=bwg-igf-feeds (feed management)
+        </protected_routes>
+      </role>
+      <role name="editor">
+        <permissions>
+          - View existing feeds
+          - Use Gutenberg block to display feeds
+          - Cannot create or modify feed configurations
+        </permissions>
+      </role>
+    </user_roles>
+    <authentication>
+      <method>WordPress native capabilities</method>
+      <capability_required>manage_options (for full access)</capability_required>
+    </authentication>
+    <api_security>
+      - Nonce verification on all AJAX/REST requests
+      - Capability checks on all admin actions
+      - Data sanitization on all inputs
+      - Output escaping on all displays
+      - Prepared statements for all database queries
+    </api_security>
+    <oauth_security>
+      - Encrypted token storage
+      - Token refresh handling
+      - Secure callback URL validation
+    </oauth_security>
+  </security_and_access_control>
+
+  <core_features>
+    <feed_management>
+      - Create new feed with name/label
+      - Edit existing feed configuration
+      - Delete feed with confirmation
+      - Duplicate/clone feed configuration
+      - List all feeds with status indicators
+      - Feed validation (check if accounts exist/are public)
+    </feed_management>
+
+    <public_feed_support>
+      - Add feed by Instagram username only
+      - Support multiple usernames in one feed (combined feed)
+      - Automatic detection of private accounts with warning
+      - No authentication required
+      - Basic post data retrieval (image, caption, likes, comments count)
+    </public_feed_support>
+
+    <connected_feed_support>
+      - OAuth connection to Instagram account
+      - Support for Basic Display API
+      - Support for Business/Creator accounts via Graph API
+      - Token storage with encryption
+      - Automatic token refresh
+      - Token expiration warnings
+      - Disconnect account functionality
+      - Advanced filtering by hashtags (include/exclude)
+      - Advanced filtering by specific post URLs (include/exclude)
+      - More reliable data access
+    </connected_feed_support>
+
+    <layout_options>
+      - Grid layout
+        - Configurable columns (1-6)
+        - Configurable rows or infinite scroll
+        - Gap/spacing between items
+        - Aspect ratio options (square, original, custom)
+      - Slider/Carousel layout
+        - Slides to show (1-5)
+        - Slides to scroll
+        - Autoplay on/off
+        - Autoplay speed
+        - Navigation arrows on/off
+        - Pagination dots on/off
+        - Infinite loop option
+        - Touch/swipe support
+    </layout_options>
+
+    <display_settings>
+      - Show/hide account name
+      - Show/hide account avatar
+      - Show/hide like count
+      - Show/hide comment count
+      - Show/hide caption
+      - Show/hide post date
+      - Show/hide "Follow on Instagram" button
+      - Configurable "Follow" button text
+      - Configurable "Follow" button style
+      - Number of posts to display
+      - Load more button option
+    </display_settings>
+
+    <popup_lightbox>
+      - Enable/disable popup on click
+      - Full-size image display
+      - Caption display in popup
+      - Like/comment counts in popup
+      - Navigation between posts in popup
+      - Close button
+      - Click outside to close
+      - Keyboard navigation (arrows, escape)
+      - Link to original Instagram post
+    </popup_lightbox>
+
+    <styling_customization>
+      - Background color
+      - Border radius
+      - Border color and width
+      - Hover effects (zoom, overlay, brightness)
+      - Overlay color and opacity
+      - Font family selection
+      - Font sizes
+      - Text colors
+      - Button colors and styles
+      - Custom CSS field for advanced users
+    </styling_customization>
+
+    <feed_ordering>
+      - Newest first (chronological)
+      - Oldest first
+      - Random order
+      - Most liked
+      - Most commented
+    </feed_ordering>
+
+    <caching_system>
+      - Configurable cache duration (15 min, 30 min, 1 hour, 6 hours, 12 hours, 24 hours)
+      - Warnings for aggressive refresh settings
+      - Manual "Refresh Now" button per feed
+      - Clear all cache option
+      - Cache status indicator
+      - Background cache refresh (WP Cron)
+    </caching_system>
+
+    <shortcode_implementation>
+      - Simple shortcode: [bwg_igf id="feed-id"]
+      - Shortcode with feed slug: [bwg_igf feed="my-feed-name"]
+      - Copy shortcode button in admin
+      - Shortcode preview in documentation
+    </shortcode_implementation>
+
+    <gutenberg_block>
+      - Block in "Widgets" or "Embeds" category
+      - Feed selector dropdown
+      - Live preview in editor
+      - Block description and icon
+      - No override options (all config in admin)
+    </gutenberg_block>
+
+    <admin_interface>
+      - Dashboard/welcome page with documentation
+      - Getting started guide
+      - Feed list with quick actions
+      - Live preview while configuring
+      - Connection status indicators
+      - Error notifications for feed issues
+      - Token expiration warnings
+      - Clean, minimal design matching WordPress admin
+    </admin_interface>
+
+    <error_handling>
+      - Private account detection with clear message
+      - Username not found handling
+      - API rate limit detection and message
+      - Connection failure graceful handling
+      - Token expiration notification
+      - Network timeout handling
+      - Empty feed state display
+    </error_handling>
+
+    <github_updates>
+      - Check GitHub releases for new versions
+      - Display update notification in WordPress admin
+      - One-click update from admin (standard WP flow)
+      - Changelog display
+      - Semantic versioning support
+    </github_updates>
+
+    <internationalization>
+      - Translation-ready with .pot file
+      - All strings wrapped in translation functions
+      - RTL support for admin interface
+    </internationalization>
+
+    <uninstall_cleanup>
+      - Option to keep or delete data on uninstall
+      - Remove custom database tables
+      - Remove options from wp_options
+      - Clear transients/cache
+    </uninstall_cleanup>
+  </core_features>
+
+  <database_schema>
+    <tables>
+      <bwg_igf_feeds>
+        - id (INT, AUTO_INCREMENT, PRIMARY KEY)
+        - name (VARCHAR 255) - display name for admin
+        - slug (VARCHAR 100, UNIQUE) - for shortcode reference
+        - feed_type (ENUM: 'public', 'connected')
+        - instagram_usernames (TEXT) - JSON array for public feeds
+        - connected_account_id (BIGINT) - FK to accounts table
+        - layout_type (ENUM: 'grid', 'slider')
+        - layout_settings (TEXT) - JSON for columns, rows, slider options
+        - display_settings (TEXT) - JSON for show/hide toggles
+        - styling_settings (TEXT) - JSON for colors, fonts, etc.
+        - filter_settings (TEXT) - JSON for hashtag/URL filters
+        - popup_settings (TEXT) - JSON for lightbox options
+        - post_count (INT) - number of posts to display
+        - ordering (ENUM: 'newest', 'oldest', 'random', 'most_liked', 'most_commented')
+        - cache_duration (INT) - seconds
+        - status (ENUM: 'active', 'inactive', 'error')
+        - error_message (TEXT) - last error if any
+        - created_at (DATETIME)
+        - updated_at (DATETIME)
+      </bwg_igf_feeds>
+
+      <bwg_igf_accounts>
+        - id (INT, AUTO_INCREMENT, PRIMARY KEY)
+        - instagram_user_id (BIGINT)
+        - username (VARCHAR 100)
+        - access_token (TEXT) - encrypted
+        - token_type (VARCHAR 50)
+        - expires_at (DATETIME)
+        - account_type (ENUM: 'basic', 'business', 'creator')
+        - profile_picture_url (TEXT)
+        - connected_at (DATETIME)
+        - last_refreshed (DATETIME)
+        - status (ENUM: 'active', 'expired', 'revoked')
+      </bwg_igf_accounts>
+
+      <bwg_igf_cache>
+        - id (INT, AUTO_INCREMENT, PRIMARY KEY)
+        - feed_id (INT) - FK to feeds table
+        - cache_key (VARCHAR 255)
+        - cache_data (LONGTEXT) - JSON of posts
+        - created_at (DATETIME)
+        - expires_at (DATETIME)
+      </bwg_igf_cache>
+    </tables>
+  </database_schema>
+
+  <api_endpoints_summary>
+    <admin_ajax>
+      - POST wp_ajax_bwg_igf_create_feed
+      - POST wp_ajax_bwg_igf_update_feed
+      - POST wp_ajax_bwg_igf_delete_feed
+      - POST wp_ajax_bwg_igf_duplicate_feed
+      - GET wp_ajax_bwg_igf_get_feed
+      - GET wp_ajax_bwg_igf_get_feeds
+      - POST wp_ajax_bwg_igf_validate_username
+      - POST wp_ajax_bwg_igf_refresh_cache
+      - POST wp_ajax_bwg_igf_clear_all_cache
+      - GET wp_ajax_bwg_igf_preview_feed
+    </admin_ajax>
+
+    <oauth>
+      - GET bwg-igf/v1/oauth/connect (initiate OAuth flow)
+      - GET bwg-igf/v1/oauth/callback (handle Instagram callback)
+      - POST bwg-igf/v1/oauth/disconnect
+      - POST bwg-igf/v1/oauth/refresh
+    </oauth>
+
+    <public_rest>
+      - GET bwg-igf/v1/feed/{id} (get feed data for frontend)
+    </public_rest>
+  </api_endpoints_summary>
+
+  <ui_layout>
+    <admin_pages>
+      <main_dashboard>
+        - Plugin branding header with BWG/Instagram logo
+        - Quick stats (total feeds, connected accounts, cache status)
+        - Getting started documentation
+        - Quick links to create feed, settings, support
+      </main_dashboard>
+
+      <feeds_list>
+        - Table with columns: Name, Type, Status, Shortcode, Actions
+        - Quick actions: Edit, Duplicate, Delete, Preview
+        - Bulk actions: Delete selected
+        - Add New Feed button prominently displayed
+      </feeds_list>
+
+      <feed_editor>
+        - Left panel: Configuration options (tabbed)
+          - Source tab: Username(s) or connected account
+          - Layout tab: Grid/slider settings
+          - Display tab: Show/hide toggles
+          - Styling tab: Colors, fonts, effects
+          - Popup tab: Lightbox settings
+          - Advanced tab: Caching, ordering, filters (connected only)
+        - Right panel: Live preview
+        - Top bar: Feed name, Save button, Back to list
+      </feed_editor>
+
+      <settings_page>
+        - General settings
+        - Default cache duration
+        - Uninstall behavior (keep/delete data)
+        - Instagram App credentials for OAuth
+        - GitHub update settings
+      </settings_page>
+
+      <accounts_page>
+        - List of connected Instagram accounts
+        - Connection status and expiration
+        - Connect new account button
+        - Disconnect button per account
+      </accounts_page>
+    </admin_pages>
+
+    <frontend_display>
+      - Grid: CSS Grid-based responsive layout
+      - Slider: Lightweight carousel with touch support
+      - Popup: Modal overlay with image and details
+      - Loading state: Subtle spinner or skeleton
+      - Error state: User-friendly message
+      - Empty state: Configurable message
+    </frontend_display>
+  </ui_layout>
+
+  <design_system>
+    <admin_styling>
+      - Follow WordPress admin color schemes
+      - Minimal custom styling for cleaner appearance
+      - Consistent spacing using WordPress standards
+      - Clean typography matching WP admin
+      - Subtle BWG branding (logo in header, accent color optional)
+    </admin_styling>
+
+    <frontend_defaults>
+      - Neutral defaults that work with any theme
+      - No forced fonts (inherit from theme)
+      - Customizable via plugin settings
+      - Responsive by default
+    </frontend_defaults>
+  </design_system>
+
+  <implementation_steps>
+    <step number="1">
+      <title>Plugin Foundation</title>
+      <tasks>
+        - Set up plugin file structure (WordPress standards)
+        - Create main plugin file with headers
+        - Implement activation/deactivation hooks
+        - Create custom database tables on activation
+        - Set up autoloading for classes
+        - Implement uninstall.php for cleanup
+      </tasks>
+    </step>
+
+    <step number="2">
+      <title>Admin Interface Foundation</title>
+      <tasks>
+        - Register admin menu pages
+        - Create dashboard/welcome page
+        - Build feeds list table (WP_List_Table)
+        - Implement basic admin styles
+        - Add settings page with options API
+      </tasks>
+    </step>
+
+    <step number="3">
+      <title>Feed CRUD Operations</title>
+      <tasks>
+        - Create feed creation form and handler
+        - Build feed editor interface
+        - Implement feed update functionality
+        - Add feed deletion with confirmation
+        - Implement feed duplication
+        - Add username validation (public feed)
+      </tasks>
+    </step>
+
+    <step number="4">
+      <title>Public Feed Data Retrieval</title>
+      <tasks>
+        - Implement Instagram public profile scraping
+        - Parse and normalize post data
+        - Handle private account detection
+        - Implement basic caching layer
+        - Add error handling for failed requests
+      </tasks>
+    </step>
+
+    <step number="5">
+      <title>OAuth & Connected Accounts</title>
+      <tasks>
+        - Implement OAuth flow initiation
+        - Handle OAuth callback
+        - Store encrypted access tokens
+        - Implement token refresh mechanism
+        - Build accounts management UI
+        - Add token expiration warnings
+      </tasks>
+    </step>
+
+    <step number="6">
+      <title>Connected Feed Features</title>
+      <tasks>
+        - Implement Instagram API data retrieval
+        - Add hashtag filtering (include/exclude)
+        - Add URL filtering (include/exclude)
+        - Handle API rate limits
+        - Implement proper error handling
+      </tasks>
+    </step>
+
+    <step number="7">
+      <title>Frontend Display - Grid Layout</title>
+      <tasks>
+        - Build responsive CSS Grid layout
+        - Implement column configuration
+        - Add spacing/gap options
+        - Handle image aspect ratios
+        - Add hover effects
+        - Implement overlay display
+      </tasks>
+    </step>
+
+    <step number="8">
+      <title>Frontend Display - Slider Layout</title>
+      <tasks>
+        - Build lightweight carousel component
+        - Implement navigation arrows
+        - Add pagination dots
+        - Implement autoplay functionality
+        - Add touch/swipe support
+        - Handle infinite loop option
+      </tasks>
+    </step>
+
+    <step number="9">
+      <title>Popup/Lightbox Feature</title>
+      <tasks>
+        - Build modal overlay component
+        - Display full-size image
+        - Show caption and engagement stats
+        - Implement navigation between posts
+        - Add keyboard navigation
+        - Handle close functionality
+      </tasks>
+    </step>
+
+    <step number="10">
+      <title>Styling & Customization</title>
+      <tasks>
+        - Implement color customization options
+        - Add typography controls
+        - Build hover effect options
+        - Add border/radius controls
+        - Implement custom CSS field
+        - Build live preview functionality
+      </tasks>
+    </step>
+
+    <step number="11">
+      <title>Shortcode Implementation</title>
+      <tasks>
+        - Register shortcode handler
+        - Parse shortcode attributes
+        - Render feed based on configuration
+        - Add copy shortcode button in admin
+        - Document shortcode usage
+      </tasks>
+    </step>
+
+    <step number="12">
+      <title>Gutenberg Block</title>
+      <tasks>
+        - Register block type
+        - Build block editor component
+        - Implement feed selector
+        - Add live preview in editor
+        - Handle block rendering on frontend
+      </tasks>
+    </step>
+
+    <step number="13">
+      <title>Caching System</title>
+      <tasks>
+        - Implement transient-based caching
+        - Add configurable cache duration
+        - Build manual refresh functionality
+        - Implement WP Cron background refresh
+        - Add cache status indicators
+        - Implement rate limit warnings
+      </tasks>
+    </step>
+
+    <step number="14">
+      <title>GitHub Updates Integration</title>
+      <tasks>
+        - Implement GitHub release checker
+        - Hook into WordPress update system
+        - Display changelog in update notice
+        - Handle update installation
+        - Add version comparison logic
+      </tasks>
+    </step>
+
+    <step number="15">
+      <title>Polish & Documentation</title>
+      <tasks>
+        - Write inline documentation
+        - Create help tabs in admin
+        - Add contextual tooltips
+        - Generate .pot file for translations
+        - Final security audit
+        - Performance optimization
+        - Cross-browser testing
+      </tasks>
+    </step>
+  </implementation_steps>
+
+  <success_criteria>
+    <functionality>
+      - All feed types (public, connected, combined) work reliably
+      - OAuth flow completes successfully
+      - Both layout types (grid, slider) display correctly
+      - Popup/lightbox functions properly
+      - Shortcode and Gutenberg block both work
+      - Caching prevents API rate limits
+      - GitHub updates work seamlessly
+    </functionality>
+
+    <user_experience>
+      - Admin interface is intuitive and well-documented
+      - Live preview accurately reflects frontend display
+      - Error messages are clear and actionable
+      - Feed creation can be completed in under 2 minutes
+      - No WordPress admin styling conflicts
+    </user_experience>
+
+    <technical_quality>
+      - Passes WordPress Plugin Check (PCP)
+      - No PHP errors or warnings
+      - No JavaScript console errors
+      - All database queries use prepared statements
+      - All user input is sanitized
+      - All output is escaped
+      - Nonces verified on all forms/AJAX
+      - Passes WPCS coding standards
+    </technical_quality>
+
+    <design_polish>
+      - Clean, professional admin interface
+      - Subtle BWG branding present
+      - Responsive frontend displays
+      - Smooth animations and transitions
+      - Accessible (WCAG 2.1 AA)
+    </design_polish>
+
+    <release_ready>
+      - Complete uninstall cleanup
+      - Translation-ready
+      - Semantic versioning
+      - Changelog maintained
+      - GitHub releases configured
+    </release_ready>
+  </success_criteria>
+</project_specification>

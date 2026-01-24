@@ -1,0 +1,228 @@
+<?php
+/**
+ * Feed Editor Template
+ *
+ * @package BWG_Instagram_Feed
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+$feed = null;
+if ( $feed_id > 0 ) {
+    global $wpdb;
+    $feed = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d",
+        $feed_id
+    ) );
+}
+
+$is_new = empty( $feed );
+?>
+<div class="wrap">
+    <div class="bwg-igf-header">
+        <h1>
+            <?php echo $is_new ? esc_html__( 'Create New Feed', 'bwg-instagram-feed' ) : esc_html__( 'Edit Feed', 'bwg-instagram-feed' ); ?>
+        </h1>
+    </div>
+
+    <form id="bwg-igf-feed-form" method="post">
+        <input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
+
+        <div class="bwg-igf-editor">
+            <!-- Configuration Panel -->
+            <div class="bwg-igf-editor-panel">
+                <div class="bwg-igf-editor-tabs">
+                    <button type="button" class="bwg-igf-editor-tab active" data-tab="source">
+                        <?php esc_html_e( 'Source', 'bwg-instagram-feed' ); ?>
+                    </button>
+                    <button type="button" class="bwg-igf-editor-tab" data-tab="layout">
+                        <?php esc_html_e( 'Layout', 'bwg-instagram-feed' ); ?>
+                    </button>
+                    <button type="button" class="bwg-igf-editor-tab" data-tab="display">
+                        <?php esc_html_e( 'Display', 'bwg-instagram-feed' ); ?>
+                    </button>
+                    <button type="button" class="bwg-igf-editor-tab" data-tab="styling">
+                        <?php esc_html_e( 'Styling', 'bwg-instagram-feed' ); ?>
+                    </button>
+                    <button type="button" class="bwg-igf-editor-tab" data-tab="popup">
+                        <?php esc_html_e( 'Popup', 'bwg-instagram-feed' ); ?>
+                    </button>
+                    <button type="button" class="bwg-igf-editor-tab" data-tab="advanced">
+                        <?php esc_html_e( 'Advanced', 'bwg-instagram-feed' ); ?>
+                    </button>
+                </div>
+
+                <div class="bwg-igf-editor-content">
+                    <!-- Source Tab -->
+                    <div id="bwg-igf-tab-source" class="bwg-igf-tab-content active">
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-name"><?php esc_html_e( 'Feed Name', 'bwg-instagram-feed' ); ?></label>
+                            <input type="text" id="bwg-igf-name" name="name" value="<?php echo $feed ? esc_attr( $feed->name ) : ''; ?>" required>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-feed-type"><?php esc_html_e( 'Feed Type', 'bwg-instagram-feed' ); ?></label>
+                            <select id="bwg-igf-feed-type" name="feed_type">
+                                <option value="public" <?php selected( $feed ? $feed->feed_type : '', 'public' ); ?>><?php esc_html_e( 'Public (Username)', 'bwg-instagram-feed' ); ?></option>
+                                <option value="connected" <?php selected( $feed ? $feed->feed_type : '', 'connected' ); ?>><?php esc_html_e( 'Connected Account', 'bwg-instagram-feed' ); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="bwg-igf-field" id="bwg-igf-username-field">
+                            <label for="bwg-igf-username"><?php esc_html_e( 'Instagram Username(s)', 'bwg-instagram-feed' ); ?></label>
+                            <input type="text" id="bwg-igf-username" name="instagram_usernames" value="<?php echo $feed ? esc_attr( $feed->instagram_usernames ) : ''; ?>" placeholder="<?php esc_attr_e( 'username or username1, username2', 'bwg-instagram-feed' ); ?>">
+                            <span class="bwg-igf-validation-indicator"></span>
+                            <p class="description"><?php esc_html_e( 'Enter one or more Instagram usernames (comma-separated for multiple).', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+                    </div>
+
+                    <!-- Layout Tab -->
+                    <div id="bwg-igf-tab-layout" class="bwg-igf-tab-content">
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-layout-type"><?php esc_html_e( 'Layout Type', 'bwg-instagram-feed' ); ?></label>
+                            <select id="bwg-igf-layout-type" name="layout_type">
+                                <option value="grid"><?php esc_html_e( 'Grid', 'bwg-instagram-feed' ); ?></option>
+                                <option value="slider"><?php esc_html_e( 'Slider', 'bwg-instagram-feed' ); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-columns"><?php esc_html_e( 'Columns', 'bwg-instagram-feed' ); ?></label>
+                            <input type="number" id="bwg-igf-columns" name="columns" value="3" min="1" max="6">
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-gap"><?php esc_html_e( 'Gap (px)', 'bwg-instagram-feed' ); ?></label>
+                            <input type="number" id="bwg-igf-gap" name="gap" value="10" min="0" max="50">
+                        </div>
+                    </div>
+
+                    <!-- Display Tab -->
+                    <div id="bwg-igf-tab-display" class="bwg-igf-tab-content">
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-post-count"><?php esc_html_e( 'Number of Posts', 'bwg-instagram-feed' ); ?></label>
+                            <input type="number" id="bwg-igf-post-count" name="post_count" value="<?php echo $feed ? esc_attr( $feed->post_count ) : '9'; ?>" min="1" max="50">
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label>
+                                <input type="checkbox" name="show_likes" value="1" checked>
+                                <?php esc_html_e( 'Show like count', 'bwg-instagram-feed' ); ?>
+                            </label>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label>
+                                <input type="checkbox" name="show_comments" value="1" checked>
+                                <?php esc_html_e( 'Show comment count', 'bwg-instagram-feed' ); ?>
+                            </label>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label>
+                                <input type="checkbox" name="show_caption" value="1">
+                                <?php esc_html_e( 'Show caption', 'bwg-instagram-feed' ); ?>
+                            </label>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label>
+                                <input type="checkbox" name="show_follow_button" value="1" checked>
+                                <?php esc_html_e( 'Show "Follow on Instagram" button', 'bwg-instagram-feed' ); ?>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Styling Tab -->
+                    <div id="bwg-igf-tab-styling" class="bwg-igf-tab-content">
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-border-radius"><?php esc_html_e( 'Border Radius (px)', 'bwg-instagram-feed' ); ?></label>
+                            <input type="number" id="bwg-igf-border-radius" name="border_radius" value="0" min="0" max="50">
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-hover-effect"><?php esc_html_e( 'Hover Effect', 'bwg-instagram-feed' ); ?></label>
+                            <select id="bwg-igf-hover-effect" name="hover_effect">
+                                <option value="none"><?php esc_html_e( 'None', 'bwg-instagram-feed' ); ?></option>
+                                <option value="zoom"><?php esc_html_e( 'Zoom', 'bwg-instagram-feed' ); ?></option>
+                                <option value="overlay"><?php esc_html_e( 'Overlay', 'bwg-instagram-feed' ); ?></option>
+                                <option value="brightness"><?php esc_html_e( 'Brightness', 'bwg-instagram-feed' ); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-custom-css"><?php esc_html_e( 'Custom CSS', 'bwg-instagram-feed' ); ?></label>
+                            <textarea id="bwg-igf-custom-css" name="custom_css" rows="5"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Popup Tab -->
+                    <div id="bwg-igf-tab-popup" class="bwg-igf-tab-content">
+                        <div class="bwg-igf-field">
+                            <label>
+                                <input type="checkbox" name="popup_enabled" value="1" checked>
+                                <?php esc_html_e( 'Enable popup/lightbox', 'bwg-instagram-feed' ); ?>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Tab -->
+                    <div id="bwg-igf-tab-advanced" class="bwg-igf-tab-content">
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-ordering"><?php esc_html_e( 'Post Ordering', 'bwg-instagram-feed' ); ?></label>
+                            <select id="bwg-igf-ordering" name="ordering">
+                                <option value="newest"><?php esc_html_e( 'Newest First', 'bwg-instagram-feed' ); ?></option>
+                                <option value="oldest"><?php esc_html_e( 'Oldest First', 'bwg-instagram-feed' ); ?></option>
+                                <option value="random"><?php esc_html_e( 'Random', 'bwg-instagram-feed' ); ?></option>
+                                <option value="most_liked"><?php esc_html_e( 'Most Liked', 'bwg-instagram-feed' ); ?></option>
+                                <option value="most_commented"><?php esc_html_e( 'Most Commented', 'bwg-instagram-feed' ); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-cache-duration"><?php esc_html_e( 'Cache Duration', 'bwg-instagram-feed' ); ?></label>
+                            <select id="bwg-igf-cache-duration" name="cache_duration">
+                                <option value="900"><?php esc_html_e( '15 Minutes', 'bwg-instagram-feed' ); ?></option>
+                                <option value="1800"><?php esc_html_e( '30 Minutes', 'bwg-instagram-feed' ); ?></option>
+                                <option value="3600" selected><?php esc_html_e( '1 Hour', 'bwg-instagram-feed' ); ?></option>
+                                <option value="21600"><?php esc_html_e( '6 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="43200"><?php esc_html_e( '12 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="86400"><?php esc_html_e( '24 Hours', 'bwg-instagram-feed' ); ?></option>
+                            </select>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <button type="button" class="button bwg-igf-refresh-cache" data-feed-id="<?php echo esc_attr( $feed_id ); ?>">
+                                <?php esc_html_e( 'Refresh Cache Now', 'bwg-instagram-feed' ); ?>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bwg-igf-editor-footer">
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-feeds' ) ); ?>" class="button">
+                        <?php esc_html_e( 'Cancel', 'bwg-instagram-feed' ); ?>
+                    </a>
+                    <button type="submit" class="button button-primary">
+                        <?php echo $is_new ? esc_html__( 'Create Feed', 'bwg-instagram-feed' ) : esc_html__( 'Save Changes', 'bwg-instagram-feed' ); ?>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="bwg-igf-preview">
+                <h3><?php esc_html_e( 'Preview', 'bwg-instagram-feed' ); ?></h3>
+                <div class="bwg-igf-preview-content bwg-igf-grid bwg-igf-grid-3">
+                    <?php for ( $i = 0; $i < 9; $i++ ) : ?>
+                        <div class="bwg-igf-item">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e1306c' width='1' height='1'/%3E%3C/svg%3E" alt="Preview placeholder">
+                        </div>
+                    <?php endfor; ?>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

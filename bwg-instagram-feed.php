@@ -1,0 +1,381 @@
+<?php
+/**
+ * Plugin Name: BWG Instagram Feed
+ * Plugin URI: https://bostonwebgroup.com/plugins/instagram-feed
+ * Description: Display Instagram feeds on your WordPress website with customizable layouts, styling, and both public and connected account support.
+ * Version: 1.0.0
+ * Author: Boston Web Group
+ * Author URI: https://bostonwebgroup.com
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: bwg-instagram-feed
+ * Domain Path: /languages
+ * Requires at least: 5.8
+ * Requires PHP: 7.4
+ *
+ * @package BWG_Instagram_Feed
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+// Plugin constants.
+define( 'BWG_IGF_VERSION', '1.0.0' );
+define( 'BWG_IGF_PLUGIN_FILE', __FILE__ );
+define( 'BWG_IGF_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'BWG_IGF_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'BWG_IGF_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+/**
+ * Main plugin class.
+ */
+final class BWG_Instagram_Feed {
+
+    /**
+     * Plugin instance.
+     *
+     * @var BWG_Instagram_Feed
+     */
+    private static $instance = null;
+
+    /**
+     * Get plugin instance.
+     *
+     * @return BWG_Instagram_Feed
+     */
+    public static function get_instance() {
+        if ( null === self::$instance ) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    /**
+     * Constructor.
+     */
+    private function __construct() {
+        $this->init_hooks();
+    }
+
+    /**
+     * Initialize hooks.
+     */
+    private function init_hooks() {
+        register_activation_hook( BWG_IGF_PLUGIN_FILE, array( $this, 'activate' ) );
+        register_deactivation_hook( BWG_IGF_PLUGIN_FILE, array( $this, 'deactivate' ) );
+
+        add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
+        add_action( 'init', array( $this, 'init' ) );
+        add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'frontend_enqueue_scripts' ) );
+
+        // Register shortcode.
+        add_shortcode( 'bwg_igf', array( $this, 'render_shortcode' ) );
+    }
+
+    /**
+     * Plugin activation.
+     */
+    public function activate() {
+        $this->create_tables();
+        $this->set_default_options();
+        flush_rewrite_rules();
+    }
+
+    /**
+     * Plugin deactivation.
+     */
+    public function deactivate() {
+        flush_rewrite_rules();
+    }
+
+    /**
+     * Load plugin textdomain.
+     */
+    public function load_textdomain() {
+        load_plugin_textdomain(
+            'bwg-instagram-feed',
+            false,
+            dirname( BWG_IGF_PLUGIN_BASENAME ) . '/languages'
+        );
+    }
+
+    /**
+     * Initialize plugin.
+     */
+    public function init() {
+        // Initialize components here.
+    }
+
+    /**
+     * Create database tables.
+     */
+    private function create_tables() {
+        global $wpdb;
+
+        $charset_collate = $wpdb->get_charset_collate();
+
+        // Feeds table.
+        $feeds_table = $wpdb->prefix . 'bwg_igf_feeds';
+        $feeds_sql = "CREATE TABLE $feeds_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            slug varchar(100) NOT NULL,
+            feed_type enum('public','connected') NOT NULL DEFAULT 'public',
+            instagram_usernames text,
+            connected_account_id bigint(20) UNSIGNED DEFAULT NULL,
+            layout_type enum('grid','slider') NOT NULL DEFAULT 'grid',
+            layout_settings longtext,
+            display_settings longtext,
+            styling_settings longtext,
+            filter_settings longtext,
+            popup_settings longtext,
+            post_count int(11) NOT NULL DEFAULT 9,
+            ordering enum('newest','oldest','random','most_liked','most_commented') NOT NULL DEFAULT 'newest',
+            cache_duration int(11) NOT NULL DEFAULT 3600,
+            status enum('active','inactive','error') NOT NULL DEFAULT 'active',
+            error_message text,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY slug (slug),
+            KEY feed_type (feed_type),
+            KEY status (status)
+        ) $charset_collate;";
+
+        // Accounts table.
+        $accounts_table = $wpdb->prefix . 'bwg_igf_accounts';
+        $accounts_sql = "CREATE TABLE $accounts_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            instagram_user_id bigint(20) UNSIGNED NOT NULL,
+            username varchar(100) NOT NULL,
+            access_token text NOT NULL,
+            token_type varchar(50),
+            expires_at datetime,
+            account_type enum('basic','business','creator') NOT NULL DEFAULT 'basic',
+            profile_picture_url text,
+            connected_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            last_refreshed datetime,
+            status enum('active','expired','revoked') NOT NULL DEFAULT 'active',
+            PRIMARY KEY (id),
+            UNIQUE KEY instagram_user_id (instagram_user_id),
+            KEY status (status)
+        ) $charset_collate;";
+
+        // Cache table.
+        $cache_table = $wpdb->prefix . 'bwg_igf_cache';
+        $cache_sql = "CREATE TABLE $cache_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            feed_id bigint(20) UNSIGNED NOT NULL,
+            cache_key varchar(255) NOT NULL,
+            cache_data longtext NOT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            expires_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            KEY feed_id (feed_id),
+            KEY cache_key (cache_key),
+            KEY expires_at (expires_at)
+        ) $charset_collate;";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $feeds_sql );
+        dbDelta( $accounts_sql );
+        dbDelta( $cache_sql );
+
+        update_option( 'bwg_igf_db_version', '1.0.0' );
+    }
+
+    /**
+     * Set default options.
+     */
+    private function set_default_options() {
+        $defaults = array(
+            'default_cache_duration' => 3600,
+            'delete_data_on_uninstall' => false,
+            'instagram_app_id' => '',
+            'instagram_app_secret' => '',
+        );
+
+        foreach ( $defaults as $key => $value ) {
+            if ( false === get_option( 'bwg_igf_' . $key ) ) {
+                add_option( 'bwg_igf_' . $key, $value );
+            }
+        }
+    }
+
+    /**
+     * Add admin menu.
+     */
+    public function add_admin_menu() {
+        add_menu_page(
+            __( 'BWG Instagram Feed', 'bwg-instagram-feed' ),
+            __( 'Instagram Feed', 'bwg-instagram-feed' ),
+            'manage_options',
+            'bwg-igf',
+            array( $this, 'render_dashboard_page' ),
+            'dashicons-instagram',
+            30
+        );
+
+        add_submenu_page(
+            'bwg-igf',
+            __( 'Dashboard', 'bwg-instagram-feed' ),
+            __( 'Dashboard', 'bwg-instagram-feed' ),
+            'manage_options',
+            'bwg-igf',
+            array( $this, 'render_dashboard_page' )
+        );
+
+        add_submenu_page(
+            'bwg-igf',
+            __( 'All Feeds', 'bwg-instagram-feed' ),
+            __( 'Feeds', 'bwg-instagram-feed' ),
+            'manage_options',
+            'bwg-igf-feeds',
+            array( $this, 'render_feeds_page' )
+        );
+
+        add_submenu_page(
+            'bwg-igf',
+            __( 'Connected Accounts', 'bwg-instagram-feed' ),
+            __( 'Accounts', 'bwg-instagram-feed' ),
+            'manage_options',
+            'bwg-igf-accounts',
+            array( $this, 'render_accounts_page' )
+        );
+
+        add_submenu_page(
+            'bwg-igf',
+            __( 'Settings', 'bwg-instagram-feed' ),
+            __( 'Settings', 'bwg-instagram-feed' ),
+            'manage_options',
+            'bwg-igf-settings',
+            array( $this, 'render_settings_page' )
+        );
+    }
+
+    /**
+     * Enqueue admin scripts and styles.
+     *
+     * @param string $hook Current admin page hook.
+     */
+    public function admin_enqueue_scripts( $hook ) {
+        if ( strpos( $hook, 'bwg-igf' ) === false ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'bwg-igf-admin',
+            BWG_IGF_PLUGIN_URL . 'assets/css/admin.css',
+            array(),
+            BWG_IGF_VERSION
+        );
+
+        wp_enqueue_script(
+            'bwg-igf-admin',
+            BWG_IGF_PLUGIN_URL . 'assets/js/admin.js',
+            array( 'jquery' ),
+            BWG_IGF_VERSION,
+            true
+        );
+
+        wp_localize_script(
+            'bwg-igf-admin',
+            'bwgIgfAdmin',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'bwg_igf_admin_nonce' ),
+                'i18n'    => array(
+                    'confirmDelete' => __( 'Are you sure you want to delete this feed?', 'bwg-instagram-feed' ),
+                    'saving'        => __( 'Saving...', 'bwg-instagram-feed' ),
+                    'saved'         => __( 'Saved!', 'bwg-instagram-feed' ),
+                    'error'         => __( 'An error occurred. Please try again.', 'bwg-instagram-feed' ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Enqueue frontend scripts and styles.
+     */
+    public function frontend_enqueue_scripts() {
+        wp_enqueue_style(
+            'bwg-igf-frontend',
+            BWG_IGF_PLUGIN_URL . 'assets/css/frontend.css',
+            array(),
+            BWG_IGF_VERSION
+        );
+
+        wp_enqueue_script(
+            'bwg-igf-frontend',
+            BWG_IGF_PLUGIN_URL . 'assets/js/frontend.js',
+            array(),
+            BWG_IGF_VERSION,
+            true
+        );
+
+        wp_localize_script(
+            'bwg-igf-frontend',
+            'bwgIgfFrontend',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'bwg_igf_frontend_nonce' ),
+            )
+        );
+    }
+
+    /**
+     * Render dashboard page.
+     */
+    public function render_dashboard_page() {
+        include BWG_IGF_PLUGIN_DIR . 'templates/admin/dashboard.php';
+    }
+
+    /**
+     * Render feeds page.
+     */
+    public function render_feeds_page() {
+        include BWG_IGF_PLUGIN_DIR . 'templates/admin/feeds.php';
+    }
+
+    /**
+     * Render accounts page.
+     */
+    public function render_accounts_page() {
+        include BWG_IGF_PLUGIN_DIR . 'templates/admin/accounts.php';
+    }
+
+    /**
+     * Render settings page.
+     */
+    public function render_settings_page() {
+        include BWG_IGF_PLUGIN_DIR . 'templates/admin/settings.php';
+    }
+
+    /**
+     * Render shortcode.
+     *
+     * @param array $atts Shortcode attributes.
+     * @return string HTML output.
+     */
+    public function render_shortcode( $atts ) {
+        $atts = shortcode_atts(
+            array(
+                'id'   => 0,
+                'feed' => '',
+            ),
+            $atts,
+            'bwg_igf'
+        );
+
+        ob_start();
+        include BWG_IGF_PLUGIN_DIR . 'templates/frontend/feed.php';
+        return ob_get_clean();
+    }
+}
+
+// Initialize plugin.
+BWG_Instagram_Feed::get_instance();
