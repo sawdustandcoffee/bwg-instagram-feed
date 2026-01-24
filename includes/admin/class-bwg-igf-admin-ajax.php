@@ -130,6 +130,7 @@ class BWG_IGF_Admin_Ajax {
         $show_follow_button = isset( $_POST['show_follow_button'] ) ? 1 : 0;
 
         // Get styling settings.
+        $background_color = isset( $_POST['background_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['background_color'] ) ) : '';
         $border_radius = isset( $_POST['border_radius'] ) ? absint( $_POST['border_radius'] ) : 0;
         $hover_effect = isset( $_POST['hover_effect'] ) ? sanitize_text_field( wp_unslash( $_POST['hover_effect'] ) ) : 'none';
         $custom_css = isset( $_POST['custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) : '';
@@ -155,9 +156,10 @@ class BWG_IGF_Admin_Ajax {
         ) );
 
         $styling_settings = wp_json_encode( array(
-            'border_radius' => $border_radius,
-            'hover_effect'  => $hover_effect,
-            'custom_css'    => $custom_css,
+            'background_color' => $background_color,
+            'border_radius'    => $border_radius,
+            'hover_effect'     => $hover_effect,
+            'custom_css'       => $custom_css,
         ) );
 
         $popup_settings = wp_json_encode( array(

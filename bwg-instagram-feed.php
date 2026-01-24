@@ -286,17 +286,20 @@ final class BWG_Instagram_Feed {
             return;
         }
 
+        // Enqueue WordPress color picker for styling options.
+        wp_enqueue_style( 'wp-color-picker' );
+
         wp_enqueue_style(
             'bwg-igf-admin',
             BWG_IGF_PLUGIN_URL . 'assets/css/admin.css',
-            array(),
+            array( 'wp-color-picker' ),
             BWG_IGF_VERSION
         );
 
         wp_enqueue_script(
             'bwg-igf-admin',
             BWG_IGF_PLUGIN_URL . 'assets/js/admin.js',
-            array( 'jquery' ),
+            array( 'jquery', 'wp-color-picker' ),
             BWG_IGF_VERSION,
             true
         );

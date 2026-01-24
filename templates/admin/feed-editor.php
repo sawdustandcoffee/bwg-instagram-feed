@@ -139,8 +139,14 @@ $is_new = empty( $feed );
                     <!-- Styling Tab -->
                     <div id="bwg-igf-tab-styling" class="bwg-igf-tab-content">
                         <div class="bwg-igf-field">
+                            <label for="bwg-igf-background-color"><?php esc_html_e( 'Background Color', 'bwg-instagram-feed' ); ?></label>
+                            <input type="text" id="bwg-igf-background-color" name="background_color" class="bwg-igf-color-picker" value="<?php echo $feed && isset( json_decode( $feed->styling_settings, true )['background_color'] ) ? esc_attr( json_decode( $feed->styling_settings, true )['background_color'] ) : ''; ?>" data-default-color="">
+                            <p class="description"><?php esc_html_e( 'Leave empty for transparent/no background.', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <div class="bwg-igf-field">
                             <label for="bwg-igf-border-radius"><?php esc_html_e( 'Border Radius (px)', 'bwg-instagram-feed' ); ?></label>
-                            <input type="number" id="bwg-igf-border-radius" name="border_radius" value="0" min="0" max="50">
+                            <input type="number" id="bwg-igf-border-radius" name="border_radius" value="<?php echo $feed && isset( json_decode( $feed->styling_settings, true )['border_radius'] ) ? esc_attr( json_decode( $feed->styling_settings, true )['border_radius'] ) : '0'; ?>" min="0" max="50">
                         </div>
 
                         <div class="bwg-igf-field">
@@ -155,7 +161,13 @@ $is_new = empty( $feed );
 
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-custom-css"><?php esc_html_e( 'Custom CSS', 'bwg-instagram-feed' ); ?></label>
-                            <textarea id="bwg-igf-custom-css" name="custom_css" rows="5"></textarea>
+                            <textarea id="bwg-igf-custom-css" name="custom_css" rows="5" placeholder=".bwg-igf-feed { /* your styles */ }"><?php
+                                if ( $feed && ! empty( $feed->styling_settings ) ) {
+                                    $styling = json_decode( $feed->styling_settings, true );
+                                    echo esc_textarea( isset( $styling['custom_css'] ) ? $styling['custom_css'] : '' );
+                                }
+                            ?></textarea>
+                            <p class="description"><?php esc_html_e( 'Add custom CSS to style your feed. Use .bwg-igf-feed as the container selector.', 'bwg-instagram-feed' ); ?></p>
                         </div>
                     </div>
 
