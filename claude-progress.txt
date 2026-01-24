@@ -4676,3 +4676,341 @@ Feature #63 PASSES. The Edit action correctly:
 
 [Feature #63 completed and verified]
 
+
+
+---
+
+## Session: 2026-01-24 (Regression Testing - Feature #59)
+
+### Feature Tested (Regression)
+- **Feature #59: Feeds submenu navigates correctly** - PASSED (No Regression)
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Feeds submenu navigates correctly
+- **Description:** Clicking Feeds submenu loads feeds list
+
+### Verification Steps Completed
+
+1. **Step 1: Click Feeds submenu item** - ✅ VERIFIED
+   - Navigated to Feeds via admin menu
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+
+2. **Step 2: Verify feeds list page loads** - ✅ VERIFIED
+   - Page loads with heading "Instagram Feeds"
+   - Table displayed with columns: Name, Type, Status, Shortcode, Actions
+   - Two feeds displayed: "Admin Security Test Feed" and "Test Feed"
+
+3. **Step 3: Verify correct URL** - ✅ VERIFIED
+   - Current URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - URL matches expected format for Feeds page
+
+4. **Step 4: Verify page content is correct** - ✅ VERIFIED
+   - Page Title: "All Feeds ‹ BWG Instagram Test — WordPress"
+   - "Add New Feed" button present with correct link
+   - Table headers: Name, Type, Status, Shortcode, Actions
+   - Feed entries show proper data with Edit/Duplicate/Delete actions
+   - Shortcodes displayed correctly
+
+### Console Errors: None detected
+
+### Screenshot
+- feature-59-regression-test-feeds-list.png - Feeds list page showing table with feeds
+
+### Conclusion
+Feature #59 PASSES regression testing. The Feeds submenu navigation continues to work correctly.
+
+### Current Status
+- Total features: 149
+- Passing: 43
+- Percentage: 28.9%
+
+[Regression testing session complete - Feature #59 verified]
+
+
+---
+
+## Session: 2026-01-24 (Feature #30 - Popup Navigation Between Posts - REGRESSION TEST)
+
+### Feature Tested
+- **Feature #30: Popup navigation between posts** - STILL PASSING ✅
+
+### Feature Details
+- **Category:** functional
+- **Name:** Popup navigation between posts
+- **Description:** User can navigate between posts in the lightbox
+
+### Verification Steps Completed
+
+1. **Step 1: Enable popup in feed settings** - ✅ VERIFIED
+   - Navigated to Feed editor for 'Test Feed'
+   - Clicked on Popup tab
+   - Popup/lightbox checkbox is already enabled (checked)
+
+2. **Step 2: Display feed on frontend** - ✅ VERIFIED
+   - Created new page "Instagram Feed Test" with shortcode [bwg_igf id="1"]
+   - Published page and navigated to frontend
+   - Feed displays 9 posts in a grid layout
+   - Screenshot: feature-30-feed-display.png
+
+3. **Step 3: Click on a post to open lightbox** - ✅ VERIFIED
+   - Clicked on first post (Post #9)
+   - Lightbox popup opened with:
+     - Large image display
+     - Caption: "Post #9 (Newest) - Fresh start, fresh perspective 🌱 #motivation"
+     - Likes/comments counts (4525/181)
+     - "View on Instagram" link
+     - Close button (X)
+   - Screenshot: feature-30-lightbox-open.png
+
+4. **Step 4: Verify navigation arrows present** - ✅ VERIFIED
+   - Previous arrow (‹) present on left side
+   - Next arrow (›) present on right side
+   - Both arrows have proper CSS classes and aria-labels
+
+5. **Step 5: Click next arrow - verify next post loads** - ✅ VERIFIED
+   - Clicked next arrow
+   - Navigated to Post #8: "Art in everyday life 🎨 #creative #design"
+   - Different image displayed (woman with flowing fabric)
+   - Different stats: 4006 likes, 160 comments
+   - Screenshot: feature-30-lightbox-next.png
+
+6. **Step 6: Click prev arrow - verify previous post loads** - ✅ VERIFIED
+   - Clicked previous arrow
+   - Returned to Post #9: "Fresh start, fresh perspective 🌱 #motivation"
+   - Original image and stats restored
+   - Screenshot: feature-30-lightbox-prev.png
+
+7. **Step 7: Verify navigation wraps at end** - ✅ VERIFIED
+   - From Post #9, clicked previous arrow
+   - Wrapped to Post #1 (Oldest): "Exploring nature's beauty 🌿 #nature #photography"
+   - Industrial machinery image displayed, 593 likes, 29 comments
+   - Screenshot: feature-30-lightbox-wrap.png
+   - From Post #1, clicked next arrow
+   - Wrapped back to Post #9 (Newest)
+   - Wrapping works in both directions
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #30 remains PASSING. All popup navigation functionality works correctly:
+- Lightbox opens when clicking on feed posts
+- Navigation arrows are visible and functional
+- Next/Previous navigation loads correct posts
+- Navigation wraps from first to last and last to first
+- No JavaScript errors
+
+[Testing] Feature #30 verified - still passing
+
+---
+
+## Session: 2026-01-24 (Regression Test - Feature #11)
+
+### Feature Tested (Regression)
+- **Feature #11: Create new public feed form displays** - ✅ STILL PASSING
+
+### Feature Details
+- **Category:** functional
+- **Name:** Create new public feed form displays
+- **Description:** New feed creation form renders with all necessary fields
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Feeds page** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Page shows "Instagram Feeds" heading with "Add New Feed" button
+   - Existing feeds table displayed
+
+2. **Step 2: Click 'Add New Feed' button** - ✅ VERIFIED
+   - Clicked "Add New Feed" button
+   - Navigated to: admin.php?page=bwg-igf-feeds&action=new
+   - Page heading: "Create New Feed"
+
+3. **Step 3: Verify feed name field is present** - ✅ VERIFIED
+   - Feed Name textbox present and accessible
+
+4. **Step 4: Verify feed type selector shows (Public/Connected)** - ✅ VERIFIED
+   - Feed Type dropdown with options:
+     - "Public (Username)" [selected by default]
+     - "Connected Account"
+
+5. **Step 5: Verify Instagram username field appears for public type** - ✅ VERIFIED
+   - Instagram Username(s) textbox present
+   - Placeholder: "username or username1, username2"
+   - Help text: "Enter one or more Instagram usernames (comma-separated for multiple)."
+
+6. **Step 6: Verify layout type options show (Grid/Slider)** - ✅ VERIFIED
+   - Clicked Layout tab
+   - Layout Type dropdown with options:
+     - "Grid" [selected by default]
+     - "Slider"
+
+7. **Step 7: Verify Save button is present** - ✅ VERIFIED
+   - "Create Feed" button present
+   - "Cancel" link also present
+
+### Console Errors: None detected
+
+### Screenshot
+- feature-11-regression-test.png - New feed form with all required fields
+
+### Conclusion
+Feature #11 PASSES regression test. The new public feed form displays correctly with:
+- All tabs present (Source, Layout, Display, Styling, Popup, Advanced)
+- Feed Name field
+- Feed Type selector (Public/Connected)
+- Instagram Username(s) field (for public type)
+- Layout Type options (Grid/Slider)
+- Create Feed/Save button
+- Live preview panel
+- No console errors
+
+### Current Status (Regression Testing)
+- Total features: 149
+- Passing: 43
+- Percentage: ~28.9%
+
+[Regression test for Feature #11 completed - STILL PASSING]
+
+[Testing] Feature #11 verified - still passing (regression test)
+
+---
+
+## Session: 2026-01-24 (Feature #64 - Back to List Button Works)
+
+### Feature Completed
+- **Feature #64: Back to list button works** - PASSED
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Back to list button works
+- **Description:** Back button from editor returns to feeds list
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=edit&feed_id=1
+   - Page heading: "Edit Feed"
+   - Cancel button visible in editor footer
+   - Screenshot: feature-64-editor-with-cancel-button.png
+
+2. **Step 2: Click Back or Cancel button** - ✅ VERIFIED
+   - Clicked "Cancel" link button
+   - Navigation triggered successfully
+   - URL changed to feeds list page
+
+3. **Step 3: Verify returns to feeds list** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Page Title: "All Feeds ‹ BWG Instagram Test — WordPress"
+   - Heading: "Instagram Feeds" with "Add New Feed" button
+   - Feeds table displayed with all feeds
+   - Screenshot: feature-64-feeds-list-after-cancel.png
+
+4. **Step 4: Verify no data lost if not saved** - ✅ VERIFIED
+   - Re-opened feed editor for "Test Feed"
+   - Changed Feed Name to "UNSAVED_CHANGES_TEST"
+   - Screenshot: feature-64-unsaved-changes.png
+   - Clicked Cancel WITHOUT saving
+   - Returned to feeds list - feed still shows "Test Feed" (original name)
+   - Re-opened editor - Feed Name is "Test Feed" (original preserved)
+   - Screenshot: feature-64-data-preserved-after-cancel.png
+   - Confirmed: Unsaved changes are discarded, original data intact
+
+### Implementation Details
+- Cancel button implemented as `<a>` link in feed-editor.php (line 240)
+- Links directly to: `admin_url('admin.php?page=bwg-igf-feeds')`
+- No data is modified until Save Changes button is clicked
+- Form uses standard HTML behavior - navigation away discards unsaved changes
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-64-editor-with-cancel-button.png - Feed editor with Cancel button
+- feature-64-feeds-list-after-cancel.png - Feeds list after clicking Cancel
+- feature-64-unsaved-changes.png - Editor with unsaved name change
+- feature-64-data-preserved-after-cancel.png - Original data preserved after cancel
+
+### Conclusion
+Feature #64 PASSES. The Cancel/Back button:
+1. Successfully returns to the feeds list
+2. Links to correct URL: admin.php?page=bwg-igf-feeds
+3. Does not save any unsaved changes
+4. Original data remains intact in database
+
+### Current Status
+- Total features: 149
+- Passing: 44 (updated)
+- Percentage: ~29.5%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Feature #64 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Regression Testing - Feature #57)
+
+### Feature Tested
+- **Feature #57: Cannot access other feed data via ID manipulation** - REGRESSION FOUND AND FIXED
+
+### Feature Details
+- **Category:** security
+- **Name:** Cannot access other feed data via ID manipulation
+- **Description:** API properly validates feed ownership/existence
+
+### Regression Discovered
+When accessing `action=edit&feed_id=999` (non-existent ID), the system was showing "Create New Feed" form instead of an error message. This is a security issue as it allows ID manipulation attacks.
+
+### Root Cause
+In `templates/admin/feed-editor.php`, the code was checking if `$feed` was empty and setting `$is_new = true` without considering that the user explicitly requested to EDIT a specific feed ID. The fallback to "create" mode was incorrect behavior.
+
+### Fix Applied
+Added validation in `feed-editor.php` to check:
+1. If action is 'edit'
+2. AND feed_id > 0 (user specified an ID)
+3. AND feed is empty (doesn't exist in database)
+4. THEN show "Feed Not Found" error page
+
+### Verification Steps Completed
+
+1. **Non-existent feed ID (999)** - ✅ NOW SHOWS ERROR
+   - URL: `action=edit&feed_id=999`
+   - Before fix: Showed "Create New Feed" form (WRONG)
+   - After fix: Shows "Feed Not Found" error (CORRECT)
+   - Screenshot: feature-57-fix-verified.png
+
+2. **Existing feed ID (1)** - ✅ STILL WORKS
+   - URL: `action=edit&feed_id=1`
+   - Shows "Edit Feed" with data populated
+   - Shows "Save Changes" button
+
+3. **New feed (action=new)** - ✅ STILL WORKS
+   - URL: `action=new`
+   - Shows "Create New Feed" with empty form
+   - Shows "Create Feed" button
+
+### Screenshots
+- feature-57-regression-test.png - Before fix: showing "Create New Feed" incorrectly
+- feature-57-fix-verified.png - After fix: showing "Feed Not Found" correctly
+
+### Console Errors: None detected
+
+### Files Modified
+- templates/admin/feed-editor.php - Added feed existence validation
+
+### Commit
+cb80920 - Fix regression: Validate feed ID exists before editing
+
+### Current Status
+- Total features: 149
+- Passing: 43 (restored after fix)
+- Percentage: ~28.9%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Regression in Feature #57 detected and fixed]
