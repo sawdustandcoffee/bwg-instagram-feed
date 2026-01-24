@@ -194,22 +194,44 @@ $is_new = empty( $feed );
                             </select>
                         </div>
 
+                        <?php
+                        // Get current cache duration from feed or use default
+                        $current_cache_duration = $feed ? intval( $feed->cache_duration ) : 3600;
+                        ?>
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-cache-duration"><?php esc_html_e( 'Cache Duration', 'bwg-instagram-feed' ); ?></label>
                             <select id="bwg-igf-cache-duration" name="cache_duration">
-                                <option value="900"><?php esc_html_e( '15 Minutes', 'bwg-instagram-feed' ); ?></option>
-                                <option value="1800"><?php esc_html_e( '30 Minutes', 'bwg-instagram-feed' ); ?></option>
-                                <option value="3600" selected><?php esc_html_e( '1 Hour', 'bwg-instagram-feed' ); ?></option>
-                                <option value="21600"><?php esc_html_e( '6 Hours', 'bwg-instagram-feed' ); ?></option>
-                                <option value="43200"><?php esc_html_e( '12 Hours', 'bwg-instagram-feed' ); ?></option>
-                                <option value="86400"><?php esc_html_e( '24 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="900" <?php selected( $current_cache_duration, 900 ); ?>><?php esc_html_e( '15 Minutes', 'bwg-instagram-feed' ); ?></option>
+                                <option value="1800" <?php selected( $current_cache_duration, 1800 ); ?>><?php esc_html_e( '30 Minutes', 'bwg-instagram-feed' ); ?></option>
+                                <option value="3600" <?php selected( $current_cache_duration, 3600 ); ?>><?php esc_html_e( '1 Hour', 'bwg-instagram-feed' ); ?></option>
+                                <option value="21600" <?php selected( $current_cache_duration, 21600 ); ?>><?php esc_html_e( '6 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="43200" <?php selected( $current_cache_duration, 43200 ); ?>><?php esc_html_e( '12 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="86400" <?php selected( $current_cache_duration, 86400 ); ?>><?php esc_html_e( '24 Hours', 'bwg-instagram-feed' ); ?></option>
                             </select>
+                            <p id="bwg-igf-cache-warning" class="description bwg-igf-cache-warning" style="color: #d63638; display: none;">
+                                <?php esc_html_e( '⚠️ Warning: Short cache durations may cause rate limiting from Instagram. Consider using a longer duration unless you need very frequent updates.', 'bwg-instagram-feed' ); ?>
+                            </p>
                         </div>
 
-                        <div class="bwg-igf-field">
+                        <div class="bwg-igf-field bwg-igf-cache-refresh-field">
                             <button type="button" class="button bwg-igf-refresh-cache" data-feed-id="<?php echo esc_attr( $feed_id ); ?>">
                                 <?php esc_html_e( 'Refresh Cache Now', 'bwg-instagram-feed' ); ?>
                             </button>
+                            <?php
+                            // Get cache timestamp if it exists
+                            if ( $feed_id > 0 ) {
+                                $cache_timestamp = $wpdb->get_var( $wpdb->prepare(
+                                    "SELECT created_at FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d ORDER BY created_at DESC LIMIT 1",
+                                    $feed_id
+                                ) );
+                                if ( $cache_timestamp ) {
+                                    $formatted_time = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $cache_timestamp ) );
+                                    echo '<p class="description bwg-igf-cache-timestamp">' . esc_html__( 'Last refreshed: ', 'bwg-instagram-feed' ) . esc_html( $formatted_time ) . '</p>';
+                                } else {
+                                    echo '<p class="description bwg-igf-cache-timestamp">' . esc_html__( 'Cache not yet created', 'bwg-instagram-feed' ) . '</p>';
+                                }
+                            }
+                            ?>
                         </div>
                     </div>
                 </div>

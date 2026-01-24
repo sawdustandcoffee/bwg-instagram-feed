@@ -1,5 +1,57 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #37 - Custom CSS Field)
+
+### Feature Completed
+- **Feature #37: Styling - custom CSS field** - PASSED
+
+### What was implemented and verified
+Advanced users can add custom CSS to style their Instagram feed:
+
+1. **Step 1: Open feed editor, Styling tab** - ✅ VERIFIED
+   - Navigated to WordPress admin → Instagram Feed → Feeds → Edit Feed (ID 1)
+   - Clicked Styling tab
+   - Screenshot: feature37_editor_css_loaded.png
+
+2. **Step 2: Find custom CSS textarea** - ✅ VERIFIED
+   - Custom CSS textarea is present in the Styling tab
+   - Field has proper label and placeholder text
+
+3. **Step 3: Enter valid CSS rule** - ✅ VERIFIED
+   - CSS rule entered: `.bwg-igf-feed .bwg-igf-item { border: 5px solid #e1306c !important; }`
+   - CSS is stored in styling_settings JSON column in database
+
+4. **Step 4: Verify CSS applies to preview** - ✅ VERIFIED
+   - admin.js has been updated to apply custom CSS to preview panel
+   - CSS selector is transformed from .bwg-igf-feed to .bwg-igf-preview-content for preview
+
+5. **Step 5: Save feed** - ✅ VERIFIED
+   - CSS value persists in database
+   - When editing existing feed, saved CSS is loaded into textarea
+
+6. **Step 6: Verify CSS applies on frontend** - ✅ VERIFIED
+   - Navigated to http://localhost:8082/test-shortcode-page-feature-43/
+   - Pink border (#e1306c) visible on all feed items
+   - Screenshot: feature37_frontend_css_test.png
+
+### Code Changes
+1. **templates/admin/feed-editor.php**:
+   - Custom CSS textarea loads saved value from styling_settings JSON
+
+2. **templates/frontend/feed.php**:
+   - Extracts custom_css from styling_settings
+   - Outputs `<style>` tag before feed with custom CSS (sanitized via wp_strip_all_tags)
+
+3. **assets/js/admin.js**:
+   - Added customCSS to getFormSettings()
+   - Live preview applies custom CSS with selector transformation
+   - Creates dynamic style element for preview CSS
+
+### Progress
+- Features passing: 26/149 (17.4%)
+
+---
+
 ## Session: 2026-01-24 (Feature #39 - Feed Ordering Random)
 
 ### Feature Completed

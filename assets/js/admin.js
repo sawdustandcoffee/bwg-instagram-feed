@@ -18,6 +18,7 @@
             this.initTabs();
             this.initColorPickers();
             this.initLivePreview();
+            this.initCacheDurationWarning();
         },
 
         bindEvents: function() {
@@ -68,6 +69,32 @@
                     }
                 });
             }
+        },
+
+        initCacheDurationWarning: function() {
+            var $select = $('#bwg-igf-cache-duration');
+            var $warning = $('#bwg-igf-cache-warning');
+
+            if (!$select.length || !$warning.length) {
+                return;
+            }
+
+            // Show/hide warning based on cache duration value
+            function updateWarning() {
+                var value = parseInt($select.val(), 10);
+                // Show warning for 15 minutes (900) or 30 minutes (1800)
+                if (value <= 1800) {
+                    $warning.slideDown(200);
+                } else {
+                    $warning.slideUp(200);
+                }
+            }
+
+            // Check on page load
+            updateWarning();
+
+            // Check on change
+            $select.on('change', updateWarning);
         },
 
         initLivePreview: function() {
@@ -242,8 +269,11 @@
 
             var $button = $(this);
             var feedId = $button.data('feed-id');
+            var originalText = $button.text();
 
+            // Show loading state with spinner
             $button.prop('disabled', true);
+            $button.html('<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span> Refreshing...');
 
             $.ajax({
                 url: bwgIgfAdmin.ajaxUrl,
@@ -255,14 +285,25 @@
                 },
                 success: function(response) {
                     $button.prop('disabled', false);
+                    $button.text(originalText);
                     if (response.success) {
                         BWGIGFAdmin.showNotice('success', 'Cache refreshed successfully!');
+                        // Update cache timestamp display if present
+                        if (response.data && response.data.timestamp) {
+                            $('.bwg-igf-cache-timestamp').text('Last refreshed: ' + response.data.timestamp);
+                        } else {
+                            // Update with current time
+                            var now = new Date();
+                            var timeStr = now.toLocaleString();
+                            $('.bwg-igf-cache-timestamp').text('Last refreshed: ' + timeStr);
+                        }
                     } else {
                         BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
                     }
                 },
                 error: function() {
                     $button.prop('disabled', false);
+                    $button.text(originalText);
                     BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
                 }
             });
