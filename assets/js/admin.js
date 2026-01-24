@@ -430,6 +430,7 @@
             var $form = $(this);
             var $button = $form.find('button[type="submit"]');
             var originalText = $button.text();
+            var originalHtml = $button.html();
 
             // Client-side validation for required feed name
             var $nameField = $form.find('#bwg-igf-name');
@@ -445,7 +446,9 @@
                 return;
             }
 
-            $button.prop('disabled', true).text(bwgIgfAdmin.i18n.saving);
+            // Show loading state with spinner (Feature #92)
+            $button.prop('disabled', true).addClass('bwg-igf-saving');
+            $button.html('<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>' + bwgIgfAdmin.i18n.saving);
 
             $.ajax({
                 url: bwgIgfAdmin.ajaxUrl,
@@ -453,7 +456,8 @@
                 data: $form.serialize() + '&action=bwg_igf_save_feed&nonce=' + bwgIgfAdmin.nonce,
                 success: function(response) {
                     if (response.success) {
-                        $button.text(bwgIgfAdmin.i18n.saved);
+                        // Show saved state (no spinner)
+                        $button.html(bwgIgfAdmin.i18n.saved).removeClass('bwg-igf-saving');
 
                         // Show success notice
                         BWGIGFAdmin.showNotice('success', response.data.message);
@@ -465,16 +469,16 @@
                             }, 1500);
                         } else {
                             setTimeout(function() {
-                                $button.text(originalText).prop('disabled', false);
+                                $button.html(originalHtml).prop('disabled', false);
                             }, 2000);
                         }
                     } else {
-                        $button.text(originalText).prop('disabled', false);
+                        $button.html(originalHtml).prop('disabled', false).removeClass('bwg-igf-saving');
                         BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
                     }
                 },
                 error: function(xhr) {
-                    $button.text(originalText).prop('disabled', false);
+                    $button.html(originalHtml).prop('disabled', false).removeClass('bwg-igf-saving');
 
                     // Try to parse the error response from wp_send_json_error
                     var errorMessage = bwgIgfAdmin.i18n.error;

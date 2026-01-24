@@ -418,3 +418,21 @@
     margin-right: 4px;
     vertical-align: middle;
 }
+
+/* Save button loading state (Feature #92) */
+button.bwg-igf-saving {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+button.bwg-igf-saving .spinner {
+    visibility: visible;
+    vertical-align: middle;
+}
+
+/* Ensure spinner displays inline properly in buttons */
+.bwg-igf-editor-footer .button .spinner {
+    float: none;
+    margin: 0 5px 0 0;
+    vertical-align: middle;
+}
