@@ -379,7 +379,14 @@ class BWG_IGF_Admin_Ajax {
             array( '%d' )
         );
 
-        wp_send_json_success( array( 'message' => __( 'Cache refreshed successfully!', 'bwg-instagram-feed' ) ) );
+        // Return the current timestamp for display
+        $current_time = current_time( 'mysql' );
+        $formatted_time = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $current_time ) );
+
+        wp_send_json_success( array(
+            'message'   => __( 'Cache refreshed successfully!', 'bwg-instagram-feed' ),
+            'timestamp' => $formatted_time,
+        ) );
     }
 
     /**

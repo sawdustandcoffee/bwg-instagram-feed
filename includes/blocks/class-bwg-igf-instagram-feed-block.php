@@ -53,22 +53,11 @@ class BWG_IGF_Instagram_Feed_Block {
             return;
         }
 
+        // Register block using block.json for proper REST API support.
         register_block_type(
-            'bwg-igf/instagram-feed',
+            __DIR__ . '/block.json',
             array(
-                'editor_script'   => 'bwg-igf-block-editor',
-                'editor_style'    => 'bwg-igf-block-editor-style',
                 'render_callback' => array( $this, 'render_block' ),
-                'attributes'      => array(
-                    'feedId' => array(
-                        'type'    => 'string',
-                        'default' => '',
-                    ),
-                ),
-                'supports'        => array(
-                    'align'  => array( 'wide', 'full' ),
-                    'anchor' => true,
-                ),
             )
         );
     }

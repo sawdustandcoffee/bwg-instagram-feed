@@ -2588,3 +2588,378 @@ The Clear All Cache functionality was already fully implemented:
 - Passing: 25
 - Percentage: ~16.8%
 
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #10)
+
+[Testing] Feature #10 (Plugin deactivates without errors) - REGRESSION TEST PASSED
+
+### Feature Details
+- **Feature ID:** 10
+- **Category:** functional
+- **Name:** Plugin deactivates without errors
+- **Description:** Plugin can be deactivated cleanly
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Plugins page** - ✅ VERIFIED
+   - Navigated to wp-admin/plugins.php
+   - BWG Instagram Feed plugin shown as active with "Deactivate" link
+
+2. **Step 2: Click 'Deactivate' on BWG Instagram Feed** - ✅ VERIFIED
+   - Clicked Deactivate link
+   - Plugin deactivated successfully
+
+3. **Step 3: Verify no PHP errors during deactivation** - ✅ VERIFIED
+   - Success message "Plugin deactivated." displayed
+   - No PHP errors or warnings
+   - No console errors
+
+4. **Step 4: Verify plugin shows as deactivated** - ✅ VERIFIED
+   - Plugin now shows "Activate" link instead of "Deactivate"
+   - Plugin count changed from Active (2) to Active (1)
+
+5. **Step 5: Verify admin menu is removed** - ✅ VERIFIED
+   - "Instagram Feed" menu no longer visible in WordPress admin sidebar
+   - Menu item completely removed upon deactivation
+
+6. **Step 6: Verify database tables are NOT deleted on deactivation** - ✅ VERIFIED
+   - Checked database via MySQL query
+   - All 3 plugin tables still exist:
+     - wp_bwg_igf_accounts
+     - wp_bwg_igf_cache
+     - wp_bwg_igf_feeds
+
+### Post-Test Cleanup
+- Plugin reactivated to restore original state
+- Instagram Feed menu visible again in sidebar
+- All functionality restored
+
+### Screenshots
+- feature-10-regression-before-deactivate.png - Plugin list before deactivation
+- feature-10-regression-after-deactivate.png - Plugin deactivated with success message
+- feature-10-regression-restored.png - Plugin reactivated
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #10 remains PASSING. The plugin deactivates cleanly without errors, the admin menu is properly removed, and database tables are preserved for future reactivation.
+
+[Testing] Feature #10 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #45 - Copy Shortcode Button)
+
+### Feature Verified
+- **Feature #45: Copy shortcode button** - PASSED
+
+### Feature Details
+- **Category:** functional
+- **Name:** Copy shortcode button
+- **Description:** Admin can easily copy shortcode from feeds list
+
+### Verification Steps Completed
+1. **Step 1: Navigate to Feeds list** - ✅ VERIFIED
+   - Navigated to /wp-admin/admin.php?page=bwg-igf-feeds
+   - Feeds list displayed with table showing all feeds
+
+2. **Step 2: Find shortcode column for a feed** - ✅ VERIFIED
+   - Shortcode column clearly visible in table header
+   - Each feed row displays shortcode in <code> tag (e.g., [bwg_igf id="5"])
+
+3. **Step 3: Click copy button next to shortcode** - ✅ VERIFIED
+   - Clipboard icon button present next to each shortcode
+   - Button has class "bwg-igf-copy-shortcode" with data-shortcode attribute
+
+4. **Step 4: Verify shortcode copied to clipboard** - ✅ VERIFIED
+   - Clicked copy button for "Test Background Color Feed"
+   - JavaScript navigator.clipboard.writeText() executed successfully
+
+5. **Step 5: Verify success notification** - ✅ VERIFIED
+   - Green success notice appeared: "Shortcode copied to clipboard!"
+   - Notice auto-dismisses after 5 seconds as designed
+
+### Implementation Details
+The copy shortcode functionality was already fully implemented:
+
+**templates/admin/feeds.php** (lines 73-78):
+- Shortcode column displays shortcode in `<code>` tag
+- Copy button with class `bwg-igf-copy-shortcode` and `data-shortcode` attribute
+- Clipboard dashicon for visual indicator
+
+**assets/js/admin.js** (lines 257-265):
+- `handleCopyShortcode` function handles click events
+- Uses `navigator.clipboard.writeText()` for modern clipboard API
+- Shows success notification via `BWGIGFAdmin.showNotice()`
+
+### Screenshots
+- feature-45-feeds-list-shortcode-column.png - Feeds list showing shortcode column and copy buttons
+- feature-45-copy-shortcode-success.png - After clicking copy button
+- feature-45-copy-shortcode-notification.png - Success notification visible
+
+### Console Errors: None detected
+
+### Current Status
+- Total features: 149
+- Passing: 26 (updated)
+- Percentage: ~17.4%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / admin123
+
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #31)
+
+[Testing] Feature #31 (Popup keyboard navigation) - REGRESSION TEST PASSED
+
+### Feature Details
+- **Feature ID:** 31
+- **Category:** functional
+- **Name:** Popup keyboard navigation
+- **Description:** User can navigate lightbox using keyboard
+
+### Verification Steps Completed
+
+1. **Step 1: Open popup on a post** - ✅ VERIFIED
+   - Navigated to http://localhost:8082/instagram-feed-test/
+   - Clicked on Post #6 image
+   - Popup/lightbox opened with Close, Previous, Next buttons visible
+   - Post #6 caption displayed: "Simple moments, big joy 💫 #minimalist"
+
+2. **Step 2: Press right arrow key** - ✅ VERIFIED
+   - Pressed ArrowRight key
+   - Popup navigated to Post #8
+
+3. **Step 3: Verify next post displays** - ✅ VERIFIED
+   - Post #8 displayed correctly: "Art in everyday life 🎨 #creative #design"
+   - Image and engagement stats (4048 likes, 164 comments) visible
+
+4. **Step 4: Press left arrow key** - ✅ VERIFIED
+   - Pressed ArrowLeft key
+   - Popup navigated back to previous post
+
+5. **Step 5: Verify previous post displays** - ✅ VERIFIED
+   - Post #6 displayed again: "Simple moments, big joy 💫 #minimalist"
+   - Engagement stats (3036 likes, 122 comments) visible
+
+6. **Step 6: Press Escape key** - ✅ VERIFIED
+   - Pressed Escape key
+
+7. **Step 7: Verify lightbox closes** - ✅ VERIFIED
+   - Lightbox/popup closed completely
+   - Main feed page displayed without popup overlay
+
+### Technical Details
+- WordPress site: http://localhost:8082
+- Test page: /instagram-feed-test/
+- Keyboard events handled: ArrowRight, ArrowLeft, Escape
+
+### Console Errors: None detected
+
+### Screenshot
+- feature-31-regression-popup-keyboard-nav.png
+
+### Conclusion
+Feature #31 remains PASSING. All keyboard navigation functionality works correctly:
+- Right arrow navigates to next post
+- Left arrow navigates to previous post
+- Escape key closes the lightbox
+
+[Testing] Feature #31 verified - still passing
+
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #34)
+
+[Testing] Feature #34 (Styling - background color customization) - REGRESSION TEST PASSED
+
+### Feature Details
+- **Feature ID:** 34
+- **Category:** functional
+- **Name:** Styling - background color customization
+- **Description:** User can customize feed background color
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Styling tab** - ✅ VERIFIED
+   - Navigated to feed editor for "Test Background Color Feed" (ID 5)
+   - Clicked Styling tab - displays Background Color, Border Radius, Hover Effect, Custom CSS options
+
+2. **Step 2: Click background color picker** - ✅ VERIFIED
+   - Color picker opens with gradient selector
+   - Shows current color value in textbox (#3498db was original color)
+   - "Clear" button available for removing color
+
+3. **Step 3: Select a color** - ✅ VERIFIED
+   - Changed color from #3498db (blue) to #e74c3c (red)
+   - Color swatch updates to show new selection
+   - Color picker supports both visual selection and hex input
+
+4. **Step 4: Verify preview background updates** - ✅ VERIFIED
+   - Preview panel on right side dynamically updates
+   - Background color changes from blue to red in real-time
+   - Live preview working correctly
+
+5. **Step 5: Save feed** - ✅ VERIFIED
+   - Clicked "Save Changes" button
+   - "Feed updated successfully!" message displayed
+   - Button changed to "Saved!" (disabled state)
+
+6. **Step 6: Verify color persists on frontend** - ✅ VERIFIED
+   - Navigated to /background-color-test/ page
+   - Feed container displays with red (#e74c3c) background
+   - Color correctly persisted after save and page reload
+
+### Screenshots
+- feature-34-styling-tab-colorpicker.png - Color picker expanded showing blue color
+- feature-34-color-changed-red.png - Color changed to red
+- feature-34-after-color-change.png - Preview showing red background
+- feature-34-frontend-background-color.png - Frontend display with red background
+
+### Console Errors: None detected
+
+### Note
+Plugin was inactive at start of session - re-activated before testing.
+
+[Testing] Feature #34 verified - still passing
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #5)
+
+[Testing] Feature #5 (Feeds list page loads correctly) - REGRESSION TEST PASSED
+
+### Feature Details
+- **Feature ID:** 5
+- **Category:** functional
+- **Name:** Feeds list page loads correctly
+- **Description:** Feed management list page renders with proper table
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Feeds submenu** - ✅ VERIFIED
+   - Successfully navigated to admin.php?page=bwg-igf-feeds
+   - Page loaded without errors
+
+2. **Step 2: Verify page title displays 'All Feeds'** - ✅ VERIFIED
+   - Page title: "All Feeds - BWG Instagram Test - WordPress"
+
+3. **Step 3: Verify table headers show (Name, Type, Status, Shortcode, Actions)** - ✅ VERIFIED
+   - Name column: Present
+   - Type column: Present
+   - Status column: Present (shows "Active" badge)
+   - Shortcode column: Present (shows copyable shortcode)
+   - Actions column: Present (Edit, Duplicate, Delete links)
+
+4. **Step 4: Verify 'Add New Feed' button is visible** - ✅ VERIFIED
+   - "Add New Feed" button visible next to "Instagram Feeds" heading
+   - Links to admin.php?page=bwg-igf-feeds&action=new
+
+5. **Step 5: Verify empty state message when no feeds exist** - ✅ VERIFIED
+   - Code review confirmed: templates/admin/feeds.php lines 36-38
+   - Empty state shows "No feeds yet!" when feeds array is empty
+   - Currently showing table view because a feed exists (correct behavior)
+
+### Table Data Verified
+- Feed: "Test Feed"
+- Type: Public
+- Status: Active
+- Shortcode: [bwg_igf id="1"]
+- Actions: Edit, Duplicate, Delete
+
+### Screenshots
+- feature-5-regression-feeds-list.png
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #5 remains PASSING. The feeds list page loads correctly with all expected elements.
+
+[Testing] Feature #5 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #40 - Cache Duration Configuration)
+
+### Feature Completed
+- **Feature #40: Cache duration configuration** - PASSED
+
+### What was implemented and verified
+User can set how long feed data is cached via the feed editor Advanced tab.
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Advanced tab** - ✅ VERIFIED
+   - Navigated to WordPress admin → Instagram Feed → Feeds → Edit Feed (ID 5)
+   - Clicked Advanced tab
+   - Cache Duration dropdown is present with all options
+
+2. **Step 2: Select 15 minute cache duration** - ✅ VERIFIED
+   - Selected "15 Minutes" from dropdown
+   - Warning message appeared: "⚠️ Warning: Short cache durations may cause rate limiting from Instagram..."
+   - Screenshot: feature-40-cache-warning-shown.png
+
+3. **Step 3: Save feed** - ✅ VERIFIED  
+   - Clicked "Save Changes" button
+   - "Feed updated successfully!" message appeared
+   - Screenshot: feature-40-15min-saved.png
+
+4. **Step 4: Select 24 hour cache duration** - ✅ VERIFIED
+   - Selected "24 Hours" from dropdown
+   - Warning message disappeared (correct behavior)
+   
+5. **Step 5: Save feed** - ✅ VERIFIED
+   - Clicked "Save Changes" button
+   - "Feed updated successfully!" message appeared
+   - Screenshot: feature-40-24hr-saved.png
+
+6. **Step 6: Verify warning for aggressive cache settings** - ✅ VERIFIED
+   - Warning shows when 15 Minutes or 30 Minutes is selected
+   - Warning hides when 1 Hour or longer is selected
+   - Warning text is red (#d63638) for visibility
+
+### Code Changes Made
+
+1. **templates/admin/feed-editor.php**:
+   - Added PHP code to load saved cache_duration value from database
+   - Added selected() function calls to each dropdown option
+   - Added warning paragraph with id="bwg-igf-cache-warning" (hidden by default)
+
+2. **assets/js/admin.js**:
+   - Added initCacheDurationWarning() function
+   - Warning shows for durations <= 1800 seconds (30 minutes)
+   - Warning hides for durations > 1800 seconds
+   - Uses slideDown/slideUp for smooth animation
+
+### Cache Duration Options
+- 15 Minutes (900 seconds) - Shows warning
+- 30 Minutes (1800 seconds) - Shows warning
+- 1 Hour (3600 seconds) - No warning (default)
+- 6 Hours (21600 seconds) - No warning
+- 12 Hours (43200 seconds) - No warning
+- 24 Hours (86400 seconds) - No warning
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-40-cache-warning-shown.png - 15 min selected with warning visible
+- feature-40-15min-saved.png - After saving 15 min setting
+- feature-40-24hr-saved.png - After saving 24 hr setting (no warning)
+
+### Current Status
+- Total features: 149
+- Passing: 24 (after this feature)
+- Percentage: ~16.1%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / admin123
+
