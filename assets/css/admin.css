@@ -4,6 +4,37 @@
  * @package BWG_Instagram_Feed
  */
 
+/* Breadcrumb Navigation */
+.bwg-igf-breadcrumbs {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #646970;
+}
+
+.bwg-igf-breadcrumb-link {
+    color: #2271b1;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.bwg-igf-breadcrumb-link:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+.bwg-igf-breadcrumb-separator {
+    margin: 0 8px;
+    color: #c3c4c7;
+    font-size: 16px;
+}
+
+.bwg-igf-breadcrumb-current {
+    color: #1d2327;
+    font-weight: 500;
+}
+
 /* Plugin header branding */
 .bwg-igf-header {
     display: flex;
