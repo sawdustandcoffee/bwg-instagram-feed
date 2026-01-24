@@ -1,5 +1,82 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #98 - Popup/lightbox works on mobile)
+
+### Feature Completed
+- **Feature #98: Popup/lightbox works on mobile** - PASSED ✅
+
+### Feature Details
+- **Category:** responsive
+- **Name:** Popup/lightbox works on mobile
+- **Description:** Lightbox is usable on small screens
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed with popup enabled on mobile** - ✅ VERIFIED
+   - Resized browser to 375x667 (iPhone viewport)
+   - Navigated to test page with Instagram feed
+   - Feed displayed correctly with slider layout
+
+2. **Step 2: Tap on a post** - ✅ VERIFIED
+   - Clicked on a post in the feed
+   - Popup/lightbox opened successfully
+
+3. **Step 3: Verify lightbox opens and fits screen** - ✅ VERIFIED
+   - Image displayed within screen bounds
+   - Caption and stats visible below image
+   - Content properly stacked vertically (not side-by-side)
+   - No horizontal overflow
+
+4. **Step 4: Verify close button accessible** - ✅ VERIFIED
+   - Close button (×) visible in top-right corner
+   - Button is 44x44px (proper touch target size)
+   - Button has semi-transparent background for visibility
+   - Successfully closed popup when clicked
+
+5. **Step 5: Verify can swipe between posts** - ✅ VERIFIED
+   - Navigation arrows visible and functional
+   - Clicked Next button to navigate to Post 2
+   - Content updated correctly (caption, stats, link)
+   - Touch swipe handler implemented in JavaScript
+
+### Implementation Details
+
+**CSS Changes (assets/css/frontend.css):**
+- Added responsive styles for 768px and 480px breakpoints
+- Popup content stacks vertically on mobile
+- Larger touch targets (44x44px) for close and nav buttons
+- Image fits within screen bounds (max-height: 45vh on small screens)
+- Details section scrollable for long captions
+- Fixed close button positioning on small screens
+
+**JavaScript Changes (assets/js/frontend.js):**
+- Added `initTouch()` method to BWGIGFPopup class
+- Implemented touch swipe detection for navigation
+- Horizontal swipes > 50px trigger next/prev
+- Uses passive event listeners for performance
+
+### Screenshots
+- feature-98-step1-mobile-feed.png - Feed on mobile viewport
+- feature-98-step3-popup-mobile-improved.png - Popup opened on mobile
+- feature-98-step4-popup-closed.png - Popup closed
+- feature-98-step5-popup-navigated.png - Navigated to Post 2
+
+### Console Errors
+- None
+
+### Commit
+26bccfc - Implement Feature #98: Popup/lightbox works on mobile
+
+### Current Status
+- Feature #98 marked as passing
+- Total features: 149
+- Passing: 77
+- Percentage: 51.7%
+
+[Feature #98 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #79 - Private account shows warning)
 
 ### Feature Completed
