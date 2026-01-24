@@ -3703,3 +3703,169 @@ Feature #35 remains PASSING. All border radius customization functionality works
 - Values persist across page reloads
 
 [Testing] Feature #35 verified - still passing
+
+---
+
+## Session: 2026-01-24 (Feature #52 - AJAX Capability Checks)
+
+### Feature Completed
+- **Feature #52: AJAX requests check capabilities** - PASSED
+
+### Feature Details
+- **Category:** security
+- **Name:** AJAX requests check capabilities
+- **Description:** AJAX actions verify user has required permissions
+
+### Verification Steps Completed
+
+1. **Step 1: Log in as subscriber user** - ✅ VERIFIED
+   - Created testsubscriber user with subscriber role via WP-CLI
+   - Logged in as testsubscriber@test.com
+   - Verified sidebar shows limited menu (only Dashboard and Profile)
+   - Screenshot: feature-52-subscriber-profile.png
+
+2. **Step 2: Attempt to call feed creation AJAX endpoint** - ✅ VERIFIED
+   - Generated valid nonce for subscriber user via WP-CLI
+   - Attempted AJAX call to bwg_igf_save_feed action
+   - Request was properly rejected
+
+3. **Step 3: Verify 403 or permission denied response** - ✅ VERIFIED
+   - Response: `{"success":false,"data":{"message":"Security check failed."}}`
+   - Subscriber user cannot access plugin admin pages directly
+   - Access to /wp-admin/admin.php?page=bwg-igf-feeds returns "Sorry, you are not allowed to access this page."
+   - Screenshot: feature-52-subscriber-denied-access.png
+
+4. **Step 4: Log in as administrator** - ✅ VERIFIED
+   - Logged out as subscriber
+   - Logged in as admin user
+   - Verified full menu access (Instagram Feed menu visible)
+   - Screenshot: feature-52-feeds-list-admin.png
+
+5. **Step 5: Verify same request succeeds** - ✅ VERIFIED
+   - Retrieved valid nonce from bwgIgfAdmin JavaScript object
+   - Made AJAX call to bwg_igf_save_feed action
+   - Response: `{"success":true,"data":{"message":"Feed created successfully!","feed_id":2,"shortcode":"[bwg_igf id=\"2\"]"}}`
+   - Feed "Admin Security Test Feed" successfully created and visible in feeds list
+   - Screenshot: feature-52-admin-ajax-success.png
+
+### Code Analysis
+
+**includes/admin/class-bwg-igf-admin-ajax.php:**
+- `verify_request()` method (lines 53-63) performs both checks:
+  1. Nonce verification via `wp_verify_nonce()`
+  2. Capability check via `current_user_can('manage_options')`
+- All AJAX handlers call `$this->verify_request()` before any action:
+  - `save_feed()` - line 103
+  - `delete_feed()` - line 258
+  - `duplicate_feed()` - line 293
+  - `validate_username()` - line 343
+  - `refresh_cache()` - line 365
+  - `clear_all_cache()` - line 396
+
+### Security Implementation Details
+- Nonce: `bwg_igf_admin_nonce`
+- Required capability: `manage_options` (Administrator only)
+- Both checks must pass for any AJAX action to proceed
+- Admin JavaScript (admin.js) only loaded for users with `manage_options` capability
+
+### Console Errors: None related to security
+
+### Screenshots
+- feature-52-feeds-list-admin.png - Admin viewing feeds list
+- feature-52-subscriber-profile.png - Subscriber limited dashboard
+- feature-52-subscriber-denied-access.png - Access denied for subscriber
+- feature-52-admin-ajax-success.png - Admin AJAX request succeeds
+
+### Current Status
+- Total features: 149
+- Passing: 29 (updated)
+- Percentage: ~19.5%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+- Subscriber test user: testsubscriber / Test123!
+
+---
+
+## Session: 2026-01-24 (Feature #55 - Database Prepared Statements)
+
+### Feature Completed
+- **Feature #55: Database queries use prepared statements** - PASSED
+
+### Feature Details
+- **Category:** security
+- **Name:** Database queries use prepared statements
+- **Description:** All database queries are parameterized
+
+### Verification Steps Completed
+
+1. **Step 1: Review feed creation code path** - ✅ VERIFIED
+   - Reviewed includes/admin/class-bwg-igf-admin-ajax.php
+   - Feed creation uses $wpdb->insert() with format specifiers
+   - All data properly sanitized before database insertion
+
+2. **Step 2: Verify $wpdb->prepare() used for INSERT** - ✅ VERIFIED
+   - $wpdb->insert() with format array (line 233-237)
+   - $wpdb->insert() for duplicate feed (line 324-327)
+   - Format specifiers: %s (string), %d (integer)
+
+3. **Step 3: Verify UPDATE queries use prepare()** - ✅ VERIFIED
+   - $wpdb->update() with format arrays (line 210-216)
+   - WHERE clause properly formatted with %d
+
+4. **Step 4: Verify DELETE queries use prepare()** - ✅ VERIFIED
+   - $wpdb->delete() with WHERE format (lines 269-273, 280-284, 376-380)
+   - All DELETE queries properly parameterized
+
+5. **Step 5: Verify SELECT queries use prepare()** - ✅ VERIFIED
+   - Fixed all SELECT queries to use $wpdb->prepare():
+     - templates/admin/dashboard.php - COUNT queries now use %i and %s placeholders
+     - templates/admin/feeds.php - SELECT * query uses %i placeholder
+     - templates/admin/accounts.php - SELECT * query uses %i placeholder
+     - includes/admin/class-bwg-igf-admin-ajax.php - TRUNCATE uses %i placeholder
+     - includes/blocks/class-bwg-igf-instagram-feed-block.php - SELECT with %i and %s
+     - uninstall.php - DROP TABLE and DELETE queries use %i and %s
+     - check_feed_css.php - Debug script updated to use prepare()
+
+### Files Modified
+- templates/admin/dashboard.php - 2 queries fixed
+- templates/admin/feeds.php - 1 query fixed
+- templates/admin/accounts.php - 1 query fixed
+- includes/admin/class-bwg-igf-admin-ajax.php - 1 query fixed (TRUNCATE)
+- includes/blocks/class-bwg-igf-instagram-feed-block.php - 1 query fixed
+- uninstall.php - 5 queries fixed
+- check_feed_css.php - 1 query fixed (debug script)
+
+### WordPress $wpdb Methods Analysis
+- **$wpdb->insert()** - Internally uses prepared statements ✓
+- **$wpdb->update()** - Internally uses prepared statements ✓
+- **$wpdb->delete()** - Internally uses prepared statements ✓
+- **$wpdb->get_var()** - Now wrapped with $wpdb->prepare() ✓
+- **$wpdb->get_row()** - Now wrapped with $wpdb->prepare() ✓
+- **$wpdb->get_results()** - Now wrapped with $wpdb->prepare() ✓
+- **$wpdb->query()** - Now wrapped with $wpdb->prepare() ✓
+
+### Verification Testing
+- Navigated to Instagram Feed Dashboard - Stats loaded correctly (Total Feeds: 6)
+- Navigated to Feeds list - All 6 feeds displayed correctly
+- Navigated to Accounts page - Empty state rendered correctly
+- No PHP errors or warnings
+- No console errors
+
+### Screenshots
+- feature-55-dashboard-prepared-statements.png - Dashboard with prepared statements working
+- feature-55-accounts-page-working.png - Accounts page working
+
+### Console Errors: None detected
+
+### Current Status
+- Total features: 149
+- Passing: 32 (updated after marking feature #55)
+- Percentage: ~21.5%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / admin123
+
+[Feature #55 completed and verified]
