@@ -50,7 +50,7 @@ $background_color = isset( $styling_settings['background_color'] ) ? $styling_se
 $popup_enabled = isset( $popup_settings['enabled'] ) ? $popup_settings['enabled'] : true;
 $custom_css = isset( $styling_settings['custom_css'] ) ? $styling_settings['custom_css'] : '';
 
-// Get cached posts
+// Get cached posts first
 global $wpdb;
 $cache_data = $wpdb->get_var( $wpdb->prepare(
     "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
@@ -63,48 +63,72 @@ if ( $cache_data ) {
     $posts = array();
 }
 
-// Demo mode: If no cached posts and feed has demo_mode enabled or username is 'demo', show sample posts
-$show_demo = empty( $posts ) && ( ! empty( $feed->instagram_usernames ) );
-if ( $show_demo ) {
-    // Generate sample demo posts for testing popup navigation
-    // Each post has a timestamp to test ordering functionality
-    $demo_images = array(
-        'https://picsum.photos/seed/bwg1/640/640',
-        'https://picsum.photos/seed/bwg2/640/640',
-        'https://picsum.photos/seed/bwg3/640/640',
-        'https://picsum.photos/seed/bwg4/640/640',
-        'https://picsum.photos/seed/bwg5/640/640',
-        'https://picsum.photos/seed/bwg6/640/640',
-        'https://picsum.photos/seed/bwg7/640/640',
-        'https://picsum.photos/seed/bwg8/640/640',
-        'https://picsum.photos/seed/bwg9/640/640',
-    );
+// If no cached posts and feed has usernames, fetch from Instagram and cache
+$no_cache_message = '';
+if ( empty( $posts ) && ! empty( $feed->instagram_usernames ) ) {
+    // Load the Instagram API class if not already loaded.
+    if ( ! class_exists( 'BWG_IGF_Instagram_API' ) ) {
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
+    }
 
-    $demo_captions = array(
-        'Post #1 (Oldest) - Exploring nature\'s beauty 🌿 #nature #photography',
-        'Post #2 - City lights and late nights ✨ #cityscape #urban',
-        'Post #3 - Coffee and good vibes ☕ #coffee #lifestyle',
-        'Post #4 - Adventure awaits! 🏔️ #travel #adventure',
-        'Post #5 - Sunset magic 🌅 #sunset #golden',
-        'Post #6 - Simple moments, big joy 💫 #minimalist',
-        'Post #7 - Weekend getaway 🚗 #roadtrip #explore',
-        'Post #8 - Art in everyday life 🎨 #creative #design',
-        'Post #9 (Newest) - Fresh start, fresh perspective 🌱 #motivation',
-    );
+    $instagram_api = new BWG_IGF_Instagram_API();
 
-    // Generate timestamps - older posts have earlier timestamps
-    $base_time = strtotime( '-9 days' );
+    // Parse usernames (could be JSON array or single username).
+    $usernames = json_decode( $feed->instagram_usernames, true );
+    if ( ! is_array( $usernames ) ) {
+        $usernames = array_map( 'trim', explode( ',', $feed->instagram_usernames ) );
+    }
 
-    $post_count = min( absint( $feed->post_count ) ?: 9, 9 );
-    for ( $i = 0; $i < $post_count; $i++ ) {
-        $posts[] = array(
-            'thumbnail'  => $demo_images[ $i ],
-            'full_image' => str_replace( '640/640', '1080/1080', $demo_images[ $i ] ),
-            'caption'    => $demo_captions[ $i ],
-            'likes'      => ( $i + 1 ) * 500 + rand( 0, 100 ), // Likes increase with newer posts
-            'comments'   => ( $i + 1 ) * 20 + rand( 0, 10 ),   // Comments increase with newer posts
-            'link'       => 'https://instagram.com/p/demo' . ( $i + 1 ),
-            'timestamp'  => $base_time + ( $i * 86400 ), // Each post is 1 day apart
+    // Clean usernames (remove @ if present).
+    $usernames = array_filter( array_map( function( $u ) {
+        return ltrim( trim( $u ), '@' );
+    }, $usernames ) );
+
+    $post_count = absint( $feed->post_count ) ?: 9;
+
+    // Fetch posts from Instagram.
+    if ( count( $usernames ) === 1 ) {
+        $fetched_posts = $instagram_api->fetch_public_posts( $usernames[0], $post_count );
+    } else {
+        $fetched_posts = $instagram_api->fetch_combined_posts( $usernames, $post_count );
+    }
+
+    // Check if we got valid posts (not an error).
+    if ( ! is_wp_error( $fetched_posts ) && ! empty( $fetched_posts ) ) {
+        $posts = $fetched_posts;
+
+        // Cache the fetched posts.
+        $cache_duration = absint( $feed->cache_duration ) ?: 3600;
+        $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
+        $cache_key = 'feed_' . $feed->id . '_' . md5( wp_json_encode( $posts ) );
+
+        // Delete old cache entries for this feed.
+        $wpdb->delete(
+            $wpdb->prefix . 'bwg_igf_cache',
+            array( 'feed_id' => $feed->id ),
+            array( '%d' )
+        );
+
+        // Insert new cache entry with real Instagram data.
+        $wpdb->insert(
+            $wpdb->prefix . 'bwg_igf_cache',
+            array(
+                'feed_id'    => $feed->id,
+                'cache_key'  => $cache_key,
+                'cache_data' => wp_json_encode( $posts ),
+                'created_at' => current_time( 'mysql' ),
+                'expires_at' => $expires_at,
+            ),
+            array( '%d', '%s', '%s', '%s', '%s' )
+        );
+    } else {
+        // Real Instagram data could not be fetched - do NOT use placeholder/mock data.
+        // Instead, display an informative error message to the user.
+        $error_detail = is_wp_error( $fetched_posts ) ? $fetched_posts->get_error_message() : __( 'No posts found.', 'bwg-instagram-feed' );
+        $no_cache_message = sprintf(
+            /* translators: %s: error detail */
+            __( 'Could not fetch Instagram posts: %s', 'bwg-instagram-feed' ),
+            $error_detail
         );
     }
 }
@@ -200,8 +224,8 @@ if ( ! empty( $custom_css ) ) :
     style="<?php echo esc_attr( implode( '; ', $custom_styles ) ); ?>"
 >
     <?php if ( empty( $posts ) ) : ?>
-        <div class="bwg-igf-loading">
-            <div class="bwg-igf-spinner"></div>
+        <div class="bwg-igf-empty-state">
+            <p><?php echo esc_html( $no_cache_message ?: __( 'No posts to display.', 'bwg-instagram-feed' ) ); ?></p>
         </div>
     <?php else : ?>
         <?php if ( 'slider' === $feed->layout_type ) : ?>

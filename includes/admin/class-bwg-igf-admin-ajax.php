@@ -131,6 +131,15 @@ class BWG_IGF_Admin_Ajax {
         $columns = isset( $_POST['columns'] ) ? absint( $_POST['columns'] ) : 3;
         $gap = isset( $_POST['gap'] ) ? absint( $_POST['gap'] ) : 10;
 
+        // Get slider-specific settings.
+        $slides_to_show = isset( $_POST['slides_to_show'] ) ? absint( $_POST['slides_to_show'] ) : 3;
+        $slides_to_scroll = isset( $_POST['slides_to_scroll'] ) ? absint( $_POST['slides_to_scroll'] ) : 1;
+        $autoplay = isset( $_POST['autoplay'] ) ? 1 : 0;
+        $autoplay_speed = isset( $_POST['autoplay_speed'] ) ? absint( $_POST['autoplay_speed'] ) : 3000;
+        $show_arrows = isset( $_POST['show_arrows'] ) ? 1 : 0;
+        $show_dots = isset( $_POST['show_dots'] ) ? 1 : 0;
+        $infinite_loop = isset( $_POST['infinite_loop'] ) ? 1 : 0;
+
         // Get display settings.
         $post_count = isset( $_POST['post_count'] ) ? absint( $_POST['post_count'] ) : 9;
         $show_likes = isset( $_POST['show_likes'] ) ? 1 : 0;
@@ -153,8 +162,15 @@ class BWG_IGF_Admin_Ajax {
 
         // Build JSON settings objects.
         $layout_settings = wp_json_encode( array(
-            'columns' => $columns,
-            'gap'     => $gap,
+            'columns'          => $columns,
+            'gap'              => $gap,
+            'slides_to_show'   => $slides_to_show,
+            'slides_to_scroll' => $slides_to_scroll,
+            'autoplay'         => (bool) $autoplay,
+            'autoplay_speed'   => $autoplay_speed,
+            'show_arrows'      => (bool) $show_arrows,
+            'show_dots'        => (bool) $show_dots,
+            'infinite_loop'    => (bool) $infinite_loop,
         ) );
 
         $display_settings = wp_json_encode( array(
@@ -393,15 +409,15 @@ class BWG_IGF_Admin_Ajax {
             wp_send_json_error( array( 'message' => __( 'Invalid feed ID.', 'bwg-instagram-feed' ) ) );
         }
 
-        // Check if feed exists.
-        $feed_exists = $wpdb->get_var(
+        // Get the full feed data.
+        $feed = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT id FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d",
+                "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d",
                 $feed_id
             )
         );
 
-        if ( ! $feed_exists ) {
+        if ( ! $feed ) {
             wp_send_json_error( array( 'message' => __( 'Feed not found.', 'bwg-instagram-feed' ) ) );
         }
 
@@ -412,14 +428,126 @@ class BWG_IGF_Admin_Ajax {
             array( '%d' )
         );
 
+        // Fetch fresh data from Instagram
+        $posts = $this->fetch_instagram_data( $feed );
+
+        if ( is_wp_error( $posts ) ) {
+            // Update feed with error status
+            $wpdb->update(
+                $wpdb->prefix . 'bwg_igf_feeds',
+                array(
+                    'status'        => 'error',
+                    'error_message' => $posts->get_error_message(),
+                ),
+                array( 'id' => $feed_id ),
+                array( '%s', '%s' ),
+                array( '%d' )
+            );
+
+            wp_send_json_error( array(
+                'message' => sprintf(
+                    __( 'Failed to fetch Instagram data: %s', 'bwg-instagram-feed' ),
+                    $posts->get_error_message()
+                ),
+            ) );
+        }
+
+        // Store in cache
+        $cache_duration = absint( $feed->cache_duration ) ?: 3600;
+        $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
+
+        $wpdb->insert(
+            $wpdb->prefix . 'bwg_igf_cache',
+            array(
+                'feed_id'    => $feed_id,
+                'cache_key'  => 'feed_' . $feed_id,
+                'cache_data' => wp_json_encode( $posts ),
+                'created_at' => current_time( 'mysql' ),
+                'expires_at' => $expires_at,
+            ),
+            array( '%d', '%s', '%s', '%s', '%s' )
+        );
+
+        // Clear any error status
+        $wpdb->update(
+            $wpdb->prefix . 'bwg_igf_feeds',
+            array(
+                'status'        => 'active',
+                'error_message' => null,
+            ),
+            array( 'id' => $feed_id ),
+            array( '%s', '%s' ),
+            array( '%d' )
+        );
+
         // Return the current timestamp for display
         $current_time = current_time( 'mysql' );
         $formatted_time = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $current_time ) );
 
         wp_send_json_success( array(
-            'message'   => __( 'Cache refreshed successfully!', 'bwg-instagram-feed' ),
-            'timestamp' => $formatted_time,
+            'message'    => sprintf(
+                __( 'Cache refreshed successfully! Fetched %d posts.', 'bwg-instagram-feed' ),
+                count( $posts )
+            ),
+            'timestamp'  => $formatted_time,
+            'post_count' => count( $posts ),
         ) );
+    }
+
+    /**
+     * Fetch Instagram data for a feed.
+     *
+     * @param object $feed Feed database row.
+     * @return array|WP_Error Array of posts or WP_Error.
+     */
+    private function fetch_instagram_data( $feed ) {
+        $instagram_api = new BWG_IGF_Instagram_API();
+        $post_count = absint( $feed->post_count ) ?: 9;
+
+        if ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
+            // Fetch using connected account
+            global $wpdb;
+
+            $account = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT access_token FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d AND status = 'active'",
+                    $feed->connected_account_id
+                )
+            );
+
+            if ( ! $account ) {
+                return new WP_Error( 'no_account', __( 'Connected account not found or inactive.', 'bwg-instagram-feed' ) );
+            }
+
+            // Decrypt the access token
+            $access_token = BWG_IGF_Encryption::decrypt( $account->access_token );
+
+            if ( ! $access_token ) {
+                return new WP_Error( 'decrypt_failed', __( 'Failed to decrypt access token.', 'bwg-instagram-feed' ) );
+            }
+
+            return $instagram_api->fetch_connected_posts( $access_token, $post_count );
+        } else {
+            // Fetch from public profile(s)
+            $usernames = $feed->instagram_usernames;
+
+            if ( empty( $usernames ) ) {
+                return new WP_Error( 'no_username', __( 'No Instagram username configured.', 'bwg-instagram-feed' ) );
+            }
+
+            // Parse usernames (could be JSON array or comma-separated)
+            $parsed_usernames = json_decode( $usernames, true );
+            if ( ! is_array( $parsed_usernames ) ) {
+                $parsed_usernames = array_map( 'trim', explode( ',', $usernames ) );
+            }
+            $parsed_usernames = array_filter( $parsed_usernames );
+
+            if ( count( $parsed_usernames ) === 1 ) {
+                return $instagram_api->fetch_public_posts( $parsed_usernames[0], $post_count );
+            } else {
+                return $instagram_api->fetch_combined_posts( $parsed_usernames, $post_count );
+            }
+        }
     }
 
     /**
