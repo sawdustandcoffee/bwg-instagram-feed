@@ -1,5 +1,73 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #51 - AJAX Nonce Verification)
+
+### Feature Completed
+- **Feature #51: AJAX requests verify nonce** - PASSED
+
+### What was verified
+Verified that all AJAX actions require valid nonce for security:
+
+1. **Step 1: Open browser developer tools** - ✅ VERIFIED
+   - Navigated to WordPress admin → Instagram Feed → Feeds
+   - Accessed JavaScript console to test AJAX requests
+
+2. **Step 2: Attempt AJAX request without nonce** - ✅ VERIFIED
+   - Sent POST request to admin-ajax.php with action=bwg_igf_clear_all_cache
+   - No nonce parameter included
+   - Response: `{"success":false,"data":{"message":"Security check failed."}}`
+
+3. **Step 3: Verify request rejected** - ✅ VERIFIED
+   - Request was properly rejected with "Security check failed." error
+
+4. **Step 4: Attempt with invalid nonce** - ✅ VERIFIED
+   - Sent POST request with nonce=invalid_nonce_123
+   - Response: `{"success":false,"data":{"message":"Security check failed."}}`
+
+5. **Step 5: Verify request rejected** - ✅ VERIFIED
+   - Request was properly rejected with "Security check failed." error
+
+6. **Step 6: Attempt with valid nonce** - ✅ VERIFIED
+   - Used bwgIgfAdmin.nonce from localized script (valid WordPress nonce)
+   - Response: `{"success":true,"data":{"message":"All cache cleared successfully!"}}`
+
+7. **Step 7: Verify request succeeds** - ✅ VERIFIED
+   - Request succeeded with valid nonce
+
+### Additional Testing
+Verified ALL 6 AJAX endpoints are protected with nonce verification:
+- bwg_igf_save_feed - ✅ Protected
+- bwg_igf_delete_feed - ✅ Protected
+- bwg_igf_duplicate_feed - ✅ Protected
+- bwg_igf_validate_username - ✅ Protected
+- bwg_igf_refresh_cache - ✅ Protected
+- bwg_igf_clear_all_cache - ✅ Protected
+
+### Technical Implementation (Already in Codebase)
+Located in `/includes/admin/class-bwg-igf-admin-ajax.php`:
+- `verify_request()` method (lines 53-63) checks nonce and capability
+- All AJAX handlers call `$this->verify_request()` at the start
+- Nonce generated via `wp_create_nonce('bwg_igf_admin_nonce')` in main plugin file
+- Nonce passed to JavaScript via `wp_localize_script()` as `bwgIgfAdmin.nonce`
+
+### Screenshots
+- feature-51-ajax-nonce-verification.png
+- feature-51-all-tests-passed.png
+
+### Console Errors
+- None detected
+
+### Current Status
+- Total features: 149
+- Passing: 31/149 (20.8%)
+- In Progress: 3
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / admin123
+
+---
+
 ## Session: 2026-01-24 (Feature #47 - Gutenberg Block Feed Selection)
 
 ### Feature Completed
