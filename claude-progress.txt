@@ -1,4 +1,82 @@
 # BWG Instagram Feed - Development Progress
+## Session: 2026-01-24 (Feature #67 - Created Feed Persists in Database)
+
+### Feature Completed
+- **Feature #67: Created feed persists in database** - PASSED ✅
+
+### Feature Details
+- **Category:** data
+- **Name:** Created feed persists in database
+- **Description:** New feed is saved to bwg_igf_feeds table
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed with unique name 'TEST_DB_PERSIST_67'** - ✅ VERIFIED
+   - Navigated to Feed Editor (admin.php?page=bwg-igf-feeds&action=new)
+   - Entered Feed Name: "TEST_DB_PERSIST_67"
+   - Entered Instagram Username: "testuser_persist"
+   - Clicked "Create Feed" button
+   - Feed appeared in Feeds list with ID 3
+   - Screenshot: feature-67-feed-persisted-in-list.png
+
+2. **Step 2: Query database for feed** - ✅ VERIFIED
+   - Executed direct database query using docker exec
+   - Feed record found in wp_bwg_igf_feeds table
+
+3. **Step 3: Verify feed record exists** - ✅ VERIFIED
+   - Record exists with id=3
+   - Name: "TEST_DB_PERSIST_67"
+   - Slug: "test_db_persist_67" (auto-generated)
+   - Status: "active"
+
+4. **Step 4: Verify all fields saved correctly** - ✅ VERIFIED
+   - **Source fields:**
+     - name: "TEST_DB_PERSIST_67" ✓
+     - slug: "test_db_persist_67" ✓
+     - feed_type: "public" ✓
+     - instagram_usernames: "testuser_persist" ✓
+   - **Layout settings:**
+     - layout_type: "grid" ✓
+     - layout_settings: {"columns":3,"gap":10} ✓
+   - **Display settings:**
+     - display_settings: {"show_likes":1,"show_comments":1,"show_caption":0,"show_follow_button":1} ✓
+     - post_count: 9 ✓
+   - **Styling settings:**
+     - styling_settings: {"background_color":"","border_radius":0,"hover_effect":"none","custom_css":""} ✓
+   - **Popup settings:**
+     - popup_settings: {"enabled":1} ✓
+   - **Advanced settings:**
+     - ordering: "newest" ✓
+     - cache_duration: 3600 (1 hour) ✓
+   - **Metadata:**
+     - created_at: 2026-01-24 20:07:35 ✓
+     - updated_at: 2026-01-24 20:07:35 ✓
+
+### UI Verification
+- Verified all tabs in Edit Feed page show correct values:
+  - Source tab: Feed Name, Feed Type, Instagram Username(s) ✓
+  - Layout tab: Layout Type (Grid), Columns (3), Gap (10) ✓
+  - Display tab: Number of Posts (9), checkboxes correctly set ✓
+  - Advanced tab: Post Ordering (Newest First), Cache Duration (1 Hour) ✓
+
+### Screenshots
+- feature-67-feed-persisted-in-list.png - Feeds list showing new feed
+- feature-67-feed-editor-source-tab.png - Source tab with saved values
+- feature-67-feed-editor-advanced-tab.png - Advanced tab with saved values
+
+### Cleanup
+- Deleted test feed "TEST_DB_PERSIST_67" after verification
+- Verified deletion removed record from database
+
+### Console Errors: None detected
+
+### Current Status
+- Total features: 149
+- Passing: 44 (updated)
+- Percentage: ~29.5%
+
+[Feature #67 completed and verified]
+# BWG Instagram Feed - Development Progress
 
 ## Session: 2026-01-24 (Feature #66 - Quick Links on Dashboard)
 
@@ -5197,3 +5275,94 @@ Feature #52 PASSES regression testing. The AJAX capability checks are working co
 - Percentage: ~29.5%
 
 [Feature #65 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Regression Test - Feature #57)
+
+### Feature Tested
+- **Feature #57: Cannot access other feed data via ID manipulation** - STILL PASSING ✅
+
+### Regression Test Verification
+
+Verified that the security feature continues to work correctly:
+
+1. **Frontend shortcode with non-existent ID 999**: Returns 'Feed not found or inactive.' - generic message
+2. **Admin edit page with non-existent feed_id=999**: Redirects to 'Create New Feed' form
+3. **AJAX duplicate_feed with ID 999**: Returns {success:false, message:'Feed not found.'}
+4. **AJAX delete_feed with ID 999**: Returns {success:false, message:'Feed not found.'}
+5. **AJAX refresh_cache with ID 999**: Returns {success:false, message:'Feed not found.'}
+
+### Security Checks Verified
+- Nonce verification (CSRF protection) - working
+- Capability check (manage_options) - working
+- Feed existence check before operations - working
+- Generic error messages (no information leakage) - working
+
+### Console Errors: None
+
+### Screenshots
+- feature-57-regression-nonexistent-feed-edit.png - Admin redirects to create form for non-existent ID
+- feature-57-regression-feeds-list.png - Feeds list showing existing feeds
+
+[Testing] Feature #57 regression test complete - STILL PASSING
+
+
+---
+
+## Session: 2026-01-24 (Regression Test - Feature #4)
+
+### Regression Test: Feature #4 - Dashboard page loads correctly
+
+**Status:** ✅ PASSED - No regression found
+
+**Feature Details:**
+- **Category:** functional  
+- **Name:** Dashboard page loads correctly
+- **Description:** Main plugin dashboard page renders without errors
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to BWG Instagram Feed menu item** - ✅ VERIFIED
+   - Clicked "Instagram Feed" in WordPress admin menu
+   - Successfully navigated to admin.php?page=bwg-igf
+
+2. **Step 2: Verify dashboard page loads** - ✅ VERIFIED
+   - Page loaded without errors
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf
+
+3. **Step 3: Verify plugin branding header displays** - ✅ VERIFIED
+   - Instagram icon logo visible
+   - "BWG Instagram Feed" heading displayed
+   - "by Boston Web Group" attribution shows
+
+4. **Step 4: Verify quick stats section shows** - ✅ VERIFIED
+   - "Quick Stats" section visible
+   - Shows "Total Feeds: 2"
+   - Shows "Connected Accounts: 1"
+
+5. **Step 5: Verify getting started guide is visible** - ✅ VERIFIED
+   - "Getting Started" section displays
+   - Shows 4 numbered steps for new users
+
+6. **Step 6: Check for any JavaScript console errors** - ✅ VERIFIED
+   - No console errors detected
+
+### Additional Verified
+- "Quick Links" section with Create New Feed, View All Feeds, Settings buttons
+- "Need Help?" section with Visit Support Center link
+- All navigation submenu items visible
+
+### Console Errors: None detected
+
+### Screenshot
+- feature-4-dashboard-regression.png
+
+### Current Status
+- Total features: 149
+- Passing: 48
+- Percentage: ~32.2%
+
+[Regression test completed - Feature #4 verified]
+
