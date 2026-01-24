@@ -610,6 +610,30 @@
     max-width: 400px;
 }
 
+/* User Not Found Warning */
+.bwg-igf-user-not-found-warning {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border: 2px solid #ffb74d;
+}
+
+.bwg-igf-user-not-found-warning .bwg-igf-empty-state-icon {
+    background: linear-gradient(45deg, #ff9800 0%, #f57c00 50%, #e65100 100%);
+    opacity: 0.9;
+}
+
+.bwg-igf-user-not-found-warning .bwg-igf-empty-state-icon svg {
+    fill: #fff;
+}
+
+.bwg-igf-user-not-found-warning h3 {
+    color: #e65100;
+}
+
+.bwg-igf-user-not-found-warning p {
+    color: #bf360c;
+    max-width: 400px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .bwg-igf-grid-4,

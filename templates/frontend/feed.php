@@ -295,15 +295,30 @@ if ( ! empty( $custom_css ) ) :
         </div>
     <?php elseif ( empty( $posts ) ) : ?>
         <?php
-        // Check if this is a private account error
+        // Determine the type of error for display purposes
         $is_private_account = strpos( $no_cache_message, 'private' ) !== false || strpos( $no_cache_message, 'Private' ) !== false;
+        $is_user_not_found = strpos( $no_cache_message, 'not found' ) !== false || strpos( $no_cache_message, 'was not found' ) !== false;
+        $has_error = ! empty( $no_cache_message );
+
+        // Determine the appropriate warning style
+        $warning_class = '';
+        if ( $is_private_account ) {
+            $warning_class = 'bwg-igf-private-account-warning';
+        } elseif ( $is_user_not_found ) {
+            $warning_class = 'bwg-igf-user-not-found-warning';
+        }
         ?>
-        <div class="bwg-igf-empty-state <?php echo $is_private_account ? 'bwg-igf-private-account-warning' : ''; ?>">
+        <div class="bwg-igf-empty-state <?php echo esc_attr( $warning_class ); ?>">
             <div class="bwg-igf-empty-state-icon">
                 <?php if ( $is_private_account ) : ?>
                     <!-- Lock icon for private accounts -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
                         <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                    </svg>
+                <?php elseif ( $is_user_not_found ) : ?>
+                    <!-- Question mark icon for user not found -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
                     </svg>
                 <?php else : ?>
                     <!-- Instagram icon for other errors -->
@@ -316,6 +331,8 @@ if ( ! empty( $custom_css ) ) :
                 <?php
                 if ( $is_private_account ) {
                     esc_html_e( 'Private Account', 'bwg-instagram-feed' );
+                } elseif ( $is_user_not_found ) {
+                    esc_html_e( 'User Not Found', 'bwg-instagram-feed' );
                 } else {
                     esc_html_e( 'No Posts Found', 'bwg-instagram-feed' );
                 }
