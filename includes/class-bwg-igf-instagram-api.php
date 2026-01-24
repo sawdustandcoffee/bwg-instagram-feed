@@ -475,6 +475,89 @@ class BWG_IGF_Instagram_API {
     }
 
     /**
+     * Generate mock posts with extra long captions for responsive testing.
+     *
+     * This tests that long text doesn't break the layout.
+     *
+     * @param int $count Number of posts to generate.
+     * @return array Array of mock posts with long captions.
+     */
+    private function generate_long_caption_posts( $count = 12 ) {
+        $posts = array();
+        $base_timestamp = time();
+
+        $placeholder_colors = array(
+            'e91e63', '9c27b0', '673ab7', '3f51b5',
+            '2196f3', '03a9f4', '00bcd4', '009688',
+            '4caf50', '8bc34a', 'cddc39', 'ffc107',
+        );
+
+        // Various long caption samples for testing
+        $long_captions = array(
+            // Very long single paragraph
+            'This is an extremely long Instagram caption that tests how the feed handles very lengthy text content. It includes multiple sentences that go on and on to verify that the layout does not break when users write detailed descriptions for their posts. This is common for travel bloggers, food reviewers, and lifestyle influencers who write extensive stories about their experiences. #longcaption #testing #responsive #layout #design #instagram #feed #wordpress #plugin #developer',
+
+            // Long caption with many hashtags
+            'Beautiful sunset view from the mountaintop! What an incredible journey to get here. The hike took 6 hours but was totally worth it. #sunset #mountain #hiking #adventure #travel #wanderlust #nature #photography #landscape #beautiful #amazing #incredible #breathtaking #stunning #gorgeous #perfectview #mountainlife #hikerlife #outdoors #explore #discover #neverstopexploring #getoutside #lifeofadventure #wildernessculture',
+
+            // Caption with special characters and emojis description
+            'Testing special characters: quotes "double" and \'single\', ampersand & symbol, less < than > greater, plus apostrophe\'s and unicode: café, naïve, resumé. Also testing numbers: 12345 and symbols: @#$%^&*()!',
+
+            // Very long continuous text without breaks (stress test)
+            'ThisIsAVeryLongWordWithoutAnySpacesOrBreaksThatTestsHowTheLayoutHandlesUnbreakableContentWhichCanHappenWhenUsersIncludeLongURLsOrHashtagsOrOtherContinuousTextThatTheSystemMustHandleGracefully',
+
+            // Multi-line caption with line breaks
+            "Line one of the caption with some text.\n\nLine two after a double break.\n\nLine three with more content that continues on and provides additional context about this amazing photo I took yesterday while exploring the city streets.",
+
+            // Caption with mentions and locations
+            'Amazing day with @friend1 @friend2 @friend3 at the most incredible location ever! Thanks to @photographer for capturing these moments. Shot on location at Super Long Location Name That Goes On And On Boulevard, Extremely Long City Name, Very Long State Name, Country With A Really Long Name 12345-6789',
+
+            // Short caption (control test)
+            'Short and sweet! ✨',
+
+            // Medium caption
+            'A perfectly normal caption length that most users would write. Not too long, not too short. Just right for testing the baseline behavior.',
+
+            // Long caption with formatting
+            '🌟 HUGE ANNOUNCEMENT 🌟\n\n📍 Location: Amazing Place\n📅 Date: January 24, 2026\n⏰ Time: All day long\n\n✨ Details: This is where we put all the important information about the event or announcement that we are making.\n\n👇 Comment below if you are interested!\n\n#announcement #exciting #news #update #followme #like #share #comment',
+
+            // Technical content (long)
+            'Testing the BWG Instagram Feed WordPress plugin for proper handling of long captions. This plugin should properly truncate or wrap text to prevent horizontal overflow and maintain a clean, responsive layout across all device sizes including mobile phones, tablets, and desktop computers.',
+
+            // Many emoji caption
+            '🎉🎊🎈🎁🎀🎄🎃🎆🎇✨💫⭐🌟💥💢💦💨🕊️🦋🌸🌺🌻🌹🌷🌼💐🍀☘️🌿🌱🌴🌵🌾🍁🍂🍃🪴',
+
+            // Very long URL-like text
+            'Check out my website: https://www.example-website-with-a-very-long-domain-name-that-tests-url-truncation.com/path/to/some/very/deep/nested/page/with/lots/of/parameters?query=string&and=more&parameters=here',
+        );
+
+        for ( $i = 0; $i < $count; $i++ ) {
+            $color = $placeholder_colors[ $i % count( $placeholder_colors ) ];
+            $post_num = $i + 1;
+            $caption = $long_captions[ $i % count( $long_captions ) ];
+
+            $placeholder_url = sprintf(
+                'https://placehold.co/640x640/%s/ffffff?text=Long+Caption+%d',
+                $color,
+                $post_num
+            );
+
+            $posts[] = array(
+                'thumbnail'  => $placeholder_url,
+                'full_image' => $placeholder_url,
+                'caption'    => $caption,
+                'likes'      => rand( 50, 5000 ),
+                'comments'   => rand( 5, 500 ),
+                'link'       => sprintf( 'https://instagram.com/p/longtest%d/', $post_num ),
+                'timestamp'  => $base_timestamp - ( $i * 3600 ),
+                'id'         => sprintf( 'longcaption_%d', $post_num ),
+            );
+        }
+
+        return $posts;
+    }
+
+    /**
      * Fetch posts for multiple usernames and combine them.
      *
      * @param array $usernames Array of Instagram usernames.
@@ -535,7 +618,7 @@ class BWG_IGF_Instagram_API {
 
         // Test mode: allow specific test usernames without API validation.
         // This enables automated testing without hitting Instagram's rate limits.
-        $test_usernames = array( 'testuser', 'testaccount', 'democount' );
+        $test_usernames = array( 'testuser', 'testaccount', 'democount', 'longcaptiontest' );
         if ( in_array( strtolower( $username ), $test_usernames, true ) ) {
             $result['valid']  = true;
             $result['exists'] = true;
