@@ -455,7 +455,10 @@
         this.dots = element.querySelectorAll('.bwg-igf-slider-dot');
 
         this.currentIndex = 0;
-        this.slidesToShow = parseInt(element.dataset.slidesToShow) || 1;
+        // Store the original configured value
+        this.configuredSlidesToShow = parseInt(element.dataset.slidesToShow) || 3;
+        // Calculate responsive slidesToShow based on viewport
+        this.slidesToShow = this.getResponsiveSlidesToShow();
         this.autoplay = element.dataset.autoplay === 'true';
         this.autoplaySpeed = parseInt(element.dataset.autoplaySpeed) || 3000;
         this.infinite = element.dataset.infinite === 'true';
@@ -474,6 +477,63 @@
 
             // Handle touch events
             this.initTouch();
+
+            // Handle resize events for responsive behavior
+            this.initResponsive();
+        },
+
+        /**
+         * Calculate the number of slides to show based on viewport width
+         * Mobile (< 480px): 1 slide
+         * Tablet (< 768px): 2 slides or configured value (whichever is smaller)
+         * Desktop: configured value
+         */
+        getResponsiveSlidesToShow: function() {
+            var viewportWidth = window.innerWidth;
+            var configured = this.configuredSlidesToShow;
+
+            if (viewportWidth < 480) {
+                // Mobile: always show 1 slide
+                return 1;
+            } else if (viewportWidth < 768) {
+                // Tablet: show 2 slides or configured value (whichever is smaller)
+                return Math.min(configured, 2);
+            } else {
+                // Desktop: show configured value
+                return configured;
+            }
+        },
+
+        /**
+         * Initialize responsive resize handling
+         */
+        initResponsive: function() {
+            var self = this;
+            var resizeTimeout;
+
+            window.addEventListener('resize', function() {
+                // Debounce resize events
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    self.handleResize();
+                }, 100);
+            });
+        },
+
+        /**
+         * Handle viewport resize - recalculate slides to show
+         */
+        handleResize: function() {
+            var newSlidesToShow = this.getResponsiveSlidesToShow();
+
+            // Only update if the value changed
+            if (newSlidesToShow !== this.slidesToShow) {
+                this.slidesToShow = newSlidesToShow;
+                this.updateSlideWidth();
+
+                // Reset to first slide to avoid index issues
+                this.goTo(0);
+            }
         },
 
         bindEvents: function() {
@@ -607,6 +667,7 @@
         init: function() {
             this.createPopup();
             this.bindEvents();
+            this.initTouch();
         },
 
         createPopup: function() {
@@ -731,6 +792,51 @@
         prev: function() {
             this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
             this.updateContent();
+        },
+
+        initTouch: function() {
+            var self = this;
+            var startX = null;
+            var startY = null;
+            var moveX = null;
+            var moveY = null;
+
+            this.popup.addEventListener('touchstart', function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientX;
+            }, { passive: true });
+
+            this.popup.addEventListener('touchmove', function(e) {
+                moveX = e.touches[0].clientX;
+                moveY = e.touches[0].clientY;
+            }, { passive: true });
+
+            this.popup.addEventListener('touchend', function() {
+                if (!self.popup.classList.contains('active')) {
+                    return;
+                }
+
+                if (startX !== null && moveX !== null) {
+                    var diffX = startX - moveX;
+                    var diffY = startY - moveY;
+
+                    // Only respond to horizontal swipes (ignore vertical scrolling)
+                    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                        if (diffX > 0) {
+                            // Swipe left = next
+                            self.next();
+                        } else {
+                            // Swipe right = prev
+                            self.prev();
+                        }
+                    }
+                }
+
+                startX = null;
+                startY = null;
+                moveX = null;
+                moveY = null;
+            });
         }
     };
 

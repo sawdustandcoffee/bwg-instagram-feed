@@ -52,6 +52,14 @@ $background_color = isset( $styling_settings['background_color'] ) ? $styling_se
 $popup_enabled = isset( $popup_settings['enabled'] ) ? $popup_settings['enabled'] : true;
 $custom_css = isset( $styling_settings['custom_css'] ) ? $styling_settings['custom_css'] : '';
 
+// Slider defaults
+$slides_to_show = isset( $layout_settings['slides_to_show'] ) ? absint( $layout_settings['slides_to_show'] ) : 3;
+$autoplay = ! empty( $layout_settings['autoplay'] );
+$autoplay_speed = isset( $layout_settings['autoplay_speed'] ) ? absint( $layout_settings['autoplay_speed'] ) : 3000;
+$infinite = isset( $layout_settings['infinite'] ) ? (bool) $layout_settings['infinite'] : true;
+$show_arrows = isset( $layout_settings['show_arrows'] ) ? (bool) $layout_settings['show_arrows'] : true;
+$show_dots = isset( $layout_settings['show_dots'] ) ? (bool) $layout_settings['show_dots'] : true;
+
 // Check if we have cached posts
 global $wpdb;
 $cache_data = $wpdb->get_var( $wpdb->prepare(
@@ -266,6 +274,12 @@ if ( ! empty( $custom_css ) ) :
     data-show-likes="<?php echo ! empty( $display_settings['show_likes'] ) ? 'true' : 'false'; ?>"
     data-show-comments="<?php echo ! empty( $display_settings['show_comments'] ) ? 'true' : 'false'; ?>"
     data-show-follow="<?php echo ! empty( $display_settings['show_follow_button'] ) ? 'true' : 'false'; ?>"
+    <?php if ( 'slider' === $feed->layout_type ) : ?>
+    data-slides-to-show="<?php echo esc_attr( $slides_to_show ); ?>"
+    data-autoplay="<?php echo $autoplay ? 'true' : 'false'; ?>"
+    data-autoplay-speed="<?php echo esc_attr( $autoplay_speed ); ?>"
+    data-infinite="<?php echo $infinite ? 'true' : 'false'; ?>"
+    <?php endif; ?>
     style="<?php echo esc_attr( implode( '; ', $custom_styles ) ); ?>"
 >
     <?php if ( ! empty( $rate_limit_warning ) ) : ?>
@@ -296,7 +310,8 @@ if ( ! empty( $custom_css ) ) :
     <?php elseif ( empty( $posts ) ) : ?>
         <?php
         // Determine the type of error for display purposes
-        $is_private_account = strpos( $no_cache_message, 'private' ) !== false || strpos( $no_cache_message, 'Private' ) !== false;
+        // Check for "is private" phrase to avoid false matches with usernames containing "private"
+        $is_private_account = strpos( $no_cache_message, 'is private' ) !== false || strpos( $no_cache_message, 'Private accounts cannot' ) !== false;
         $is_user_not_found = strpos( $no_cache_message, 'not found' ) !== false || strpos( $no_cache_message, 'was not found' ) !== false;
         $has_error = ! empty( $no_cache_message );
 

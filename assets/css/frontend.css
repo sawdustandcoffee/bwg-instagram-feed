@@ -644,10 +644,53 @@
 
     .bwg-igf-popup-content {
         flex-direction: column;
+        max-width: 95vw;
+        max-height: 95vh;
+        gap: 15px;
+    }
+
+    .bwg-igf-popup-image {
+        max-width: 100%;
+        max-height: 50vh;
+        width: auto;
     }
 
     .bwg-igf-popup-details {
         width: auto;
+        max-width: 100%;
+        padding: 0 10px 10px;
+        overflow-y: auto;
+        max-height: 40vh;
+    }
+
+    /* Larger close button for touch targets */
+    .bwg-igf-popup-close {
+        width: 44px;
+        height: 44px;
+        top: 10px;
+        right: 10px;
+        font-size: 32px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    /* Mobile-friendly nav buttons */
+    .bwg-igf-popup-nav {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+    }
+
+    .bwg-igf-popup-prev {
+        left: 10px;
+    }
+
+    .bwg-igf-popup-next {
+        right: 10px;
     }
 }
 
@@ -657,5 +700,79 @@
     .bwg-igf-grid-5,
     .bwg-igf-grid-6 {
         grid-template-columns: repeat(1, 1fr);
+    }
+
+    /* Full-screen popup on small screens */
+    .bwg-igf-popup {
+        padding: 0;
+    }
+
+    .bwg-igf-popup-content {
+        max-width: 100vw;
+        max-height: 100vh;
+        width: 100%;
+        height: 100%;
+        gap: 10px;
+        padding: 50px 0 0;
+        box-sizing: border-box;
+        justify-content: flex-start;
+    }
+
+    .bwg-igf-popup-image {
+        max-width: 100%;
+        max-height: 45vh;
+        width: 100%;
+        object-fit: contain;
+    }
+
+    .bwg-igf-popup-details {
+        padding: 10px 15px 20px;
+        max-height: calc(55vh - 60px);
+        overflow-y: auto;
+    }
+
+    .bwg-igf-popup-caption {
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .bwg-igf-popup-stats {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .bwg-igf-popup-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    /* Ensure close button is always visible and accessible */
+    .bwg-igf-popup-close {
+        position: fixed;
+        top: 5px;
+        right: 5px;
+        z-index: 100;
+    }
+
+    /* Position nav buttons in the middle of image area */
+    .bwg-igf-popup-nav {
+        top: calc(50px + 22.5vh);
+    }
+
+    .bwg-igf-popup-prev {
+        left: 5px;
+    }
+
+    .bwg-igf-popup-next {
+        right: 5px;
     }
 }

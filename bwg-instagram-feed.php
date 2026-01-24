@@ -325,6 +325,7 @@ final class BWG_Instagram_Feed {
                     'saved'            => __( 'Saved!', 'bwg-instagram-feed' ),
                     'error'            => __( 'An error occurred. Please try again.', 'bwg-instagram-feed' ),
                     'feedNameRequired' => __( 'Feed name is required.', 'bwg-instagram-feed' ),
+                    'feedDeleted'      => __( 'Feed deleted successfully!', 'bwg-instagram-feed' ),
                 ),
             )
         );

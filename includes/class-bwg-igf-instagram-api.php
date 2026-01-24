@@ -60,6 +60,11 @@ class BWG_IGF_Instagram_API {
             return $this->generate_mock_posts( $username, $count );
         }
 
+        // Test mode: return mock data with extra long captions for responsive testing.
+        if ( 'longcaptiontest' === strtolower( $username ) ) {
+            return $this->generate_long_caption_posts( $count );
+        }
+
         // Test mode: simulate a private account error for testing.
         $private_test_usernames = array( 'testprivate', 'privatetestaccount' );
         if ( in_array( strtolower( $username ), $private_test_usernames, true ) ) {
