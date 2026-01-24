@@ -48,6 +48,7 @@ $hover_effect = isset( $styling_settings['hover_effect'] ) ? $styling_settings['
 $border_radius = isset( $styling_settings['border_radius'] ) ? absint( $styling_settings['border_radius'] ) : 0;
 $background_color = isset( $styling_settings['background_color'] ) ? $styling_settings['background_color'] : '';
 $popup_enabled = isset( $popup_settings['enabled'] ) ? $popup_settings['enabled'] : true;
+$custom_css = isset( $styling_settings['custom_css'] ) ? $styling_settings['custom_css'] : '';
 
 // Get cached posts
 global $wpdb;
@@ -66,6 +67,7 @@ if ( $cache_data ) {
 $show_demo = empty( $posts ) && ( ! empty( $feed->instagram_usernames ) );
 if ( $show_demo ) {
     // Generate sample demo posts for testing popup navigation
+    // Each post has a timestamp to test ordering functionality
     $demo_images = array(
         'https://picsum.photos/seed/bwg1/640/640',
         'https://picsum.photos/seed/bwg2/640/640',
@@ -79,16 +81,19 @@ if ( $show_demo ) {
     );
 
     $demo_captions = array(
-        'Exploring nature\'s beauty 🌿 #nature #photography',
-        'City lights and late nights ✨ #cityscape #urban',
-        'Coffee and good vibes ☕ #coffee #lifestyle',
-        'Adventure awaits! 🏔️ #travel #adventure',
-        'Sunset magic 🌅 #sunset #golden',
-        'Simple moments, big joy 💫 #minimalist',
-        'Weekend getaway 🚗 #roadtrip #explore',
-        'Art in everyday life 🎨 #creative #design',
-        'Fresh start, fresh perspective 🌱 #motivation',
+        'Post #1 (Oldest) - Exploring nature\'s beauty 🌿 #nature #photography',
+        'Post #2 - City lights and late nights ✨ #cityscape #urban',
+        'Post #3 - Coffee and good vibes ☕ #coffee #lifestyle',
+        'Post #4 - Adventure awaits! 🏔️ #travel #adventure',
+        'Post #5 - Sunset magic 🌅 #sunset #golden',
+        'Post #6 - Simple moments, big joy 💫 #minimalist',
+        'Post #7 - Weekend getaway 🚗 #roadtrip #explore',
+        'Post #8 - Art in everyday life 🎨 #creative #design',
+        'Post #9 (Newest) - Fresh start, fresh perspective 🌱 #motivation',
     );
+
+    // Generate timestamps - older posts have earlier timestamps
+    $base_time = strtotime( '-9 days' );
 
     $post_count = min( absint( $feed->post_count ) ?: 9, 9 );
     for ( $i = 0; $i < $post_count; $i++ ) {
@@ -96,10 +101,59 @@ if ( $show_demo ) {
             'thumbnail'  => $demo_images[ $i ],
             'full_image' => str_replace( '640/640', '1080/1080', $demo_images[ $i ] ),
             'caption'    => $demo_captions[ $i ],
-            'likes'      => rand( 100, 5000 ),
-            'comments'   => rand( 5, 200 ),
+            'likes'      => ( $i + 1 ) * 500 + rand( 0, 100 ), // Likes increase with newer posts
+            'comments'   => ( $i + 1 ) * 20 + rand( 0, 10 ),   // Comments increase with newer posts
             'link'       => 'https://instagram.com/p/demo' . ( $i + 1 ),
+            'timestamp'  => $base_time + ( $i * 86400 ), // Each post is 1 day apart
         );
+    }
+}
+
+// Apply ordering based on feed settings
+$ordering = isset( $feed->ordering ) ? $feed->ordering : 'newest';
+
+if ( ! empty( $posts ) ) {
+    switch ( $ordering ) {
+        case 'newest':
+            // Sort by timestamp descending (newest first)
+            usort( $posts, function( $a, $b ) {
+                $time_a = isset( $a['timestamp'] ) ? $a['timestamp'] : 0;
+                $time_b = isset( $b['timestamp'] ) ? $b['timestamp'] : 0;
+                return $time_b - $time_a;
+            });
+            break;
+
+        case 'oldest':
+            // Sort by timestamp ascending (oldest first)
+            usort( $posts, function( $a, $b ) {
+                $time_a = isset( $a['timestamp'] ) ? $a['timestamp'] : 0;
+                $time_b = isset( $b['timestamp'] ) ? $b['timestamp'] : 0;
+                return $time_a - $time_b;
+            });
+            break;
+
+        case 'random':
+            // Shuffle the posts
+            shuffle( $posts );
+            break;
+
+        case 'most_liked':
+            // Sort by likes descending
+            usort( $posts, function( $a, $b ) {
+                $likes_a = isset( $a['likes'] ) ? intval( $a['likes'] ) : 0;
+                $likes_b = isset( $b['likes'] ) ? intval( $b['likes'] ) : 0;
+                return $likes_b - $likes_a;
+            });
+            break;
+
+        case 'most_commented':
+            // Sort by comments descending
+            usort( $posts, function( $a, $b ) {
+                $comments_a = isset( $a['comments'] ) ? intval( $a['comments'] ) : 0;
+                $comments_b = isset( $b['comments'] ) ? intval( $b['comments'] ) : 0;
+                return $comments_b - $comments_a;
+            });
+            break;
     }
 }
 
@@ -131,7 +185,14 @@ if ( 'grid' === $feed->layout_type ) {
 if ( 'none' !== $hover_effect ) {
     $feed_classes[] = 'bwg-igf-hover-' . $hover_effect;
 }
+
+// Output custom CSS if provided
+if ( ! empty( $custom_css ) ) :
 ?>
+<style type="text/css" id="bwg-igf-custom-css-<?php echo esc_attr( $feed->id ); ?>">
+<?php echo wp_strip_all_tags( $custom_css ); ?>
+</style>
+<?php endif; ?>
 <div
     class="<?php echo esc_attr( implode( ' ', $feed_classes ) ); ?>"
     data-feed-id="<?php echo esc_attr( $feed->id ); ?>"
