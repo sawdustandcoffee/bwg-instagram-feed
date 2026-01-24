@@ -17,13 +17,15 @@ $feed_slug = ! empty( $atts['feed'] ) ? sanitize_title( $atts['feed'] ) : '';
 global $wpdb;
 
 if ( $feed_id > 0 ) {
+    // Include both 'active' and 'error' status feeds - error feeds may have rate limit warnings
+    // but can still display cached content
     $feed = $wpdb->get_row( $wpdb->prepare(
-        "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d AND status = 'active'",
+        "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d AND status IN ('active', 'error')",
         $feed_id
     ) );
 } elseif ( ! empty( $feed_slug ) ) {
     $feed = $wpdb->get_row( $wpdb->prepare(
-        "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE slug = %s AND status = 'active'",
+        "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE slug = %s AND status IN ('active', 'error')",
         $feed_slug
     ) );
 } else {
@@ -50,87 +52,123 @@ $background_color = isset( $styling_settings['background_color'] ) ? $styling_se
 $popup_enabled = isset( $popup_settings['enabled'] ) ? $popup_settings['enabled'] : true;
 $custom_css = isset( $styling_settings['custom_css'] ) ? $styling_settings['custom_css'] : '';
 
-// Get cached posts first
+// Check if we have cached posts
 global $wpdb;
 $cache_data = $wpdb->get_var( $wpdb->prepare(
     "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
     $feed->id
 ) );
 
-if ( $cache_data ) {
+// Determine if we have cached posts
+$has_cache = ! empty( $cache_data );
+$posts = array();
+$no_cache_message = '';
+$rate_limit_warning = '';
+
+if ( $has_cache ) {
     $posts = json_decode( $cache_data, true ) ?: array();
-} else {
-    $posts = array();
 }
 
-// If no cached posts and feed has usernames, fetch from Instagram and cache
-$no_cache_message = '';
-if ( empty( $posts ) && ! empty( $feed->instagram_usernames ) ) {
+// Also check for expired cache (useful for showing stale data during rate limiting)
+$expired_cache_data = null;
+if ( ! $has_cache ) {
+    // Get any existing cache, even if expired
+    $expired_cache_data = $wpdb->get_var( $wpdb->prepare(
+        "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d ORDER BY created_at DESC LIMIT 1",
+        $feed->id
+    ) );
+}
+
+// Determine if we need async loading (no cache but have usernames)
+// This shows a loading state while AJAX fetches the data
+$needs_async_load = empty( $posts ) && ! empty( $feed->instagram_usernames );
+
+// For private accounts, we need to try fetching synchronously to show the error
+// Otherwise, the async JS will just show loading indefinitely
+if ( $needs_async_load && ! empty( $feed->instagram_usernames ) ) {
     // Load the Instagram API class if not already loaded.
     if ( ! class_exists( 'BWG_IGF_Instagram_API' ) ) {
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
     }
 
     $instagram_api = new BWG_IGF_Instagram_API();
-
-    // Parse usernames (could be JSON array or single username).
     $usernames = json_decode( $feed->instagram_usernames, true );
     if ( ! is_array( $usernames ) ) {
-        $usernames = array_map( 'trim', explode( ',', $feed->instagram_usernames ) );
+        $usernames = array( $feed->instagram_usernames );
     }
 
-    // Clean usernames (remove @ if present).
-    $usernames = array_filter( array_map( function( $u ) {
-        return ltrim( trim( $u ), '@' );
-    }, $usernames ) );
+    // Try to fetch posts for the first username to check for errors
+    if ( ! empty( $usernames[0] ) ) {
+        $fetched_posts = $instagram_api->get_posts( $usernames[0], 12 );
 
-    $post_count = absint( $feed->post_count ) ?: 9;
+        if ( is_wp_error( $fetched_posts ) ) {
+            // Store specific error message based on error type
+            $error_code = $fetched_posts->get_error_code();
+            $error_message = $fetched_posts->get_error_message();
 
-    // Fetch posts from Instagram.
-    if ( count( $usernames ) === 1 ) {
-        $fetched_posts = $instagram_api->fetch_public_posts( $usernames[0], $post_count );
-    } else {
-        $fetched_posts = $instagram_api->fetch_combined_posts( $usernames, $post_count );
+            // Check for private account error specifically
+            if ( 'private_account' === $error_code ) {
+                $no_cache_message = sprintf(
+                    /* translators: %s: Instagram username */
+                    __( 'This Instagram account (@%s) is private. Private accounts cannot be displayed without authentication.', 'bwg-instagram-feed' ),
+                    esc_html( $usernames[0] )
+                );
+                $needs_async_load = false; // Don't show loading, show error
+            } elseif ( 'user_not_found' === $error_code ) {
+                $no_cache_message = sprintf(
+                    /* translators: %s: Instagram username */
+                    __( 'Instagram user "@%s" was not found. Please check the username and try again.', 'bwg-instagram-feed' ),
+                    esc_html( $usernames[0] )
+                );
+                $needs_async_load = false;
+            } else {
+                $no_cache_message = sprintf(
+                    /* translators: %s: Error message */
+                    __( 'Could not fetch Instagram posts: %s', 'bwg-instagram-feed' ),
+                    $error_message
+                );
+                // Keep async load for other errors (might be temporary)
+            }
+        } elseif ( is_array( $fetched_posts ) && ! empty( $fetched_posts ) ) {
+            // Successfully fetched posts, use them
+            $posts = $fetched_posts;
+            $needs_async_load = false;
+
+            // Cache the posts for future use
+            $wpdb->insert(
+                $wpdb->prefix . 'bwg_igf_cache',
+                array(
+                    'feed_id'    => $feed->id,
+                    'cache_data' => wp_json_encode( $posts ),
+                    'expires_at' => gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour' ) ),
+                    'created_at' => current_time( 'mysql' ),
+                ),
+                array( '%d', '%s', '%s', '%s' )
+            );
+        }
+    }
+}
+
+// Check if there's a rate limit error stored for this feed
+$feed_status = $feed->status ?? 'active';
+$feed_error = $feed->error_message ?? '';
+$is_rate_limited = ( 'error' === $feed_status &&
+    ( stripos( $feed_error, 'rate' ) !== false ||
+      stripos( $feed_error, 'limit' ) !== false ||
+      stripos( $feed_error, 'temporarily' ) !== false ) );
+
+// If rate limited but we have cached/expired data, show the data with a warning
+if ( $is_rate_limited ) {
+    $rate_limit_warning = __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing. Showing cached posts below.', 'bwg-instagram-feed' );
+
+    // If no current cache but have expired cache, use expired cache
+    if ( empty( $posts ) && ! empty( $expired_cache_data ) ) {
+        $posts = json_decode( $expired_cache_data, true ) ?: array();
+        $rate_limit_warning = __( 'Instagram is temporarily limiting requests. Showing previously cached posts. Please wait a few minutes and try again.', 'bwg-instagram-feed' );
     }
 
-    // Check if we got valid posts (not an error).
-    if ( ! is_wp_error( $fetched_posts ) && ! empty( $fetched_posts ) ) {
-        $posts = $fetched_posts;
-
-        // Cache the fetched posts.
-        $cache_duration = absint( $feed->cache_duration ) ?: 3600;
-        $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
-        $cache_key = 'feed_' . $feed->id . '_' . md5( wp_json_encode( $posts ) );
-
-        // Delete old cache entries for this feed.
-        $wpdb->delete(
-            $wpdb->prefix . 'bwg_igf_cache',
-            array( 'feed_id' => $feed->id ),
-            array( '%d' )
-        );
-
-        // Insert new cache entry with real Instagram data.
-        $wpdb->insert(
-            $wpdb->prefix . 'bwg_igf_cache',
-            array(
-                'feed_id'    => $feed->id,
-                'cache_key'  => $cache_key,
-                'cache_data' => wp_json_encode( $posts ),
-                'created_at' => current_time( 'mysql' ),
-                'expires_at' => $expires_at,
-            ),
-            array( '%d', '%s', '%s', '%s', '%s' )
-        );
-    } else {
-        // Real Instagram data could not be fetched - do NOT use placeholder/mock data.
-        // Instead, display an informative error message to the user.
-        $error_detail = is_wp_error( $fetched_posts ) ? $fetched_posts->get_error_message() : __( 'No posts found.', 'bwg-instagram-feed' );
-        $no_cache_message = sprintf(
-            /* translators: %s: error detail */
-            __( 'Could not fetch Instagram posts: %s', 'bwg-instagram-feed' ),
-            $error_detail
-        );
-    }
+    // Don't show loading state if rate limited
+    $needs_async_load = false;
 }
 
 // Apply ordering based on feed settings
@@ -218,14 +256,80 @@ if ( ! empty( $custom_css ) ) :
 </style>
 <?php endif; ?>
 <div
-    class="<?php echo esc_attr( implode( ' ', $feed_classes ) ); ?>"
+    class="<?php echo esc_attr( implode( ' ', $feed_classes ) ); ?><?php echo $needs_async_load ? ' bwg-igf-loading-feed' : ''; ?>"
     data-feed-id="<?php echo esc_attr( $feed->id ); ?>"
     data-popup="<?php echo $popup_enabled ? 'true' : 'false'; ?>"
+    data-needs-load="<?php echo $needs_async_load ? 'true' : 'false'; ?>"
+    data-layout-type="<?php echo esc_attr( $feed->layout_type ); ?>"
+    data-columns="<?php echo esc_attr( $columns ); ?>"
+    data-hover-effect="<?php echo esc_attr( $hover_effect ); ?>"
+    data-show-likes="<?php echo ! empty( $display_settings['show_likes'] ) ? 'true' : 'false'; ?>"
+    data-show-comments="<?php echo ! empty( $display_settings['show_comments'] ) ? 'true' : 'false'; ?>"
+    data-show-follow="<?php echo ! empty( $display_settings['show_follow_button'] ) ? 'true' : 'false'; ?>"
     style="<?php echo esc_attr( implode( '; ', $custom_styles ) ); ?>"
 >
-    <?php if ( empty( $posts ) ) : ?>
-        <div class="bwg-igf-empty-state">
-            <p><?php echo esc_html( $no_cache_message ?: __( 'No posts to display.', 'bwg-instagram-feed' ) ); ?></p>
+    <?php if ( ! empty( $rate_limit_warning ) ) : ?>
+        <!-- Rate Limit Warning Banner -->
+        <div class="bwg-igf-rate-limit-warning" role="alert">
+            <div class="bwg-igf-rate-limit-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <div class="bwg-igf-rate-limit-text">
+                <strong><?php esc_html_e( 'Rate Limit Reached', 'bwg-instagram-feed' ); ?></strong>
+                <p><?php echo esc_html( $rate_limit_warning ); ?></p>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ( $needs_async_load ) : ?>
+        <!-- Loading State - displayed while fetching Instagram data via AJAX -->
+        <div class="bwg-igf-loading" role="status" aria-live="polite" aria-label="<?php esc_attr_e( 'Loading Instagram feed...', 'bwg-instagram-feed' ); ?>">
+            <div class="bwg-igf-loading-content">
+                <div class="bwg-igf-spinner"></div>
+                <p class="bwg-igf-loading-text"><?php esc_html_e( 'Loading Instagram feed...', 'bwg-instagram-feed' ); ?></p>
+            </div>
+        </div>
+    <?php elseif ( empty( $posts ) ) : ?>
+        <?php
+        // Check if this is a private account error
+        $is_private_account = strpos( $no_cache_message, 'private' ) !== false || strpos( $no_cache_message, 'Private' ) !== false;
+        ?>
+        <div class="bwg-igf-empty-state <?php echo $is_private_account ? 'bwg-igf-private-account-warning' : ''; ?>">
+            <div class="bwg-igf-empty-state-icon">
+                <?php if ( $is_private_account ) : ?>
+                    <!-- Lock icon for private accounts -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                    </svg>
+                <?php else : ?>
+                    <!-- Instagram icon for other errors -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                <?php endif; ?>
+            </div>
+            <h3>
+                <?php
+                if ( $is_private_account ) {
+                    esc_html_e( 'Private Account', 'bwg-instagram-feed' );
+                } else {
+                    esc_html_e( 'No Posts Found', 'bwg-instagram-feed' );
+                }
+                ?>
+            </h3>
+            <p>
+                <?php
+                if ( ! empty( $no_cache_message ) ) {
+                    echo esc_html( $no_cache_message );
+                } else {
+                    esc_html_e( 'This feed doesn\'t have any posts to display yet. Please check the Instagram username or try again later.', 'bwg-instagram-feed' );
+                }
+                ?>
+            </p>
         </div>
     <?php else : ?>
         <?php if ( 'slider' === $feed->layout_type ) : ?>

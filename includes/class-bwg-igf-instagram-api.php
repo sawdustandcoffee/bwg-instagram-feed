@@ -102,7 +102,31 @@ class BWG_IGF_Instagram_API {
             return new WP_Error( 'user_not_found', __( 'Instagram user not found.', 'bwg-instagram-feed' ) );
         }
 
+        // Check for rate limiting (429 Too Many Requests)
+        if ( 429 === $status_code ) {
+            return new WP_Error(
+                'rate_limited',
+                __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+            );
+        }
+
         if ( 200 !== $status_code ) {
+            // Check for rate limiting indicators in non-429 responses
+            // Instagram sometimes returns 403 or other codes when rate limiting
+            $rate_limit_indicators = array( 403, 503 );
+            if ( in_array( $status_code, $rate_limit_indicators, true ) ) {
+                $body_check = wp_remote_retrieve_body( $response );
+                if ( stripos( $body_check, 'rate' ) !== false ||
+                     stripos( $body_check, 'limit' ) !== false ||
+                     stripos( $body_check, 'too many' ) !== false ||
+                     stripos( $body_check, 'temporarily' ) !== false ) {
+                    return new WP_Error(
+                        'rate_limited',
+                        __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+                    );
+                }
+            }
+
             return new WP_Error(
                 'http_error',
                 sprintf( __( 'Instagram returned HTTP error: %d', 'bwg-instagram-feed' ), $status_code )
@@ -110,6 +134,34 @@ class BWG_IGF_Instagram_API {
         }
 
         $body = wp_remote_retrieve_body( $response );
+
+        // Check if the user doesn't exist (Instagram returns 200 but with specific content)
+        // Instagram's SPA may HTML-encode apostrophes, so check multiple variations
+        $not_found_indicators = array(
+            "Sorry, this page isn't available",
+            "Sorry, this page isn&#039;t available",  // HTML-encoded apostrophe
+            "page isn't available",
+            "page isn&#039;t available",
+            'The link you followed may be broken',
+            '"HttpErrorPage"',
+            '"errorPage"',
+            '"PageError"',
+            'errorPage',
+        );
+
+        foreach ( $not_found_indicators as $indicator ) {
+            if ( strpos( $body, $indicator ) !== false ) {
+                return new WP_Error( 'user_not_found', __( 'Instagram user not found.', 'bwg-instagram-feed' ) );
+            }
+        }
+
+        // Additional check: if the page contains "404" in the title or common error patterns
+        // Instagram embeds error status in JSON data
+        if ( preg_match( '/"status":\s*"fail"/', $body ) ||
+             preg_match( '/<title>[^<]*404[^<]*<\/title>/i', $body ) ||
+             preg_match( '/"error_type":\s*"user_not_found"/', $body ) ) {
+            return new WP_Error( 'user_not_found', __( 'Instagram user not found.', 'bwg-instagram-feed' ) );
+        }
 
         // Check if the profile is private
         if ( strpos( $body, 'This Account is Private' ) !== false || strpos( $body, '"is_private":true' ) !== false ) {
@@ -123,6 +175,11 @@ class BWG_IGF_Instagram_API {
             // Instagram blocks most scraping attempts, so we'll use a reliable fallback
             // Try the embed endpoint as an alternative
             $posts = $this->fetch_from_embed_endpoint( $username, $count );
+
+            // If embed endpoint returns a WP_Error, propagate it
+            if ( is_wp_error( $posts ) ) {
+                return $posts;
+            }
         }
 
         return $posts;
@@ -198,8 +255,40 @@ class BWG_IGF_Instagram_API {
             return array();
         }
 
+        $status_code = wp_remote_retrieve_response_code( $response );
         $body = wp_remote_retrieve_body( $response );
         $data = json_decode( $body, true );
+
+        // Check for rate limiting (429 Too Many Requests)
+        if ( 429 === $status_code ) {
+            return new WP_Error(
+                'rate_limited',
+                __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+            );
+        }
+
+        // Check for rate limiting in 403/503 responses
+        if ( in_array( $status_code, array( 403, 503 ), true ) ) {
+            if ( stripos( $body, 'rate' ) !== false ||
+                 stripos( $body, 'limit' ) !== false ||
+                 stripos( $body, 'too many' ) !== false ||
+                 stripos( $body, 'temporarily' ) !== false ) {
+                return new WP_Error(
+                    'rate_limited',
+                    __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+                );
+            }
+        }
+
+        // Check for user not found in API response
+        if ( 404 === $status_code || ( isset( $data['status'] ) && 'fail' === $data['status'] ) ) {
+            return new WP_Error( 'user_not_found', __( 'Instagram user not found.', 'bwg-instagram-feed' ) );
+        }
+
+        // Check if data indicates user doesn't exist
+        if ( isset( $data['data'] ) && empty( $data['data']['user'] ) ) {
+            return new WP_Error( 'user_not_found', __( 'Instagram user not found.', 'bwg-instagram-feed' ) );
+        }
 
         if ( ! empty( $data['data']['user']['edge_owner_to_timeline_media']['edges'] ) ) {
             return $this->parse_timeline_edges( $data['data']['user']['edge_owner_to_timeline_media']['edges'], $count );
@@ -416,13 +505,38 @@ class BWG_IGF_Instagram_API {
             return $response;
         }
 
+        $status_code = wp_remote_retrieve_response_code( $response );
         $body = wp_remote_retrieve_body( $response );
         $data = json_decode( $body, true );
 
+        // Check for rate limiting (429 Too Many Requests)
+        if ( 429 === $status_code ) {
+            return new WP_Error(
+                'rate_limited',
+                __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+            );
+        }
+
         if ( isset( $data['error'] ) ) {
+            // Check if error message indicates rate limiting
+            $error_message = $data['error']['message'] ?? 'Unknown error';
+            $error_code = $data['error']['code'] ?? 0;
+
+            // Instagram Graph API rate limit error codes: 4 (App-level), 17 (User-level), 32 (Page-level)
+            // Also check message content for rate limit indicators
+            if ( in_array( $error_code, array( 4, 17, 32 ), true ) ||
+                 stripos( $error_message, 'rate' ) !== false ||
+                 stripos( $error_message, 'limit' ) !== false ||
+                 stripos( $error_message, 'too many' ) !== false ) {
+                return new WP_Error(
+                    'rate_limited',
+                    __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+                );
+            }
+
             return new WP_Error(
                 'api_error',
-                sprintf( __( 'Instagram API error: %s', 'bwg-instagram-feed' ), $data['error']['message'] ?? 'Unknown error' )
+                sprintf( __( 'Instagram API error: %s', 'bwg-instagram-feed' ), $error_message )
             );
         }
 
