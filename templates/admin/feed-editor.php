@@ -250,11 +250,18 @@ $is_new = empty( $feed );
 
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-hover-effect"><?php esc_html_e( 'Hover Effect', 'bwg-instagram-feed' ); ?></label>
+                            <?php
+                            $hover_effect = 'none';
+                            if ( $feed && ! empty( $feed->styling_settings ) ) {
+                                $styling = json_decode( $feed->styling_settings, true );
+                                $hover_effect = isset( $styling['hover_effect'] ) ? $styling['hover_effect'] : 'none';
+                            }
+                            ?>
                             <select id="bwg-igf-hover-effect" name="hover_effect">
-                                <option value="none"><?php esc_html_e( 'None', 'bwg-instagram-feed' ); ?></option>
-                                <option value="zoom"><?php esc_html_e( 'Zoom', 'bwg-instagram-feed' ); ?></option>
-                                <option value="overlay"><?php esc_html_e( 'Overlay', 'bwg-instagram-feed' ); ?></option>
-                                <option value="brightness"><?php esc_html_e( 'Brightness', 'bwg-instagram-feed' ); ?></option>
+                                <option value="none" <?php selected( $hover_effect, 'none' ); ?>><?php esc_html_e( 'None', 'bwg-instagram-feed' ); ?></option>
+                                <option value="zoom" <?php selected( $hover_effect, 'zoom' ); ?>><?php esc_html_e( 'Zoom', 'bwg-instagram-feed' ); ?></option>
+                                <option value="overlay" <?php selected( $hover_effect, 'overlay' ); ?>><?php esc_html_e( 'Overlay', 'bwg-instagram-feed' ); ?></option>
+                                <option value="brightness" <?php selected( $hover_effect, 'brightness' ); ?>><?php esc_html_e( 'Brightness', 'bwg-instagram-feed' ); ?></option>
                             </select>
                         </div>
 
