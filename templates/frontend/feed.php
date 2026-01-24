@@ -99,7 +99,7 @@ if ( $needs_async_load && ! empty( $feed->instagram_usernames ) ) {
 
     // Try to fetch posts for the first username to check for errors
     if ( ! empty( $usernames[0] ) ) {
-        $fetched_posts = $instagram_api->get_posts( $usernames[0], 12 );
+        $fetched_posts = $instagram_api->fetch_public_posts( $usernames[0], 12 );
 
         if ( is_wp_error( $fetched_posts ) ) {
             // Store specific error message based on error type

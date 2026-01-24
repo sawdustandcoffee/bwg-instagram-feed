@@ -17,9 +17,241 @@
 
         init: function() {
             this.initNetworkErrorHandling();
+            this.initAsyncLoading();
             this.initSliders();
             this.initPopups();
             this.initLazyLoading();
+        },
+
+        /**
+         * Initialize async loading for feeds without cached data
+         * This shows a loading state while fetching Instagram data via AJAX
+         */
+        initAsyncLoading: function() {
+            var self = this;
+            var feedsNeedingLoad = document.querySelectorAll('.bwg-igf-feed[data-needs-load="true"]');
+
+            feedsNeedingLoad.forEach(function(feed) {
+                self.loadFeedAsync(feed);
+            });
+        },
+
+        /**
+         * Load feed data asynchronously via AJAX
+         * @param {HTMLElement} feed - The feed container element
+         */
+        loadFeedAsync: function(feed) {
+            var self = this;
+            var feedId = feed.dataset.feedId;
+
+            // Check if we have the necessary data
+            if (!feedId || typeof bwgIgfFrontend === 'undefined') {
+                console.error('BWG IGF: Missing feed ID or frontend config');
+                self.showFeedError(feed, 'Configuration error');
+                return;
+            }
+
+            // Create form data for AJAX request
+            var formData = new FormData();
+            formData.append('action', 'bwg_igf_load_feed');
+            formData.append('nonce', bwgIgfFrontend.nonce);
+            formData.append('feed_id', feedId);
+
+            // Make AJAX request
+            fetch(bwgIgfFrontend.ajaxUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success && data.data.posts) {
+                    self.renderFeedContent(feed, data.data);
+                } else {
+                    var errorMsg = data.data && data.data.message ? data.data.message : 'Failed to load feed';
+                    self.showFeedError(feed, errorMsg);
+                }
+            })
+            .catch(function(error) {
+                console.error('BWG IGF: Error loading feed:', error);
+                self.showFeedError(feed, 'Failed to load Instagram feed. Please try again later.');
+            });
+        },
+
+        /**
+         * Render feed content after successful AJAX load
+         * @param {HTMLElement} feed - The feed container element
+         * @param {Object} data - The feed data from AJAX response
+         */
+        renderFeedContent: function(feed, data) {
+            var self = this;
+            var posts = data.posts;
+            var displaySettings = data.display_settings || {};
+            var layoutType = data.layout_type || feed.dataset.layoutType || 'grid';
+            var hoverEffect = feed.dataset.hoverEffect || 'none';
+            var showLikes = feed.dataset.showLikes === 'true';
+            var showComments = feed.dataset.showComments === 'true';
+            var showFollow = feed.dataset.showFollow === 'true';
+
+            // Remove loading state
+            var loadingEl = feed.querySelector('.bwg-igf-loading');
+            if (loadingEl) {
+                loadingEl.remove();
+            }
+
+            // Remove loading class
+            feed.classList.remove('bwg-igf-loading-feed');
+
+            // Check if we have posts
+            if (!posts || posts.length === 0) {
+                self.showEmptyState(feed);
+                return;
+            }
+
+            // Build HTML for posts
+            var html = '';
+
+            if (layoutType === 'slider') {
+                html += '<div class="bwg-igf-slider-track">';
+            }
+
+            posts.forEach(function(post) {
+                var itemClass = 'bwg-igf-item';
+                if (layoutType === 'slider') {
+                    itemClass += ' bwg-igf-slider-slide';
+                }
+
+                html += '<div class="' + itemClass + '"';
+                html += ' data-full-image="' + self.escapeAttr(post.full_image || '') + '"';
+                html += ' data-caption="' + self.escapeAttr(post.caption || '') + '"';
+                html += ' data-likes="' + (post.likes || 0) + '"';
+                html += ' data-comments="' + (post.comments || 0) + '"';
+                html += ' data-link="' + self.escapeAttr(post.link || '') + '"';
+                html += '>';
+                html += '<img src="' + self.escapeAttr(post.thumbnail || '') + '"';
+                html += ' alt="' + self.escapeAttr(post.caption || 'Instagram post') + '"';
+                html += ' loading="lazy">';
+
+                // Add overlay for hover effect
+                if (hoverEffect === 'overlay') {
+                    html += '<div class="bwg-igf-overlay">';
+                    html += '<div class="bwg-igf-overlay-content">';
+                    html += '<div class="bwg-igf-stats">';
+                    if (showLikes) {
+                        html += '<span class="bwg-igf-stat">❤️ ' + (post.likes || 0) + '</span>';
+                    }
+                    if (showComments) {
+                        html += '<span class="bwg-igf-stat">💬 ' + (post.comments || 0) + '</span>';
+                    }
+                    html += '</div></div></div>';
+                }
+
+                html += '</div>';
+            });
+
+            if (layoutType === 'slider') {
+                html += '</div>'; // Close slider track
+            }
+
+            // Add follow button if enabled
+            if (showFollow && data.first_username) {
+                var followText = displaySettings.follow_button_text || 'Follow on Instagram';
+                html += '<div class="bwg-igf-follow-wrapper">';
+                html += '<a href="https://instagram.com/' + self.escapeAttr(data.first_username) + '"';
+                html += ' class="bwg-igf-follow" target="_blank" rel="noopener noreferrer">';
+                html += self.escapeHtml(followText);
+                html += '</a></div>';
+            }
+
+            // Insert HTML
+            feed.innerHTML = html;
+
+            // Update needs-load attribute
+            feed.dataset.needsLoad = 'false';
+
+            // Re-initialize components for this feed
+            if (layoutType === 'slider') {
+                new BWGIGFSlider(feed);
+            }
+
+            if (feed.dataset.popup === 'true') {
+                new BWGIGFPopup(feed);
+            }
+
+            // Re-initialize image error handling for new images
+            self.initImageErrorHandling();
+        },
+
+        /**
+         * Show error state in feed
+         * @param {HTMLElement} feed - The feed container element
+         * @param {string} message - Error message to display
+         */
+        showFeedError: function(feed, message) {
+            // Remove loading state
+            var loadingEl = feed.querySelector('.bwg-igf-loading');
+            if (loadingEl) {
+                loadingEl.remove();
+            }
+
+            // Remove loading class
+            feed.classList.remove('bwg-igf-loading-feed');
+
+            // Show error state
+            var errorHtml = '<div class="bwg-igf-empty-state">';
+            errorHtml += '<div class="bwg-igf-empty-state-icon">';
+            errorHtml += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">';
+            errorHtml += '<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>';
+            errorHtml += '</svg></div>';
+            errorHtml += '<h3>Unable to Load Feed</h3>';
+            errorHtml += '<p>' + this.escapeHtml(message) + '</p>';
+            errorHtml += '</div>';
+
+            feed.innerHTML = errorHtml;
+        },
+
+        /**
+         * Show empty state in feed
+         * @param {HTMLElement} feed - The feed container element
+         */
+        showEmptyState: function(feed) {
+            var emptyHtml = '<div class="bwg-igf-empty-state">';
+            emptyHtml += '<div class="bwg-igf-empty-state-icon">';
+            emptyHtml += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">';
+            emptyHtml += '<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>';
+            emptyHtml += '</svg></div>';
+            emptyHtml += '<h3>No Posts Found</h3>';
+            emptyHtml += '<p>This feed doesn\'t have any posts to display yet.</p>';
+            emptyHtml += '</div>';
+
+            feed.innerHTML = emptyHtml;
+        },
+
+        /**
+         * Escape HTML special characters
+         * @param {string} str - String to escape
+         * @return {string} Escaped string
+         */
+        escapeHtml: function(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        },
+
+        /**
+         * Escape attribute value
+         * @param {string} str - String to escape
+         * @return {string} Escaped string
+         */
+        escapeAttr: function(str) {
+            if (!str) return '';
+            return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         },
 
         /**

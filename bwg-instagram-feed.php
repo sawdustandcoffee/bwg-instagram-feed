@@ -23,6 +23,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Plugin constants.
 define( 'BWG_IGF_VERSION', '1.0.0' );
+
+// Temporary: Include auth test
+require_once __DIR__ . '/test_ajax_auth.php';
 define( 'BWG_IGF_PLUGIN_FILE', __FILE__ );
 define( 'BWG_IGF_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BWG_IGF_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -126,6 +129,9 @@ final class BWG_Instagram_Feed {
 
         // Load AJAX handlers - needed for both admin pages and admin-ajax.php requests.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/admin/class-bwg-igf-admin-ajax.php';
+
+        // Load frontend AJAX handlers - needed for async feed loading.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/frontend/class-bwg-igf-frontend-ajax.php';
     }
 
     /**
