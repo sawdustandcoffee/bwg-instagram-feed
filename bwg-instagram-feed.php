@@ -74,6 +74,9 @@ final class BWG_Instagram_Feed {
 
         // Register shortcode.
         add_shortcode( 'bwg_igf', array( $this, 'render_shortcode' ) );
+
+        // Load Gutenberg block early so it can register on init hook.
+        $this->load_gutenberg_block();
     }
 
     /**
@@ -109,9 +112,6 @@ final class BWG_Instagram_Feed {
     public function init() {
         // Load admin AJAX handlers.
         $this->load_admin_ajax();
-
-        // Load Gutenberg block.
-        $this->load_gutenberg_block();
     }
 
     /**
