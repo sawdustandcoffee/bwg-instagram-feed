@@ -1,4 +1,71 @@
 # BWG Instagram Feed - Development Progress
+## Session: 2026-01-24 (Feature #69 - Feed Persists After Page Refresh)
+
+### Feature Completed
+- **Feature #69: Feed persists after page refresh** - PASSED ✅
+
+### Feature Details
+- **Category:** data
+- **Name:** Feed persists after page refresh
+- **Description:** Feed data remains after browser refresh
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed 'TEST_REFRESH'** - ✅ VERIFIED
+   - Navigated to Add New Feed page
+   - Entered Feed Name: "TEST_REFRESH"
+   - Entered Instagram Username: "instagram"
+   - Clicked "Create Feed" button
+   - Feed created successfully with ID 6
+
+2. **Step 2: Navigate to feeds list** - ✅ VERIFIED
+   - After creation, automatically redirected to feeds list
+   - Feed "TEST_REFRESH" visible in table
+
+3. **Step 3: Refresh the page (F5)** - ✅ VERIFIED
+   - Pressed F5 to refresh browser
+   - Page reloaded completely
+
+4. **Step 4: Verify feed still appears** - ✅ VERIFIED
+   - Feed "TEST_REFRESH" still visible in feeds list
+   - Same ID (6), same shortcode [bwg_igf id="6"]
+   - Status: Active, Type: Public
+
+5. **Step 5: Verify all data intact** - ✅ VERIFIED
+   - Clicked feed to open editor
+   - Feed Name: "TEST_REFRESH" ✓
+   - Feed Type: "Public (Username)" ✓
+   - Instagram Username(s): "instagram" ✓
+   - All settings preserved correctly
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-69-data-persisted.png - Feed editor showing all data intact after refresh
+
+### Test Data Cleanup
+- Deleted TEST_REFRESH feed after verification
+
+### Conclusion
+Feature #69 PASSES. Feed data correctly persists:
+1. Data is saved to database on creation
+2. Data survives page refresh
+3. All fields are preserved correctly
+4. No data loss occurs
+
+### Current Status
+- Total features: 149
+- Passing: 49 (updated)
+- Percentage: ~32.9%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Feature #69 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #67 - Created Feed Persists in Database)
 
 ### Feature Completed
@@ -5365,4 +5432,231 @@ Verified that the security feature continues to work correctly:
 - Percentage: ~32.2%
 
 [Regression test completed - Feature #4 verified]
+
+
+---
+
+## Session: 2026-01-24 15:10 (Regression Test - Feature #47)
+
+### Regression Test: Feature #47 - Gutenberg block feed selection
+
+**Status:** ✅ PASSED - No regression found
+
+**Feature Details:**
+- **Category:** functional
+- **Name:** Gutenberg block feed selection
+- **Description:** User can select which feed to display in block
+
+### Test Steps Performed
+
+1. **Step 1: Insert BWG Instagram Feed block** - ✅ VERIFIED
+   - Navigated to post-new.php (Gutenberg editor)
+   - Opened block inserter
+   - Found BWG Instagram Feed under Widgets category
+   - Inserted block successfully
+
+2. **Step 2: Verify feed selector dropdown appears** - ✅ VERIFIED
+   - Block displays with dropdown selector
+   - Options: "Select a Feed", "Admin Security Test Feed", "Test Feed"
+
+3. **Step 3: Select a feed from dropdown** - ✅ VERIFIED
+   - Selected "Test Feed" from dropdown
+   - Selection applied successfully
+
+4. **Step 4: Verify preview loads in editor** - ✅ VERIFIED
+   - Preview rendered with 9 Instagram posts
+   - Images display correctly with alt text captions
+   - "Follow on Instagram" link present
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-47-block-with-dropdown.png - Block with feed selector
+- feature-47-preview-loaded.png - Preview showing Instagram content
+
+### Conclusion
+Feature #47 PASSES regression testing. The Gutenberg block feed selection works correctly:
+- Block can be inserted from the block library
+- Feed selector dropdown is displayed
+- Selecting a feed loads the preview in the editor
+
+[Regression test completed - Feature #47 verified]
+
+[Testing] Feature #47 verified - still passing (regression test)
+
+---
+
+## Session: 2026-01-24 (Regression Test - Feature #18)
+
+### Regression Test: Feature #18 - Feed editor tabs navigation
+
+**Status:** ✅ PASSED - No regression found
+
+**Feature Details:**
+- **Category:** functional
+- **Name:** Feed editor tabs navigation
+- **Description:** All configuration tabs in feed editor work correctly
+
+### Test Steps Performed
+
+1. **Step 1: Open feed editor** - ✅ VERIFIED
+   - Navigated to feed editor for feed_id=1
+   - Source tab displayed by default with Feed Name, Feed Type, Username fields
+
+2. **Step 2: Click Source tab** - ✅ VERIFIED
+   - Content shows: Feed Name, Feed Type dropdown, Instagram Username(s) field
+
+3. **Step 3: Click Layout tab** - ✅ VERIFIED
+   - Layout options show: Layout Type (Grid/Slider), Columns, Gap (px)
+
+4. **Step 4: Click Display tab** - ✅ VERIFIED
+   - Display toggles show: Number of Posts, Show like count, Show comment count, Show caption, Show Follow button
+
+5. **Step 5: Click Styling tab** - ✅ VERIFIED
+   - Style options show: Background Color picker, Border Radius, Hover Effect dropdown, Custom CSS textarea
+
+6. **Step 6: Click Popup tab** - ✅ VERIFIED
+   - Lightbox options show: Enable popup/lightbox checkbox
+
+7. **Step 7: Click Advanced tab** - ✅ VERIFIED
+   - Cache/order options show: Post Ordering dropdown, Cache Duration dropdown, Refresh Cache Now button
+
+### Screenshots
+- feature-18-initial-source-tab.png
+- feature-18-layout-tab.png
+- feature-18-display-tab.png
+- feature-18-styling-tab.png
+- feature-18-popup-tab.png
+- feature-18-advanced-tab.png
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #18 PASSES regression testing. All 6 tabs navigate correctly and display their expected content.
+
+[Testing] Feature #18 verified - still passing (regression test)
+
+
+
+---
+
+## Session: Regression Testing - Feature #46
+**Date:** 2025-01-24
+
+### Feature Tested
+**Feature ID:** 46
+**Category:** functional
+**Name:** Gutenberg block appears in inserter
+**Description:** BWG Instagram Feed block available in block editor
+
+### Test Steps
+1. **Step 1: Edit a page with Gutenberg editor** - VERIFIED
+   - Navigated to Pages > Add New Page
+   - Gutenberg editor loaded successfully
+
+2. **Step 2: Open block inserter** - VERIFIED
+   - Clicked + button to open block inserter
+
+3. **Step 3: Search for Instagram or BWG** - INITIALLY FAILED
+   - Search for Instagram returned No results available
+   - Search for BWG returned No results found
+   - REGRESSION DETECTED
+
+### Root Cause Analysis
+- PHP register_block_type() was using block.json path
+- JavaScript registerBlockType() also registered the same block name
+- Conflict: WordPress pre-registered block from block.json,
+  then JavaScript registerBlockType() failed silently
+- Result: Block registered server-side but client-side edit/save never loaded
+
+### Fix Applied
+- Modified includes/blocks/class-bwg-igf-instagram-feed-block.php
+- Changed from: register_block_type(__DIR__ . block.json, ...)
+- Changed to: register_block_type(bwg-igf/instagram-feed, ...) with explicit params
+- This allows JavaScript to handle full block registration
+
+### Verification After Fix
+- Search for Instagram now shows BWG Instagram Feed block
+- Search for BWG now shows BWG Instagram Feed block
+- Block appears in Widgets category
+- Block has appropriate Instagram icon
+
+### Screenshot
+- feature-46-instagram-search-fixed.png
+
+### Commit
+- 1fc5f5e: Fix regression in Gutenberg block appears in inserter
+
+### Status
+- Feature #46 marked as passing
+- Regression fixed and verified
+
+[Regression test completed - Feature #46 fixed and verified]
+
+
+
+---
+
+## Session: 2026-01-24 (Regression Test - Feature #55)
+
+### Feature Tested
+- **Feature #55: Database queries use prepared statements** - STILL PASSING ✅
+
+### Feature Details
+- **Category:** security
+- **Name:** Database queries use prepared statements
+- **Description:** All database queries are parameterized
+
+### Verification Steps Completed
+
+1. **Step 1: Review feed creation code path** - ✅ VERIFIED
+   - Reviewed includes/admin/class-bwg-igf-admin-ajax.php
+   - All queries use $wpdb->prepare() for SELECT operations
+   - INSERT/UPDATE/DELETE use proper format arrays
+
+2. **Step 2: Verify $wpdb->prepare() used for INSERT** - ✅ VERIFIED
+   - Line 242-246: $wpdb->insert() with format array
+   - Line 345-348: $wpdb->insert() for feed duplication
+   - Line 527-540: $wpdb->insert() for account creation
+
+3. **Step 3: Verify UPDATE queries use prepare()** - ✅ VERIFIED
+   - Line 219-225: $wpdb->update() with proper format arrays
+   - Line 501-515: $wpdb->update() for account reconnection
+
+4. **Step 4: Verify DELETE queries use prepare()** - ✅ VERIFIED
+   - Line 290-294: $wpdb->delete() with format array
+   - Lines 301, 409, 570: Other delete operations
+
+5. **Step 5: Verify SELECT queries use prepare()** - ✅ VERIFIED
+   - All SELECT queries in all files use $wpdb->prepare()
+   - Verified in: feed-editor.php, feeds.php, dashboard.php, accounts.php
+   - Verified in: frontend/feed.php, class-bwg-igf-instagram-feed-block.php, uninstall.php
+
+### UI Verification
+- Feeds list page loads correctly (SELECT with prepare)
+- Edit feed page loads data correctly (SELECT with prepare)
+- No console errors detected
+
+### Files Reviewed
+- includes/admin/class-bwg-igf-admin-ajax.php (AJAX handlers)
+- templates/admin/feed-editor.php (Editor page)
+- templates/admin/feeds.php (Feeds list)
+- templates/admin/dashboard.php (Dashboard stats)
+- templates/admin/accounts.php (Accounts list)
+- templates/frontend/feed.php (Frontend rendering)
+- includes/blocks/class-bwg-igf-instagram-feed-block.php (Block editor)
+- uninstall.php (Cleanup queries)
+
+### Screenshots
+- feature-55-regression-edit-feed.png - Edit feed page showing data loaded via prepared statement
+
+### Console Errors: None
+
+### Conclusion
+Feature #55 PASSES regression testing. All database queries continue to use proper prepared statements:
+- SELECT queries use $wpdb->prepare()
+- INSERT/UPDATE/DELETE use proper format arrays with %s/%d placeholders
+- Table names use %i placeholder (WordPress 6.2+)
+
+[Testing] Feature #55 regression test complete - STILL PASSING
 
