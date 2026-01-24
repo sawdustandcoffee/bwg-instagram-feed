@@ -8892,3 +8892,222 @@ The feature was already implemented with the following components:
 - Percentage: 44.3%
 
 [Feature #88 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #6 Regression Test)
+
+### Feature Tested
+- **Feature #6: Settings page loads correctly** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** functional
+- **Description:** Plugin settings page renders with all options
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Settings submenu** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings
+   - Page loaded successfully after login
+
+2. **Step 2: Verify page title displays** - ✅ VERIFIED
+   - Heading "Settings" present at level 1
+
+3. **Step 3: Verify general settings section visible** - ✅ VERIFIED
+   - "General Settings" section heading present
+
+4. **Step 4: Verify cache duration option present** - ✅ VERIFIED
+   - Dropdown "Default Cache Duration" present
+   - Options: 15 Minutes, 30 Minutes, 1 Hour (selected), 6 Hours, 12 Hours, 24 Hours
+   - Helper text: "How long to cache Instagram data before fetching fresh content."
+
+5. **Step 5: Verify uninstall behavior option present** - ✅ VERIFIED
+   - Checkbox "Delete Data on Uninstall" present
+   - Helper text: "Warning: This will permanently delete all feeds, settings, and connected accounts."
+
+6. **Step 6: Verify Instagram App credentials fields present** - ✅ VERIFIED
+   - textbox "Instagram App ID" present (value: 123456789012345)
+   - textbox "Instagram App Secret" present (masked)
+   - Helper text about Meta Developer Portal
+
+7. **Step 7: Verify Save Changes button is functional** - ✅ VERIFIED
+   - Clicked "Save Changes" button
+   - Success notification appeared: "Settings saved."
+   - Page remained on settings with data intact
+
+### Additional Elements Verified
+- Cache Management section with "Clear All Cache" button
+- Instagram API Settings section with instructions
+
+### Screenshots
+- feature-6-settings-page.png - Settings page before save
+- feature-6-settings-saved.png - Settings page after successful save
+
+### Console Errors
+- None
+
+### Result
+Feature #6 PASSES regression test. Settings page loads correctly with all required options.
+
+[Testing] Feature #6 verified - still passing
+[Testing] Session complete - Feature #34 verified as still passing
+[Testing] Feature #11 verified - still passing (Create new public feed form displays)
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #74 Regression Test)
+
+### Feature Tested
+- **Feature #74: Instagram posts displayed are real** - EXTERNAL DEPENDENCY FAILURE
+
+### Feature Details
+- **Category:** data
+- **Description:** Frontend displays actual Instagram content not mock data
+
+### Verification Steps
+
+1. **Step 1: Navigate to feed page** - VERIFIED
+   - URL: http://localhost:8088/?page_id=14
+   - Page loads correctly
+
+2. **Step 2: Observe feed display** - FAILED
+   - Shows "User Not Found" error instead of Instagram posts
+   - Error: Instagram user @instagram was not found
+
+3. **Step 3: Investigation** - COMPLETED
+   - HTTP request to Instagram returns 200 OK
+   - Instagram blocking scraping with anti-bot page content
+   - Code correctly detects this as user not found
+
+### Root Cause
+
+NOT a code regression - external dependency issue:
+- Instagram actively blocking scraping attempts
+- Feature originally passed when Instagram allowed request
+- Instagram anti-scraping measures are inconsistent
+
+### Status
+
+Feature marked as FAILING due to Instagram blocking.
+This is an external dependency issue, not a code bug.
+
+[Testing] Feature #74 - Instagram blocking scraping requests (external issue)
+[Testing] Feature #74 SKIPPED - moved to end of queue (external dependency on Instagram)
+[Testing] Feature #36 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #63 Regression Test)
+
+### Feature Tested
+- **Feature #63: Edit feed action opens editor with data** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** navigation
+- **Description:** Edit action loads feed editor with existing data
+
+### Verification Steps Completed
+
+1. **Step 1: Create a feed** - ✅ VERIFIED (used existing feed 'Test Feed' id=1)
+
+2. **Step 2: Navigate to Feeds list** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Feeds table displayed with multiple feeds
+
+3. **Step 3: Click Edit action on the feed** - ✅ VERIFIED
+   - Clicked Edit link for 'Test Feed'
+   - Redirected to: admin.php?page=bwg-igf-feeds&action=edit&feed_id=1
+
+4. **Step 4: Verify editor loads** - ✅ VERIFIED
+   - Page heading: 'Edit Feed'
+   - Breadcrumb: Dashboard › Feeds › Edit
+   - Tab navigation present: Source, Layout, Display, Styling, Popup, Advanced
+   - Form fields rendered correctly
+   - Preview section shows slider preview with placeholder images
+
+5. **Step 5: Verify saved data is populated** - ✅ VERIFIED
+   - Feed Name: 'Test Feed' (pre-populated correctly)
+   - Feed Type: 'Public (Username)' (selected)
+   - Instagram Username(s): 'instagram' (pre-populated)
+   - Layout Tab verified:
+     - Layout Type: Slider (selected)
+     - Slides to Show: 3
+     - Autoplay: enabled
+     - Navigation Arrows: enabled
+     - Pagination Dots: enabled
+     - Infinite Loop: enabled
+
+### Screenshots
+- feature-63-edit-feed-verification.png - Edit Feed page with saved data
+
+### Console Errors
+- None
+
+### Result
+Feature #63 PASSES regression test. Edit action correctly:
+- Opens the feed editor
+- Loads all saved data into form fields
+- Displays preview based on feed settings
+- All tabs accessible and functional
+
+[Testing] Feature #63 verified - still passing
+[Testing] Session complete - Feature #63 regression test passed
+
+---
+
+## Session: 2026-01-24 (Feature #91 - Success notification on cache clear)
+
+### Feature Completed
+- **Feature #91: Success notification on cache clear** - PASSED ✅
+
+### Feature Details
+- **Category:** feedback
+- **Name:** Success notification on cache clear
+- **Description:** Clear success message after clearing cache
+
+### Verification Steps
+
+1. **Step 1: Navigate to Settings** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings
+   - Settings page with "Cache Management" section found
+
+2. **Step 2: Click Clear All Cache** - ✅ VERIFIED
+   - Button found in Cache Management section
+   - Confirmation dialog appears: "Are you sure you want to clear all cached data?"
+
+3. **Step 3: Verify success notification appears** - ✅ VERIFIED
+   - Success message "All cache cleared successfully!" displayed (via Feature #42 verification)
+   - WordPress-style success notice appears after confirmation dialog accepted
+   - Auto-dismisses after 5 seconds
+
+### Implementation Details (Already Exists)
+
+**1. PHP Backend (`includes/admin/class-bwg-igf-admin-ajax.php` lines 670-684)**
+- `clear_all_cache()` method sends `wp_send_json_success( array( 'message' => __( 'All cache cleared successfully!', 'bwg-instagram-feed' ) ) );`
+
+**2. JavaScript Frontend (`assets/js/admin.js` lines 550-572)**
+- `handleClearCache()` function makes AJAX call and on success calls `BWGIGFAdmin.showNotice('success', 'All cache cleared successfully!');`
+
+**3. showNotice function (`assets/js/admin.js` lines 602-613)**
+- Creates WordPress-style admin notice
+- Auto-dismisses after 5 seconds
+
+### Cross-Reference
+
+Feature #91 was verified as part of Feature #42 regression testing:
+- Step 5 from Feature #42: "Verify success message" - ✅ VERIFIED
+- Success message displayed: "All cache cleared successfully!"
+- Screenshots: feature-42-cache-cleared-success.png
+
+### Result
+
+Feature #91 is fully implemented and verified. The success notification functionality exists and works correctly.
+
+### Current Status
+- Feature #91 marked as passing
+- No code changes required (already implemented)
+- Credentials: admin / admin123
+
+[Feature #91 completed and verified]
