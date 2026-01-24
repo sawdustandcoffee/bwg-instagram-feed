@@ -692,3 +692,148 @@ Verified that all three custom database tables are created correctly when the pl
 - Docker: http://localhost:8082
 - Credentials: admin / password123
 
+[Testing] Feature #43 (Shortcode renders feed) - REGRESSION TEST PASSED - 2026-01-24 12:47
+
+Verification: Shortcode [bwg_igf id="1"] renders feed container with correct structure including loading spinner and Follow on Instagram button. No console errors. No regressions detected.
+
+## Testing Session: 2026-01-24 12:39
+
+[Testing] Feature #46 (Gutenberg block appears in inserter) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Edit a page with Gutenberg editor - Navigated to Add New Page
+2. ✅ Open block inserter - Clicked Block Inserter button
+3. ✅ Search for 'Instagram' - Block found as first result
+4. ✅ Search for 'BWG' - Block found as only result
+5. ✅ Verify BWG Instagram Feed block appears - Block visible with correct title
+6. ✅ Verify block has appropriate icon - Pink Instagram camera icon displayed
+
+### Technical Verification
+- Block registered in WordPress: bwg-igf/instagram-feed
+- Category: widgets
+- Keywords: instagram, feed, social, bwg, gallery
+- Total blocks in editor: 107
+
+### Console Errors
+- No JavaScript errors related to block registration
+- Block editor script loads successfully (HTTP 200)
+
+### Screenshot
+- feature-46-regression-test-bwg-block-found.png
+
+### Notes
+- Initial test showed "No results" which was a timing issue
+- After allowing full page load, block appears correctly in search results
+- Block appears in Widgets category when browsing all blocks
+- No regressions detected - feature still working correctly
+
+[Testing] Feature #46 verified - still passing
+
+
+## Testing Session: 2026-01-24 12:40 (Regression Testing - Feature #3)
+
+[Testing] Feature #3 (Admin menu appears after activation) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Logged in as WordPress administrator (admin / password123)
+2. ✅ 'Instagram Feed' menu item appears in WordPress admin sidebar
+3. ✅ Menu has correct Instagram-style circular camera icon (dashicon)
+4. ✅ All four submenu items present and visible on hover:
+   - Dashboard → admin.php?page=bwg-igf
+   - Feeds → admin.php?page=bwg-igf-feeds
+   - Accounts → admin.php?page=bwg-igf-accounts
+   - Settings → admin.php?page=bwg-igf-settings
+
+### Additional Checks
+- ✅ No console errors detected
+- ✅ All menu links point to correct URLs
+
+### Screenshots
+- feature-3-regression-test-menu.png - Shows menu item in sidebar
+- feature-3-regression-submenu-hover.png - Shows all submenu items on hover
+
+[Testing] Feature #3 verified - still passing
+
+---
+
+## Session: 2026-01-24 (Feature #18)
+
+### Feature Completed
+- **Feature #18: Feed editor tabs navigation** - PASSED
+
+### What was verified
+All configuration tabs in the feed editor work correctly. Clicking each tab:
+1. Updates the active tab indicator (underline/highlight)
+2. Shows the appropriate content for that tab
+3. Hides the content from other tabs
+
+### Verification Steps Completed
+1. ✅ Opened feed editor (admin.php?page=bwg-igf-feeds&action=new)
+2. ✅ Clicked Source tab - Shows Feed Name, Feed Type, Instagram Username(s)
+3. ✅ Clicked Layout tab - Shows Layout Type, Columns, Gap
+4. ✅ Clicked Display tab - Shows Number of Posts, show/hide checkboxes
+5. ✅ Clicked Styling tab - Shows Border Radius, Hover Effect, Custom CSS
+6. ✅ Clicked Popup tab - Shows Enable popup/lightbox checkbox
+7. ✅ Clicked Advanced tab - Shows Post Ordering, Cache Duration, Refresh Cache button
+8. ✅ Clicked back to Source tab - Navigates correctly back to first tab
+9. ✅ No JavaScript console errors detected
+
+### Tab Contents Summary
+| Tab | Content Fields |
+|-----|----------------|
+| Source | Feed Name, Feed Type, Instagram Username(s) |
+| Layout | Layout Type (Grid/Slider), Columns (1-6), Gap (px) |
+| Display | Number of Posts, Show like count, Show comment count, Show caption, Show Follow button |
+| Styling | Border Radius, Hover Effect, Custom CSS textarea |
+| Popup | Enable popup/lightbox checkbox |
+| Advanced | Post Ordering, Cache Duration, Refresh Cache Now button |
+
+### Technical Implementation
+- Tab navigation handled by `admin.js` → `initTabs()` function
+- CSS classes: `.bwg-igf-editor-tab.active` for active tab highlighting
+- CSS classes: `.bwg-igf-tab-content.active` for showing/hiding content
+- Tab content IDs: `bwg-igf-tab-{source|layout|display|styling|popup|advanced}`
+
+### Screenshots
+- feature-18-source-tab-initial.png
+- feature-18-layout-tab.png
+- feature-18-display-tab.png
+- feature-18-styling-tab.png
+- feature-18-popup-tab.png
+- feature-18-advanced-tab.png
+- feature-18-source-tab-final.png
+
+### Current Status
+- Total features: 149
+- Passing: 9 (Features #1, #2, #3, #5, #11, #12, #18, #43, #46, #47)
+- Percentage: ~6.0%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / password123
+
+### Notes
+- Feature #18 unblocks many dependent features (#19-29) that require working tab navigation
+- All tabs transition smoothly with proper active state management
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #5)
+
+[Testing] Feature #5 (Feeds list page loads correctly) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Navigate to Feeds submenu - Page loaded at admin.php?page=bwg-igf-feeds
+2. ✅ Page title displays 'All Feeds' - Confirmed in browser title
+3. ✅ Table headers show (Name, Type, Status, Shortcode, Actions) - All 5 columns present
+4. ✅ 'Add New Feed' button is visible - Button present next to heading
+5. ✅ Table displays existing feed correctly (TEST_SHORTCODE_FEED_43)
+
+### Additional Checks
+- No console errors detected
+- Feed row displays correctly with: Name, Type (Public), Status (Active), Shortcode, and Actions (Edit/Duplicate/Delete)
+
+### Screenshot
+- feature-5-regression-test-20260124.png
+
+[Testing] Feature #5 verified - still passing
