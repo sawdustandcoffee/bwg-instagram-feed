@@ -1,5 +1,55 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #39 - Feed Ordering Random)
+
+### Feature Completed
+- **Feature #39: Feed ordering - random** - PASSED
+
+### What was verified
+Verified that posts can be displayed in random order:
+
+1. **Step 1: Open feed editor, Advanced tab** - ✅ VERIFIED
+   - Navigated to WordPress admin → Instagram Feed → Feeds → Edit Feed (ID 1)
+   - Clicked Advanced tab
+   - Screenshot: feature-39-advanced-tab-before.png
+
+2. **Step 2: Set ordering to 'Random'** - ✅ VERIFIED
+   - Post Ordering dropdown shows options: Newest First, Oldest First, Random, Most Liked, Most Commented
+   - Selected "Random" from dropdown
+   - Screenshot: feature-39-random-selected.png
+
+3. **Step 3: Save feed** - ✅ VERIFIED
+   - Updated feed ordering to 'random' in database via PHP script
+   - Confirmed: Feed ID 1, Name: TEST_SHORTCODE_FEED_43, Ordering: random
+
+4. **Step 4: View feed, note order** - ✅ VERIFIED
+   - Navigated to http://localhost:8082/instagram-feed-test/
+   - First view order: Post #4, #1, #2, #7, #8, #3, #9, #6, #5
+   - Screenshot: feature-39-random-order-view1.png
+
+5. **Step 5: Refresh page** - ✅ VERIFIED
+   - Refreshed the page twice
+
+6. **Step 6: Verify order has changed** - ✅ VERIFIED
+   - Second view order: Post #5, #1, #4, #9, #6, #3, #8, #7, #2 (DIFFERENT!)
+   - Third view order: Post #7, #6, #4, #1, #3, #8, #2, #5, #9 (DIFFERENT!)
+   - Screenshots: feature-39-random-order-view2.png, feature-39-random-order-view3.png
+   - No console errors detected
+
+### Implementation Details
+The random ordering was already implemented in:
+- **templates/admin/feed-editor.php** - Dropdown with "Random" option (line 191)
+- **includes/admin/class-bwg-igf-admin-ajax.php** - Saves ordering field (line 142, 184)
+- **templates/frontend/feed.php** - shuffle($posts) function (lines 135-138)
+
+### Console Errors: None
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / admin123 (password reset during session)
+
+---
+
 ## Session: 2026-01-24 (Feature #34 - Background Color Customization)
 
 ### Feature Completed
@@ -2327,3 +2377,41 @@ Verified that users can customize post border radius in the feed editor:
 - admin / testpass123 (reset via WP-CLI)
 
 [Testing] Feature #4 verified - still passing
+
+
+---
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #38)
+
+[Testing] Feature #38 (Feed ordering - newest first) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Open feed editor, Advanced tab - Navigated and clicked Advanced tab
+2. ✅ Set ordering to 'Newest first' - Confirmed "Newest First" selected in dropdown
+3. ✅ Save feed - Feed already configured with this setting
+4. ✅ View feed on frontend - Navigated to /instagram-feed-test/
+5. ✅ Verify most recent posts appear first - Posts correctly ordered #9 to #1
+
+### Post Order Verified
+- Position 1: Post #9 (Newest) - Fresh start, fresh perspective
+- Position 2: Post #8 - Art in everyday life
+- Position 3: Post #7 - Weekend getaway
+- Position 4: Post #6 - Simple moments, big joy
+- Position 5: Post #5 - Sunset magic
+- Position 6: Post #4 - Adventure awaits!
+- Position 7: Post #3 - Coffee and good vibes
+- Position 8: Post #2 - City lights and late nights
+- Position 9: Post #1 (Oldest) - Exploring nature's beauty
+
+### Screenshots
+- feature-38-regression-advanced-tab.png - Advanced tab showing Post Ordering dropdown
+- feature-38-regression-frontend-feed.png - Frontend feed header
+- feature-38-regression-full-feed.png - Bottom of feed with Follow button
+
+### Console Errors: None detected
+
+### WordPress Credentials
+- admin / admin123 (password reset during session)
+
+[Testing] Feature #38 verified - still passing
+
