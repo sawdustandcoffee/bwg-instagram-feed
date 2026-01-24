@@ -1,5 +1,68 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #70 - Feed Persists After Logout/Login)
+
+### Feature Completed
+- **Feature #70: Feed persists after logout/login** - PASSED ✅
+
+### Feature Details
+- **Category:** data
+- **Name:** Feed persists after logout/login
+- **Description:** Feed data remains after session change
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed 'TEST_SESSION'** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Clicked "Add New Feed"
+   - Entered Feed Name: TEST_SESSION
+   - Entered Instagram Username: testuser
+   - Clicked "Create Feed" button
+   - Feed created successfully with ID: 7
+   - Screenshot: feature-70-test-session-created.png
+
+2. **Step 2: Log out of WordPress** - ✅ VERIFIED
+   - Navigated to logout URL
+   - Confirmed logout message: "You are now logged out."
+   - Screenshot: feature-70-logged-out.png
+
+3. **Step 3: Log back in as admin** - ✅ VERIFIED
+   - Fresh browser session (closed and reopened browser)
+   - Navigated to login page
+   - Logged in with admin / admin123
+   - Successfully authenticated as admin
+
+4. **Step 4: Navigate to feeds list** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Page loaded successfully with feeds table
+
+5. **Step 5: Verify feed still exists** - ✅ VERIFIED
+   - "TEST_SESSION" feed visible in feeds list
+   - Feed ID: 7
+   - Type: Public
+   - Status: Active
+   - Shortcode: [bwg_igf id="7"]
+   - All feed data intact after logout/login cycle
+   - Screenshot: feature-70-feed-persisted.png
+
+### Console Errors: None detected
+
+### Cleanup
+- Test feed deleted after verification to keep database clean
+
+### Current Status
+- Total features: 149
+- Passing: 49 (updated)
+- Percentage: ~32.9%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Feature #70 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #71 - Edited Feed Changes Persist)
 
 ### Feature Completed
@@ -5771,4 +5834,101 @@ Feature #55 PASSES regression testing. All database queries continue to use prop
 - Table names use %i placeholder (WordPress 6.2+)
 
 [Testing] Feature #55 regression test complete - STILL PASSING
+
+
+---
+
+## Session: 2026-01-24 (Regression Test - Feature #61)
+
+### Regression Test: Feature #61 - Accounts submenu navigates correctly
+
+**Status:** ✅ PASSED - No regression found
+
+**Feature Details:**
+- **Category:** navigation
+- **Name:** Accounts submenu navigates correctly
+- **Description:** Clicking Accounts submenu loads accounts page
+
+### Test Steps Performed
+
+1. **Step 1: Click Accounts submenu item** - ✅ VERIFIED
+   - Successfully clicked the Accounts submenu link under Instagram Feed menu
+
+2. **Step 2: Verify accounts page loads** - ✅ VERIFIED
+   - Page loaded correctly with:
+     - "Connected Instagram Accounts" heading
+     - "Connect an Account" section with description and button
+     - "Connected Accounts" table showing existing account data
+
+3. **Step 3: Verify correct URL** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-accounts
+
+### Console Errors: None detected
+
+### Screenshot
+- feature-61-accounts-submenu-regression.png
+
+### Conclusion
+Feature #61 PASSES regression testing. The Accounts submenu navigation works correctly.
+
+[Testing] Feature #61 verified - still passing (regression test)
+
+
+---
+
+## Session: 2026-01-24 15:13 (Regression Test - Feature #34)
+
+### Regression Test: Feature #34 - Styling - background color customization
+
+**Status:** ✅ PASSED - No regression found
+
+**Feature Details:**
+- **Category:** functional
+- **Name:** Styling - background color customization
+- **Description:** User can customize feed background color
+
+### Test Steps Performed
+
+1. **Step 1: Open feed editor, Styling tab** - ✅ VERIFIED
+   - Navigated to Feeds > Edit (feed_id=1)
+   - Clicked Styling tab
+   - Background Color option displayed with Select Color button
+
+2. **Step 2: Click background color picker** - ✅ VERIFIED
+   - Clicked Select Color button
+   - Color picker expanded with gradient selector and swatches
+   - Current color shown: #3498db
+
+3. **Step 3: Select a color** - ✅ VERIFIED
+   - Changed color to #ff5733 (orange-red)
+   - Value updated in text field
+
+4. **Step 4: Verify preview background updates** - ✅ VERIFIED
+   - Preview panel on right side showed live update
+   - 9-image grid displayed with new background color
+
+5. **Step 5: Save feed** - ✅ VERIFIED
+   - Clicked Save Changes button
+   - "Feed updated successfully!" message displayed
+   - Button changed to "Saved!" (disabled)
+
+6. **Step 6: Verify color persists on frontend** - ✅ VERIFIED
+   - Navigated to Instagram Feed Test page (?page_id=14)
+   - Background color #ff5733 visible around images
+   - Color correctly applied to feed container
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-34-color-picker-open.png - Color picker with preview
+- feature-34-frontend-feed.png - Frontend with background color applied
+
+### Conclusion
+Feature #34 PASSES regression testing. Background color customization works correctly:
+- Color picker UI functions properly
+- Live preview updates in real-time
+- Color persists after saving
+- Color displays correctly on frontend
+
+[Testing] Feature #34 verified - still passing (regression test)
 
