@@ -408,15 +408,18 @@
                 },
                 success: function(response) {
                     if (response.success) {
+                        // Show success notification (Feature #90)
+                        BWGIGFAdmin.showNotice('success', response.data.message || bwgIgfAdmin.i18n.feedDeleted);
+
                         $button.closest('tr').fadeOut(function() {
                             $(this).remove();
                         });
                     } else {
-                        alert(response.data.message || bwgIgfAdmin.i18n.error);
+                        BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
                     }
                 },
                 error: function() {
-                    alert(bwgIgfAdmin.i18n.error);
+                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
                 }
             });
         },
