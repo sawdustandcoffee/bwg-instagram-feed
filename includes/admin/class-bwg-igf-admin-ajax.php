@@ -126,6 +126,78 @@ class BWG_IGF_Admin_Ajax {
         $feed_type = isset( $_POST['feed_type'] ) ? sanitize_text_field( wp_unslash( $_POST['feed_type'] ) ) : 'public';
         $instagram_usernames = isset( $_POST['instagram_usernames'] ) ? sanitize_text_field( wp_unslash( $_POST['instagram_usernames'] ) ) : '';
 
+        // Validate Instagram usernames for public feeds.
+        if ( 'public' === $feed_type ) {
+            if ( empty( $instagram_usernames ) ) {
+                wp_send_json_error( array(
+                    'message' => __( 'Instagram username is required for public feeds.', 'bwg-instagram-feed' ),
+                    'field' => 'instagram_usernames',
+                ) );
+            }
+
+            // Parse usernames (comma-separated).
+            $usernames_array = array_map( 'trim', explode( ',', $instagram_usernames ) );
+            $usernames_array = array_filter( $usernames_array );
+
+            if ( empty( $usernames_array ) ) {
+                wp_send_json_error( array(
+                    'message' => __( 'Please enter at least one valid Instagram username.', 'bwg-instagram-feed' ),
+                    'field' => 'instagram_usernames',
+                ) );
+            }
+
+            // Validate each username.
+            $instagram_api = new BWG_IGF_Instagram_API();
+            $validation_errors = array();
+
+            foreach ( $usernames_array as $username ) {
+                // Basic format validation first.
+                if ( ! preg_match( '/^[a-zA-Z0-9_.]+$/', $username ) ) {
+                    $validation_errors[] = sprintf(
+                        /* translators: %s: Instagram username */
+                        __( '"%s" is not a valid Instagram username format.', 'bwg-instagram-feed' ),
+                        esc_html( $username )
+                    );
+                    continue;
+                }
+
+                // Validate against Instagram.
+                $result = $instagram_api->validate_username( $username );
+
+                if ( ! $result['valid'] ) {
+                    if ( ! $result['exists'] ) {
+                        $validation_errors[] = sprintf(
+                            /* translators: %s: Instagram username */
+                            __( 'Instagram user "@%s" was not found. Please check the spelling and try again.', 'bwg-instagram-feed' ),
+                            esc_html( $username )
+                        );
+                    } elseif ( $result['is_private'] ) {
+                        $validation_errors[] = sprintf(
+                            /* translators: %s: Instagram username */
+                            __( 'The Instagram account "@%s" is private. Only public accounts can be displayed.', 'bwg-instagram-feed' ),
+                            esc_html( $username )
+                        );
+                    } else {
+                        $validation_errors[] = sprintf(
+                            /* translators: 1: Instagram username, 2: error message */
+                            __( 'Error validating "@%1$s": %2$s', 'bwg-instagram-feed' ),
+                            esc_html( $username ),
+                            esc_html( $result['error'] )
+                        );
+                    }
+                }
+            }
+
+            // If there are validation errors, return them.
+            if ( ! empty( $validation_errors ) ) {
+                wp_send_json_error( array(
+                    'message' => implode( ' ', $validation_errors ),
+                    'field' => 'instagram_usernames',
+                    'errors' => $validation_errors,
+                ) );
+            }
+        }
+
         // Get layout settings.
         $layout_type = isset( $_POST['layout_type'] ) ? sanitize_text_field( wp_unslash( $_POST['layout_type'] ) ) : 'grid';
         $columns = isset( $_POST['columns'] ) ? absint( $_POST['columns'] ) : 3;
@@ -387,12 +459,50 @@ class BWG_IGF_Admin_Ajax {
 
         // Basic username format validation.
         if ( ! preg_match( '/^[a-zA-Z0-9_.]+$/', $username ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid username format.', 'bwg-instagram-feed' ) ) );
+            wp_send_json_error( array(
+                'message' => __( 'Invalid username format. Instagram usernames can only contain letters, numbers, periods, and underscores.', 'bwg-instagram-feed' ),
+                'error_type' => 'invalid_format',
+            ) );
         }
 
-        // For now, just return success since we can't verify Instagram accounts without their API.
-        // In production, this would make an API call to verify the account exists and is public.
-        wp_send_json_success( array( 'message' => __( 'Username format is valid.', 'bwg-instagram-feed' ) ) );
+        // Actually validate the username exists on Instagram.
+        $instagram_api = new BWG_IGF_Instagram_API();
+        $result = $instagram_api->validate_username( $username );
+
+        if ( ! $result['valid'] ) {
+            $error_message = $result['error'];
+            $error_type = 'validation_failed';
+
+            // Provide clear, helpful error messages based on the error type.
+            if ( ! $result['exists'] ) {
+                $error_message = sprintf(
+                    /* translators: %s: Instagram username */
+                    __( 'Instagram user "@%s" was not found. Please check the spelling and try again.', 'bwg-instagram-feed' ),
+                    esc_html( $username )
+                );
+                $error_type = 'user_not_found';
+            } elseif ( $result['is_private'] ) {
+                $error_message = sprintf(
+                    /* translators: %s: Instagram username */
+                    __( 'The Instagram account "@%s" is private. Only public accounts can be displayed in feeds.', 'bwg-instagram-feed' ),
+                    esc_html( $username )
+                );
+                $error_type = 'private_account';
+            }
+
+            wp_send_json_error( array(
+                'message' => $error_message,
+                'error_type' => $error_type,
+            ) );
+        }
+
+        wp_send_json_success( array(
+            'message' => sprintf(
+                /* translators: %s: Instagram username */
+                __( 'Instagram user "@%s" is valid and public.', 'bwg-instagram-feed' ),
+                esc_html( $username )
+            ),
+        ) );
     }
 
     /**
