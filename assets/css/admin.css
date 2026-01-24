@@ -136,6 +136,96 @@
     color: #856404;
 }
 
+/* Tab content visibility */
+.bwg-igf-tab-content {
+    display: none;
+}
+
+.bwg-igf-tab-content.active {
+    display: block;
+}
+
+/* Editor footer */
+.bwg-igf-editor-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-top: 1px solid #c3c4c7;
+    background: #f6f7f7;
+}
+
+/* Empty state */
+.bwg-igf-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.bwg-igf-empty-state h2 {
+    margin-bottom: 10px;
+}
+
+.bwg-igf-empty-state p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* Preview grid styles */
+.bwg-igf-preview-content.bwg-igf-grid {
+    display: grid;
+    gap: var(--bwg-igf-gap, 10px);
+}
+
+.bwg-igf-grid-1 { grid-template-columns: repeat(1, 1fr); }
+.bwg-igf-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.bwg-igf-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.bwg-igf-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.bwg-igf-grid-5 { grid-template-columns: repeat(5, 1fr); }
+.bwg-igf-grid-6 { grid-template-columns: repeat(6, 1fr); }
+
+.bwg-igf-preview .bwg-igf-item {
+    aspect-ratio: 1;
+    overflow: hidden;
+}
+
+.bwg-igf-preview .bwg-igf-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Validation indicator */
+.bwg-igf-validation-indicator {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.bwg-igf-validation-indicator .spinner {
+    float: none;
+    margin: 0;
+}
+
+/* Checkbox labels inline */
+.bwg-igf-field label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.bwg-igf-field > label:has(input[type="checkbox"]) {
+    display: inline-flex;
+    align-items: center;
+    font-weight: normal;
+}
+
+/* Description text */
+.bwg-igf-field .description {
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
 /* Responsive */
 @media (max-width: 782px) {
     .bwg-igf-editor {
@@ -144,5 +234,16 @@
 
     .bwg-igf-preview {
         position: static;
+    }
+
+    .bwg-igf-editor-tabs {
+        flex-wrap: wrap;
+    }
+
+    .bwg-igf-editor-tab {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 8px 10px;
+        font-size: 13px;
     }
 }
