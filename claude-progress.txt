@@ -837,3 +837,162 @@ All configuration tabs in the feed editor work correctly. Clicking each tab:
 - feature-5-regression-test-20260124.png
 
 [Testing] Feature #5 verified - still passing
+
+## Testing Session: 2026-01-24 12:42 (Regression Testing - Feature #46)
+
+[Testing] Feature #46 (Gutenberg block appears in inserter) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Navigated to Add New Page in Gutenberg editor
+2. ✅ Opened block inserter (clicked Block Inserter button)
+3. ✅ Searched for 'Instagram' - BWG Instagram Feed block appeared as first result
+4. ✅ Searched for 'BWG' - BWG Instagram Feed block appeared (1 result found message shown)
+5. ✅ Block has appropriate Instagram-style icon (circular camera icon)
+6. ✅ Block is categorized under Widgets section
+
+### Console Errors
+- Only unrelated WordPress block directory search errors (403/400) - not related to the plugin
+- No plugin-specific JavaScript errors
+
+### Screenshot
+- feature-46-regression-test-bwg-block-search.png
+
+### Notes
+- Block properly registered with WordPress block editor
+- Search functionality works for both 'Instagram' and 'BWG' terms
+- No regressions detected
+
+[Testing] Feature #46 verified - still passing
+
+
+## Testing Session: 2026-01-24 12:47 (Regression Testing - Feature #5)
+
+[Testing] Feature #5 (Feeds list page loads correctly) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Navigate to Feeds submenu - Page loaded at admin.php?page=bwg-igf-feeds
+2. ✅ Page title displays 'All Feeds' - Confirmed in browser title
+3. ✅ Table headers show (Name, Type, Status, Shortcode, Actions) - All 5 columns present
+4. ✅ 'Add New Feed' button is visible - Button present next to heading
+5. ✅ Feed data displays correctly - Shows TEST_SHORTCODE_FEED_43 with all columns
+
+### Additional Checks
+- No console errors detected
+- Feed row shows: Name, Type (Public), Status (Active), Shortcode, Actions (Edit/Duplicate/Delete)
+
+### Screenshot
+- feature-5-regression-test-20260124-feeds-list.png
+
+[Testing] Feature #5 verified - still passing
+
+## Testing Session: 2026-01-24 12:44 (Regression Testing - Feature #18)
+
+[Testing] Feature #18 (Feed editor tabs navigation) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Open feed editor - Navigated to admin.php?page=bwg-igf-feeds&action=new
+2. ✅ Click Source tab - Shows Feed Name, Feed Type, Instagram Username(s)
+3. ✅ Click Layout tab - Shows Layout Type (Grid/Slider), Columns, Gap
+4. ✅ Click Display tab - Shows Number of Posts, show/hide checkboxes
+5. ✅ Click Styling tab - Shows Border Radius, Hover Effect, Custom CSS
+6. ✅ Click Popup tab - Shows Enable popup/lightbox checkbox
+7. ✅ Click Advanced tab - Shows Post Ordering, Cache Duration, Refresh Cache button
+8. ✅ Click back to Source tab - Navigation completes full round-trip
+
+### Tab Contents Summary
+| Tab | Content Fields |
+|-----|----------------|
+| Source | Feed Name, Feed Type (Public/Connected), Instagram Username(s) |
+| Layout | Layout Type (Grid/Slider), Columns (1-6), Gap (px) |
+| Display | Number of Posts, Show like/comment/caption/Follow button checkboxes |
+| Styling | Border Radius, Hover Effect (None/Zoom/Overlay/Brightness), Custom CSS |
+| Popup | Enable popup/lightbox checkbox |
+| Advanced | Post Ordering (5 options), Cache Duration (6 options), Refresh Cache button |
+
+### Console Errors
+- None detected
+
+### Screenshot
+- feature-18-regression-test-tabs-verified.png
+
+### Notes
+- All 6 tabs navigate correctly with proper active state highlighting
+- Tab content switches properly - only relevant content visible for each tab
+- No JavaScript errors during tab navigation
+- No regressions detected
+
+[Testing] Feature #18 verified - still passing
+
+
+## Testing Session: 2026-01-24 12:44 (Regression Testing - Feature #46)
+
+[Testing] Feature #46 (Gutenberg block appears in inserter) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Edited a page with Gutenberg editor
+2. ✅ Opened block inserter
+3. ✅ Searched for 'Instagram' - BWG Instagram Feed block appears
+4. ✅ Searched for 'BWG' - BWG Instagram Feed block appears (1 result found)
+5. ✅ Block has appropriate Instagram camera icon
+
+### Screenshot
+- feature-46-regression-test-bwg-block-search.png
+
+### Notes
+- Block is registered under 'Widgets' category in block inserter
+- No console errors related to block registration
+- No regressions detected
+
+[Testing] Feature #46 verified - still passing
+
+---
+
+## Session: 2026-01-24 (Feature #7)
+
+### Feature Completed
+- **Feature #7: Accounts page loads correctly** - PASSED
+
+### What was accomplished
+1. Verified Accounts page loads at admin.php?page=bwg-igf-accounts
+2. Page displays correctly with all required elements:
+   - Page title "Connected Instagram Accounts"
+   - "Connect an Account" section with description
+   - Warning notice about configuring Instagram App credentials
+   - "Go to Settings" link (navigates correctly)
+   - "Connected Accounts" section
+   - Empty state message "No accounts connected yet."
+3. No PHP errors detected
+4. No JavaScript console errors detected
+5. Page uses WordPress native styling correctly
+
+### Verification Steps Completed
+1. ✅ Navigate to Accounts submenu - Page loaded correctly
+2. ✅ Verify page title displays - "Connected Instagram Accounts"
+3. ✅ Verify 'Connect Account' section visible - Shows with description
+4. ✅ Verify accounts list section visible - "Connected Accounts" heading present
+5. ✅ Verify empty state when no accounts connected - "No accounts connected yet."
+6. ✅ "Go to Settings" link works - Successfully navigates to Settings page
+7. ✅ Sidebar menu navigation works - Accounts submenu navigates correctly
+
+### Template Details
+- Location: templates/admin/accounts.php
+- Features:
+  - WordPress standard "wrap" class for layout
+  - bwg-igf-widget class for content sections
+  - Checks for Instagram App credentials before showing Connect button
+  - Displays connected accounts in WP_List_Table format (when accounts exist)
+  - Shows token expiration with color warning for < 7 days
+  - Disconnect link for each connected account
+
+### Screenshot
+- feature-7-accounts-page-loaded.png
+
+### Current Status
+- Total features: 149
+- Passing: 11 (Features #1, #2, #3, #5, #7, #11, #12, #18, #43, #46, #47)
+- Percentage: ~7.4%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / password123
+
