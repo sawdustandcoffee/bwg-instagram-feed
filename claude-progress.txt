@@ -9111,3 +9111,103 @@ Feature #91 is fully implemented and verified. The success notification function
 - Credentials: admin / admin123
 
 [Feature #91 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #85 Regression Test)
+
+### Feature Tested
+- **Feature #85: Required username validation for public feed** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** form
+- **Description:** Public feed requires at least one username
+
+### Verification Steps Completed
+
+1. **Step 1: Create new public feed** - ✅ VERIFIED
+   - Navigated to Add New Feed page
+   - Feed Type defaulted to "Public (Username)"
+
+2. **Step 2: Enter feed name** - ✅ VERIFIED
+   - Entered "Test Feature 85" in Feed Name field
+
+3. **Step 3: Leave username field empty** - ✅ VERIFIED
+   - Instagram Username(s) field was left empty
+
+4. **Step 4: Click Save** - ✅ VERIFIED
+   - Clicked "Create Feed" button
+   - Server returned 400 Bad Request (validation triggered)
+
+5. **Step 5: Verify error about required username** - ✅ VERIFIED
+   - Error message displayed: "Instagram username is required for public feeds."
+   - Captured in accessibility snapshot immediately after form submission
+
+### Screenshots
+- feature-85-username-required-error-verified.png - Form after submission attempt
+- feature-85-error-message-top.png - Page state after scroll
+
+### Console Errors
+- None
+
+### Result
+Feature #85 PASSES regression test. Public feed username validation is working correctly.
+
+[Testing] Feature #85 verified - still passing
+[Testing] Session complete - Feature #85 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Feature #93 - Error Notification on Failed Save)
+
+### Feature Completed
+- **Feature #93: Error notification on failed save** - PASSED ✅
+
+### Feature Details
+- **Category:** feedback
+- **Name:** Error notification on failed save
+- **Description:** Clear error message when save fails
+
+### Verification Steps Completed
+
+1. **Step 1: Modify feed with invalid data** - ✅ VERIFIED
+   - Navigated to Edit Feed page for Test Feed (ID: 1)
+   - Changed Instagram username to "invalid_nonexistent_user_xyz123"
+
+2. **Step 2: Attempt to save** - ✅ VERIFIED
+   - Clicked "Save Changes" button
+
+3. **Step 3: Verify error notification appears** - ✅ VERIFIED
+   - Error message displayed inline below the Instagram Username(s) field
+   - Red X icon displayed next to error message
+
+4. **Step 4: Verify error message is specific and helpful** - ✅ VERIFIED
+   - Message: "Instagram user "@invalid_nonexistent_user_xyz123" was not found. Please check the spelling and try again."
+   - Includes exact username that failed validation
+   - Provides clear guidance on what to do (check spelling)
+
+### Implementation Details
+- **Backend (class-bwg-igf-admin-ajax.php)**:
+  - Line 167-173: Returns specific error message with username when validation fails
+  - Uses wp_send_json_error() with message and field parameters
+
+- **Frontend (admin.js)**:
+  - Line 471-473: Handles AJAX response with success=false
+  - Shows error notice via BWGIGFAdmin.showNotice('error', response.data.message)
+  - Line 602-613: showNotice() function creates WordPress-style notice with appropriate styling
+
+### Screenshots
+- feature-93-error-notification-specific.png - Error notification displayed below username field
+
+### Console Errors
+- None
+
+### Current Status
+- Feature #93 marked as passing
+- Total features: 149
+- Passing: 71
+- Percentage: 47.7%
+
+[Feature #93 completed and verified]
