@@ -1179,3 +1179,86 @@ Verified the plugin dashboard page loads correctly and all elements render as ex
 - feature-12-regression-test-feeds-list.png
 
 [Testing] Feature #12 verified - still passing
+
+## Testing Session: 2026-01-24 (Regression Testing - Feature #2)
+
+[Testing] Feature #2 (Plugin creates database tables on activation) - REGRESSION TEST PASSED
+
+### Verification Steps Completed
+1. ✅ Plugin is activated on WordPress installation
+2. ✅ wp_bwg_igf_feeds table exists with correct schema (19 columns)
+3. ✅ wp_bwg_igf_accounts table exists with correct schema (11 columns)
+4. ✅ wp_bwg_igf_cache table exists with correct schema (6 columns)
+5. ✅ All columns have correct data types
+6. ✅ Indexes created properly:
+   - feeds: PRIMARY, UNIQUE(slug), INDEX(feed_type), INDEX(status)
+   - accounts: PRIMARY, UNIQUE(instagram_user_id), INDEX(status)
+   - cache: PRIMARY, INDEX(feed_id), INDEX(cache_key), INDEX(expires_at)
+7. ✅ No console errors detected
+
+### Screenshots
+- feature-2-regression-test-plugin-active.png
+
+### Notes
+- Database schema verified via MySQL DESCRIBE and SHOW INDEX commands
+- All three custom tables (feeds, accounts, cache) present and correctly structured
+- No regressions detected
+
+[Testing] Feature #2 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #9)
+
+### Feature Completed
+- **Feature #9: BWG branding displays correctly** - PASSED
+
+### What was accomplished
+Implemented and verified Boston Web Group branding in the plugin header area.
+
+### Implementation Changes
+1. Updated `templates/admin/dashboard.php`:
+   - Added `.bwg-igf-logo` container with Instagram dashicon
+   - Added `.bwg-igf-branding` container with h1 and tagline
+   - Added "by Boston Web Group" tagline span
+
+2. Updated `assets/css/admin.css`:
+   - Added Instagram-gradient background for logo (purple #833ab4, red #fd1d1d, orange #fcb045)
+   - Added rounded corners (12px border-radius) and subtle shadow
+   - Styled the Instagram dashicon in white
+   - Added typography styles for heading and tagline
+
+### Verification Steps Completed
+1. ✅ Navigate to plugin dashboard - admin.php?page=bwg-igf
+2. ✅ Verify BWG logo or branding in header area - Instagram-gradient logo box displays
+3. ✅ Verify Instagram logo element present - White Instagram camera icon visible in gradient box
+4. ✅ Verify brand colors are subtle and professional - Colors confined to small logo area, professional appearance
+
+### Branding Elements
+- Logo: 48x48px gradient box with Instagram camera dashicon
+- Gradient: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%)
+- Shadow: 0 2px 8px rgba(131, 58, 180, 0.3)
+- Heading: "BWG Instagram Feed" (600 weight, 23px)
+- Tagline: "by Boston Web Group" (13px, gray #646970)
+
+### Screenshot
+- feature-9-branding-final.png
+
+### Git Commit
+- `4089aae` - Add BWG branding to plugin dashboard - Feature #9
+
+### Current Status
+- Total features: 149
+- Passing: 13 (Features #1, #2, #3, #4, #5, #7, #9, #11, #12, #18, #43, #46, #47)
+- Percentage: ~8.7%
+
+### WordPress Environment
+- Docker: http://localhost:8082
+- Credentials: admin / testpass123 (password was reset during session)
+
+### Notes
+- The wp-instagram directory is mounted as the plugin directory in Docker
+- Files must be edited in /home/buckneri/projects/wp-instagram for changes to reflect in browser
+- Files should also be copied to /home/buckneri/projects/bwg-instagram-feed for git commits
+
