@@ -8608,3 +8608,76 @@ Feature #63 PASSES regression test. Edit feed action correctly:
 Feature #11 PASSES regression test. New feed creation form displays correctly with all required fields.
 
 [Testing] Feature #11 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #87 - Column Count Validation)
+
+### Feature Completed
+- **Feature #87: Column count within valid range** - PASSED ✅
+
+### Feature Details
+- **Category:** form
+- **Name:** Column count within valid range
+- **Description:** Grid columns validated between 1-6
+
+### Implementation
+
+**1. HTML5 Validation (templates/admin/feed-editor.php)**
+- Input field has `min="1" max="6"` attributes for browser-level validation
+- Already existed in codebase
+
+**2. Server-side Validation (includes/admin/class-bwg-igf-admin-ajax.php)**
+- Added `$columns = max( 1, min( 6, $columns ) );` at line 205
+- Ensures values are clamped to valid range even if client-side validation is bypassed
+
+**3. Client-side JavaScript Validation (assets/js/admin.js)**
+- Added `initColumnCountValidation()` function
+- Real-time warning displayed on input when value is outside 1-6 range
+- Auto-correction on blur: values below 1 corrected to 1, values above 6 corrected to 6
+- Warning notification shown when value is auto-corrected
+- Preview updates after correction
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Layout tab** - ✅ VERIFIED
+   - Navigated to admin.php?page=bwg-igf-feeds&action=edit&feed_id=1
+   - Changed Layout Type to "Grid" to reveal Columns field
+   - Columns field displayed with initial value "3"
+
+2. **Step 2: Try to set columns to 0** - ✅ VERIFIED
+   - Entered "0" in the Columns field
+
+3. **Step 3: Verify minimum of 1 enforced** - ✅ VERIFIED
+   - On blur/save, value corrected to "1"
+   - Warning message displayed: "Columns set to minimum (1)"
+   - Inline warning shown: "Minimum is 1"
+
+4. **Step 4: Try to set columns to 10** - ✅ VERIFIED
+   - Entered "10" in the Columns field
+
+5. **Step 5: Verify maximum of 6 enforced** - ✅ VERIFIED
+   - On blur/save, value corrected to "6"
+   - Warning message displayed: "Columns limited to maximum (6)"
+   - Inline warning shown: "Maximum is 6"
+
+### Screenshots
+- feature-87-columns-initial.png - Initial state with 3 columns
+- feature-87-minimum-enforced.png - Value corrected to 1 with warning
+- feature-87-maximum-enforced.png - Value corrected to 6 with warning
+
+### Console Errors
+- None
+
+### Commit
+9f29f52 - Implement column count validation (1-6 range) - Feature #87
+
+### Current Status
+- Feature #87 marked as passing
+- Total features: 149
+- Passing: 69
+- In Progress: 3
+- Percentage: 46.3%
+
+[Feature #87 completed and verified]
