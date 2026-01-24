@@ -5090,3 +5090,110 @@ cb80920 - Fix regression: Validate feed ID exists before editing
 - Credentials: admin / admin123
 
 [Regression in Feature #57 detected and fixed]
+
+---
+
+## Session: 2026-01-24 (Regression Test - Feature #52)
+
+### Regression Test: Feature #52 - AJAX requests check capabilities
+
+**Status:** ✅ PASSED - No regression found
+
+**Feature Details:**
+- **Category:** security  
+- **Name:** AJAX requests check capabilities
+- **Description:** AJAX actions verify user has required permissions
+
+### Test Steps Performed
+
+1. **Step 1: Log in as subscriber user** - ✅ VERIFIED
+   - Logged in as 'testsubscriber' (subscriber role)
+   - Verified limited admin menu (only Dashboard and Profile)
+
+2. **Step 2: Attempt to call feed creation AJAX endpoint** - ✅ VERIFIED
+   - Called bwg_igf_save_feed AJAX action
+   - Request properly rejected
+
+3. **Step 3: Verify permission denied response** - ✅ VERIFIED
+   - Response: {"success":false,"data":{"message":"Security check failed."}}
+   - Subscriber cannot create feeds
+
+4. **Step 4: Log in as administrator** - ✅ VERIFIED
+   - Logged in as 'admin' (administrator role)
+   - Full admin menu visible including Instagram Feed
+
+5. **Step 5: Verify same request succeeds** - ✅ VERIFIED
+   - Called bwg_igf_save_feed AJAX action with valid nonce
+   - Response: {"success":true,"data":{"message":"Feed created successfully!","feed_id":4}}
+   - Admin can create feeds successfully
+   - Test feed cleaned up after verification
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #52 PASSES regression testing. The AJAX capability checks are working correctly:
+- Subscriber users are properly blocked with "Security check failed"
+- Administrator users can successfully use the AJAX endpoints
+
+[Regression test completed - Feature #52 verified]
+
+
+
+---
+
+## Session: 2026-01-24 (Feature #65 - Breadcrumbs Show Correct Path)
+
+### Feature Completed
+- **Feature #65: Breadcrumbs show correct path** - PASSED ✅
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Breadcrumbs show correct path
+- **Description:** Breadcrumb navigation reflects current location
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to feed editor** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=edit&feed_id=1
+   - Feed editor page loaded successfully
+
+2. **Step 2: Verify breadcrumbs show: Dashboard > Feeds > Edit** - ✅ VERIFIED
+   - Breadcrumb navigation visible at top of page
+   - Shows: "Dashboard › Feeds › Edit"
+   - Screenshot: feature-65-breadcrumbs-edit-page.png
+
+3. **Step 3: Click Feeds in breadcrumb** - ✅ VERIFIED
+   - Clicked "Feeds" link in breadcrumb navigation
+   - Link is styled with proper hover effects
+
+4. **Step 4: Verify navigates to feeds list** - ✅ VERIFIED
+   - Successfully navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Feeds list page displayed with all feeds
+   - Screenshot: feature-65-feeds-list-after-breadcrumb-click.png
+
+### Additional Verification
+- Also tested "Create New Feed" page breadcrumbs
+- Shows: "Dashboard › Feeds › Create"
+- Screenshot: feature-65-breadcrumbs-create-page.png
+
+### Implementation Details
+- Breadcrumb HTML added to templates/admin/feed-editor.php
+- CSS styles added to assets/css/admin.css:
+  - .bwg-igf-breadcrumbs - flex container
+  - .bwg-igf-breadcrumb-link - clickable links with hover effects
+  - .bwg-igf-breadcrumb-separator - "›" separator styling
+  - .bwg-igf-breadcrumb-current - current page indicator
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-65-breadcrumbs-edit-page.png - Edit Feed page with breadcrumbs
+- feature-65-breadcrumbs-create-page.png - Create New Feed page with breadcrumbs
+- feature-65-feeds-list-after-breadcrumb-click.png - Feeds list after clicking breadcrumb
+
+### Current Status
+- Total features: 149
+- Passing: 44 (updated)
+- Percentage: ~29.5%
+
+[Feature #65 completed and verified]
