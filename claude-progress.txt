@@ -1,5 +1,65 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #71 - Edited Feed Changes Persist)
+
+### Feature Completed
+- **Feature #71: Edited feed changes persist** - PASSED ✅
+
+### Feature Details
+- **Category:** data
+- **Name:** Edited feed changes persist
+- **Description:** Modifications to feed are saved correctly
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed with name 'ORIGINAL'** - ✅ VERIFIED
+   - Navigated to Feeds page at http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Clicked "Add New Feed" button
+   - Entered Feed Name: ORIGINAL
+   - Entered Instagram Username: testuser
+   - Clicked "Create Feed" button
+   - Feed created successfully with ID: 8
+
+2. **Step 2: Edit feed, change name to 'MODIFIED'** - ✅ VERIFIED
+   - Clicked Edit link for "ORIGINAL" feed
+   - Editor opened at: admin.php?page=bwg-igf-feeds&action=edit&feed_id=8
+   - Cleared Feed Name field and entered: MODIFIED
+
+3. **Step 3: Save changes** - ✅ VERIFIED
+   - Clicked "Save Changes" button
+   - Success message displayed: "Feed updated successfully!"
+   - Button changed to "Saved!" (disabled state)
+
+4. **Step 4: Refresh page** - ✅ VERIFIED
+   - Navigated back to the same edit URL
+   - Page fully reloaded from server
+
+5. **Step 5: Verify name shows 'MODIFIED'** - ✅ VERIFIED
+   - Feed Name field shows "MODIFIED" after refresh
+   - Navigated to feeds list - feed name shows "MODIFIED" in table
+   - Data persisted to database correctly
+
+### Screenshot
+- feature-71-modified-feed-in-list.png - Feeds list showing "MODIFIED" name
+
+### Console Errors: None detected
+
+### Cleanup
+- Test feed deleted after verification
+
+### Current Status
+- Total features: 149
+- Passing: 49 (Feature #71 now passing)
+- Percentage: ~32.9%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Feature #71 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #68 - Feed Appears in List After Creation)
 
 ### Feature Completed
