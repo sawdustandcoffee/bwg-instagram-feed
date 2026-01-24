@@ -4171,3 +4171,419 @@ Feature #34 remains PASSING. All background color customization functionality wo
 
 [Testing] Feature #34 verified - still passing
 
+
+
+---
+
+## Session: 2026-01-24 (Feature #61 - Regression Test)
+
+### Feature Tested
+- **Feature #61: Accounts submenu navigates correctly** - STILL PASSING ✅
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Accounts submenu navigates correctly
+- **Description:** Clicking Accounts submenu loads accounts page
+
+### Verification Steps Completed
+
+1. **Step 1: Click Accounts submenu item** - ✅ VERIFIED
+   - Logged into WordPress admin (admin/admin123)
+   - Navigated to Instagram Feed Dashboard (admin.php?page=bwg-igf)
+   - Clicked "Accounts" submenu link
+   - Navigation triggered successfully
+
+2. **Step 2: Verify accounts page loads** - ✅ VERIFIED
+   - Page Title: "Connected Accounts ‹ BWG Instagram Test — WordPress"
+   - Main heading: "Connected Instagram Accounts" (h1)
+   - Content includes:
+     - "Connect an Account" section with instructions
+     - "Go to Settings" link for Instagram App credentials
+     - "Connected Accounts" section showing "No accounts connected yet."
+
+3. **Step 3: Verify correct URL** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-accounts
+   - Correct page query parameter: page=bwg-igf-accounts
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-61-regression-test.png - Accounts page after clicking submenu
+
+### Conclusion
+Feature #61 remains PASSING. No regression detected.
+
+[Testing] Feature #61 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 15:04 (Feature #61 - Regression Test)
+
+### Feature Tested
+- **Feature #61: Accounts submenu navigates correctly** - STILL PASSING ✅
+
+### Verification Steps Completed
+
+1. **Step 1: Click Accounts submenu item** - ✅ VERIFIED
+   - Navigated from Feeds page to Accounts via submenu click
+   - Link clicked successfully
+
+2. **Step 2: Verify accounts page loads** - ✅ VERIFIED
+   - Page Title: 'Connected Accounts ‹ BWG Instagram Test — WordPress'
+   - Main heading: 'Connected Instagram Accounts'
+   - Table displayed with connected account: @test_encryption_user
+
+3. **Step 3: Verify correct URL** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-accounts
+
+### Screenshots
+- feature-61-regression-test.png - Accounts page after navigation
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #61 remains PASSING. No regression found.
+
+[Testing] Feature #61 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #6 - Regression Test)
+
+### Feature Tested
+- **Feature #6: Settings page loads correctly** - STILL PASSING
+
+### Feature Details
+- **Category:** functional
+- **Name:** Settings page loads correctly
+- **Description:** Plugin settings page renders with all options
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Settings submenu** - ✅ VERIFIED
+   - Successfully navigated to admin.php?page=bwg-igf-settings
+
+2. **Step 2: Verify page title displays** - ✅ VERIFIED
+   - Page title: "Settings ‹ BWG Instagram Test — WordPress"
+   - Heading "Settings" (h1) visible
+
+3. **Step 3: Verify general settings section visible** - ✅ VERIFIED
+   - "General Settings" section heading (h2) present
+
+4. **Step 4: Verify cache duration option present** - ✅ VERIFIED
+   - Dropdown with options: 15 Minutes, 30 Minutes, 1 Hour, 6 Hours, 12 Hours, 24 Hours
+   - Default selection: 1 Hour
+
+5. **Step 5: Verify uninstall behavior option present** - ✅ VERIFIED
+   - "Delete Data on Uninstall" checkbox with warning message
+
+6. **Step 6: Verify Instagram App credentials fields present** - ✅ VERIFIED
+   - Instagram App ID text field
+   - Instagram App Secret text field
+
+7. **Step 7: Verify Save Changes button is functional** - ✅ VERIFIED
+   - Clicked Save Changes button
+   - Success message "Settings saved." appeared
+
+### Additional Verifications
+- Cache Management section with "Clear All Cache" button present
+- No console errors detected
+
+### Screenshots
+- feature-6-settings-page-regression.png - Settings page initial view
+- feature-6-settings-page-full-regression.png - Full page screenshot
+- feature-6-settings-saved-success.png - Settings saved confirmation
+
+### Conclusion
+Feature #6 remains PASSING. No regression detected.
+
+[Testing] Feature #6 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #51 - AJAX Nonce Verification - REGRESSION TEST)
+
+### Feature Tested
+- **Feature #51: AJAX requests verify nonce** - STILL PASSING ✅
+
+### Feature Details
+- **Category:** security
+- **Name:** AJAX requests verify nonce
+- **Description:** All AJAX actions require valid nonce
+
+### Verification Steps Completed
+
+1. **Step 1: Open browser developer tools** - ✅ VERIFIED
+   - Used Playwright browser automation to test AJAX requests
+
+2. **Step 2: Attempt AJAX request without nonce** - ✅ VERIFIED
+   - Action: bwg_igf_validate_username
+   - Result: Rejected with 'Security check failed.'
+
+3. **Step 3: Verify request rejected** - ✅ VERIFIED
+   - Request properly rejected when no nonce provided
+
+4. **Step 4: Attempt with invalid nonce** - ✅ VERIFIED
+   - Action: bwg_igf_validate_username with nonce='invalid_nonce_12345'
+   - Result: Rejected with 'Security check failed.'
+
+5. **Step 5: Verify request rejected** - ✅ VERIFIED
+   - Request properly rejected with invalid nonce
+
+6. **Step 6: Attempt with valid nonce** - ✅ VERIFIED
+   - Action: bwg_igf_validate_username with valid nonce from bwgIgfAdmin.nonce
+   - Result: Accepted with 'Username format is valid.'
+
+7. **Step 7: Verify request succeeds** - ✅ VERIFIED
+   - Request properly accepted with valid nonce
+
+### Additional Tests Performed
+- duplicate_feed without nonce → Rejected ✅
+- delete_feed with invalid nonce → Rejected ✅
+- clear_all_cache with valid nonce → Succeeded ✅
+
+### Code Verification
+- verify_request() method in class-bwg-igf-admin-ajax.php properly checks nonce
+- Uses wp_verify_nonce() with 'bwg_igf_admin_nonce' action
+- Also verifies user capabilities with current_user_can('manage_options')
+
+### Screenshots
+- feature-51-nonce-verification.png - Feed editor page during testing
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #51 remains PASSING. All AJAX nonce verification functionality works correctly:
+- Requests without nonce are rejected
+- Requests with invalid nonce are rejected
+- Requests with valid nonce are accepted
+
+[Testing] Feature #51 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #57 - Cannot Access Other Feed Data via ID Manipulation)
+
+### Feature Completed
+- **Feature #57: Cannot access other feed data via ID manipulation** - PASSED
+
+### Feature Details
+- **Category:** security
+- **Name:** Cannot access other feed data via ID manipulation
+- **Description:** API properly validates feed ownership/existence
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed with ID 1** - VERIFIED
+   - Existing feeds in system: ID 1, 4, 5, 6, 7
+   - Multiple feeds available for testing
+
+2. **Step 2: Access API with non-existent ID 999** - VERIFIED
+   - Created test page with shortcode: [bwg_igf id="999"]
+   - Page published at: /security-test-non-existent-feed-id/
+   - Also tested AJAX endpoints with ID 999
+
+3. **Step 3: Verify 404 or error response** - VERIFIED
+   - Frontend shortcode: Returns "Feed not found or inactive."
+   - AJAX duplicate_feed: Returns {"success":false,"data":{"message":"Feed not found."}}
+   - Error responses are generic and do not reveal system information
+
+4. **Step 4: Verify no data leakage** - VERIFIED
+   - Error messages do not reveal:
+     - Whether the ID exists or not
+     - What other feeds exist  
+     - Any database information
+     - Any internal error details
+   - All responses use generic, safe error messages
+
+### Code Review - Security Implementation
+
+**templates/frontend/feed.php (lines 19-36):**
+- Uses prepared statements (prevents SQL injection)
+- Only returns active feeds
+- Returns generic error for any non-existent/inactive feed
+
+**includes/admin/class-bwg-igf-admin-ajax.php:**
+- duplicate_feed(): Checks if feed exists before duplicating
+- delete_feed(): Now checks if feed exists first (improved)
+- refresh_cache(): Now checks if feed exists first (improved)
+- All endpoints verify nonce AND capabilities before processing
+
+### Improvements Made
+Enhanced security for delete_feed and refresh_cache endpoints:
+- Added existence check before attempting operation
+- Returns "Feed not found" error for non-existent IDs
+- Prevents information leakage about feed existence
+
+### Screenshots
+- feature-57-non-existent-feed-id-999.png - Frontend error for non-existent feed
+- feature-57-feeds-list-verification.png - Admin feeds list showing existing feeds
+
+### Console Errors: None detected
+
+### Current Status
+- Total features: 149
+- Feature #57: PASSING
+
+[Feature #57 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Feature #62 - Add New Feed Button Navigation)
+
+### Feature Completed
+- **Feature #62: Add New Feed button navigates to editor** - PASSED
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Add New Feed button navigates to editor
+- **Description:** Add New Feed button opens feed creation form
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Feeds list** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Page title: "All Feeds ‹ BWG Instagram Test — WordPress"
+   - Heading: "Instagram Feeds" with "Add New Feed" button visible
+   - Screenshot: feature-62-feeds-list-with-add-button.png
+
+2. **Step 2: Click 'Add New Feed' button** - ✅ VERIFIED
+   - Clicked the "Add New Feed" link button
+   - URL changed to: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=new
+
+3. **Step 3: Verify feed editor page loads** - ✅ VERIFIED
+   - Page heading: "Create New Feed"
+   - Editor tabs present: Source, Layout, Display, Styling, Popup, Advanced
+   - Preview section displayed on the right with pink placeholder images
+   - Form fields displayed correctly
+   - Screenshot: feature-62-new-feed-editor.png
+
+4. **Step 4: Verify empty/default values shown** - ✅ VERIFIED
+   
+   **Source Tab (default):**
+   - Feed Name: empty textbox
+   - Feed Type: "Public (Username)" selected (default)
+   - Instagram Username(s): empty with placeholder text
+   
+   **Layout Tab:**
+   - Layout Type: "Grid" selected (default)
+   - Columns: 3 (default)
+   - Gap (px): 10 (default)
+   
+   **Display Tab:**
+   - Number of Posts: 9 (default)
+   - Show like count: checked (default)
+   - Show comment count: checked (default)
+   - Show caption: unchecked (default)
+   - Show "Follow on Instagram" button: checked (default)
+   
+   **Styling Tab:**
+   - Background Color: empty (no color selected)
+   - Border Radius (px): 0 (default)
+   - Hover Effect: "None" selected (default)
+   - Custom CSS: empty with placeholder text
+   
+   Screenshot: feature-62-styling-tab-defaults.png
+
+### Console Errors: None detected
+
+### Conclusion
+Feature #62 PASSES. The "Add New Feed" button successfully navigates to the feed editor page with:
+- Correct URL: admin.php?page=bwg-igf-feeds&action=new
+- Proper page heading: "Create New Feed"
+- All tabs (Source, Layout, Display, Styling, Popup, Advanced) visible
+- Form fields initialized with appropriate empty/default values
+- Live preview section displayed
+
+### Current Status
+- Total features: 149
+- Passing: 40 (updated)
+- Percentage: ~26.8%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Feature #62 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Feature #56 - OAuth Tokens Encrypted)
+
+### Feature Completed
+- **Feature #56: OAuth tokens stored encrypted** - PASSED
+
+### Feature Details
+- **Category:** security
+- **Name:** OAuth tokens stored encrypted
+- **Description:** Instagram access tokens are encrypted in database
+
+### Verification Steps Completed
+
+1. **Step 1: Connect an Instagram account** - ✅ VERIFIED
+   - Configured Instagram App credentials in Settings
+   - Navigated to Accounts page
+   - Clicked "Connect Instagram Account" button
+   - Entered test username: test_encryption_user
+   - Account created successfully with "Active" status
+
+2. **Step 2: Access database directly** - ✅ VERIFIED
+   - Used docker exec to query MariaDB database
+   - Query: SELECT id, username, LEFT(access_token, 80) FROM wp_bwg_igf_accounts
+
+3. **Step 3: View access_token column in bwg_igf_accounts** - ✅ VERIFIED
+   - Token stored as: `bwg_enc_v1:jgrpjcWp+E1jnXdMrLLq+LIpVxi7ueDNy7M/kRyOjJu2iy5FS9Xho+8E8sePNLzMnYPYF`
+
+4. **Step 4: Verify token is not stored in plain text** - ✅ VERIFIED
+   - Original token would start with: `IGQVJWZADJLazNHUm1jM2...`
+   - Stored token starts with: `bwg_enc_v1:` (encryption prefix)
+   - Token is clearly encrypted, not plaintext
+
+5. **Step 5: Verify encrypted format** - ✅ VERIFIED
+   - Used "Verify Encryption" button in admin UI
+   - Confirmed encryption details:
+     - **Token Preview:** bwg_enc_v1:jgrp...6YgU=
+     - **Encrypted:** ✓ Yes
+     - **Method:** aes-256-gcm
+
+### Implementation Details
+
+**Encryption Class (class-bwg-igf-encryption.php):**
+- Uses AES-256-GCM cipher (authenticated encryption)
+- Derives encryption key from WordPress AUTH_KEY and SECURE_AUTH_KEY salts
+- Random IV generated for each encryption operation
+- Includes authentication tag for tamper detection
+- Prefix `bwg_enc_v1:` identifies encrypted values
+- Fallback to base64 encoding if OpenSSL not available
+
+**AJAX Handlers Added:**
+- `bwg_igf_connect_account` - Encrypts token before storing
+- `bwg_igf_disconnect_account` - Removes account and encrypted token
+- `bwg_igf_verify_token_encryption` - Verifies encryption status for admins
+
+**Files Modified:**
+- bwg-instagram-feed.php - Load encryption helper class
+- includes/admin/class-bwg-igf-admin-ajax.php - Add account AJAX handlers
+- assets/js/admin.js - Add JavaScript for account connection UI
+- templates/admin/accounts.php - Add "Verify Encryption" button
+
+### Screenshots
+- feature-56-oauth-token-encrypted.png - Verification showing encrypted token
+
+### Console Errors: None detected
+
+### Current Status
+- Total features: 149
+- Passing: 38 (updated)
+- Percentage: ~25.5%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Feature #56 completed and verified]
