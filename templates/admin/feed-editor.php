@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $feed = null;
+$is_edit_action = isset( $_GET['action'] ) && 'edit' === $_GET['action'];
+
 if ( $feed_id > 0 ) {
     global $wpdb;
     $feed = $wpdb->get_row( $wpdb->prepare(
@@ -19,9 +21,42 @@ if ( $feed_id > 0 ) {
     ) );
 }
 
+// Security check: If user requested to edit a specific feed but it doesn't exist, show error
+if ( $is_edit_action && $feed_id > 0 && empty( $feed ) ) {
+    ?>
+    <div class="wrap">
+        <h1><?php esc_html_e( 'Feed Not Found', 'bwg-instagram-feed' ); ?></h1>
+        <div class="notice notice-error">
+            <p><?php esc_html_e( 'The feed you are trying to edit does not exist or has been deleted.', 'bwg-instagram-feed' ); ?></p>
+        </div>
+        <p>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-feeds' ) ); ?>" class="button button-primary">
+                <?php esc_html_e( 'Return to Feeds List', 'bwg-instagram-feed' ); ?>
+            </a>
+        </p>
+    </div>
+    <?php
+    return;
+}
+
 $is_new = empty( $feed );
 ?>
 <div class="wrap">
+    <!-- Breadcrumb Navigation -->
+    <nav class="bwg-igf-breadcrumbs" aria-label="<?php esc_attr_e( 'Breadcrumb', 'bwg-instagram-feed' ); ?>">
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf' ) ); ?>" class="bwg-igf-breadcrumb-link">
+            <?php esc_html_e( 'Dashboard', 'bwg-instagram-feed' ); ?>
+        </a>
+        <span class="bwg-igf-breadcrumb-separator" aria-hidden="true">&rsaquo;</span>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-feeds' ) ); ?>" class="bwg-igf-breadcrumb-link">
+            <?php esc_html_e( 'Feeds', 'bwg-instagram-feed' ); ?>
+        </a>
+        <span class="bwg-igf-breadcrumb-separator" aria-hidden="true">&rsaquo;</span>
+        <span class="bwg-igf-breadcrumb-current" aria-current="page">
+            <?php echo $is_new ? esc_html__( 'Create', 'bwg-instagram-feed' ) : esc_html__( 'Edit', 'bwg-instagram-feed' ); ?>
+        </span>
+    </nav>
+
     <div class="bwg-igf-header">
         <h1>
             <?php echo $is_new ? esc_html__( 'Create New Feed', 'bwg-instagram-feed' ) : esc_html__( 'Edit Feed', 'bwg-instagram-feed' ); ?>
