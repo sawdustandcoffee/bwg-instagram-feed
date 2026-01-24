@@ -144,12 +144,20 @@
                 success: function(response) {
                     if (response.success) {
                         $button.text(bwgIgfAdmin.i18n.saved);
-                        setTimeout(function() {
-                            $button.text(originalText).prop('disabled', false);
-                        }, 2000);
 
                         // Show success notice
                         BWGIGFAdmin.showNotice('success', response.data.message);
+
+                        // Redirect to feeds list if creating new feed
+                        if (response.data.redirect) {
+                            setTimeout(function() {
+                                window.location.href = response.data.redirect;
+                            }, 1500);
+                        } else {
+                            setTimeout(function() {
+                                $button.text(originalText).prop('disabled', false);
+                            }, 2000);
+                        }
                     } else {
                         $button.text(originalText).prop('disabled', false);
                         BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);

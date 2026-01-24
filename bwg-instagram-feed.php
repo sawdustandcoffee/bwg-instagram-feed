@@ -107,8 +107,19 @@ final class BWG_Instagram_Feed {
      * Initialize plugin.
      */
     public function init() {
+        // Load admin AJAX handlers.
+        $this->load_admin_ajax();
+
         // Load Gutenberg block.
         $this->load_gutenberg_block();
+    }
+
+    /**
+     * Load admin AJAX handlers.
+     */
+    private function load_admin_ajax() {
+        // Load AJAX handlers - needed for both admin pages and admin-ajax.php requests.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/admin/class-bwg-igf-admin-ajax.php';
     }
 
     /**
