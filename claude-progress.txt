@@ -1,4 +1,56 @@
 # BWG Instagram Feed - Development Progress
+
+## Session: 2026-01-24 (Feature #68 - Feed Appears in List After Creation)
+
+### Feature Completed
+- **Feature #68: Feed appears in list after creation** - PASSED
+
+### Feature Details
+- **Category:** data
+- **Name:** Feed appears in list after creation
+- **Description:** Newly created feed shows in feeds list
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed TEST_LIST_APPEAR** - VERIFIED
+   - Logged in as admin at http://localhost:8088
+   - Navigated to Feeds list page
+   - Clicked Add New Feed button
+   - Filled in Feed Name: TEST_LIST_APPEAR
+   - Filled in Instagram Username: instagram
+   - Clicked Create Feed button
+
+2. **Step 2: Navigate to feeds list** - VERIFIED
+   - After creation, automatically redirected to feeds list page
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+
+3. **Step 3: Verify feed appears in table** - VERIFIED
+   - Feed TEST_LIST_APPEAR appears in the feeds table
+   - Assigned ID: 5
+   - Shortcode: [bwg_igf id=5]
+   - Screenshot: feature-68-feed-appears-in-list.png
+
+4. **Step 4: Verify name matches** - VERIFIED
+   - Name displayed in table: TEST_LIST_APPEAR
+   - Exact match with what was entered
+   - Type: Public
+   - Status: Active
+   - Actions available: Edit, Delete
+
+### Console Errors: None detected
+
+### Cleanup
+- Test feed deleted after verification to keep database clean
+
+### Current Status
+- Total features: 149
+- Passing: 49 (Feature #68 now passing)
+- Percentage: 32.9%
+
+[Feature #68 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #69 - Feed Persists After Page Refresh)
 
 ### Feature Completed
