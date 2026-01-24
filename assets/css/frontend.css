@@ -69,6 +69,10 @@
 .bwg-igf-overlay-content {
     color: #fff;
     text-align: center;
+    max-width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* Engagement stats */
@@ -189,6 +193,50 @@
 .bwg-igf-popup-details {
     color: #fff;
     width: 300px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Popup caption - handle long text */
+.bwg-igf-popup-caption {
+    margin: 0 0 15px 0;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    white-space: pre-wrap;
+}
+
+/* Popup stats */
+.bwg-igf-popup-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.bwg-igf-popup-stats span {
+    white-space: nowrap;
+}
+
+/* Popup link */
+.bwg-igf-popup-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bwg-igf-popup-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    color: #fff;
 }
 
 .bwg-igf-popup-close {
