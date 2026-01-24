@@ -118,6 +118,9 @@ final class BWG_Instagram_Feed {
      * Load admin AJAX handlers.
      */
     private function load_admin_ajax() {
+        // Load encryption helper.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-encryption.php';
+
         // Load AJAX handlers - needed for both admin pages and admin-ajax.php requests.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/admin/class-bwg-igf-admin-ajax.php';
     }

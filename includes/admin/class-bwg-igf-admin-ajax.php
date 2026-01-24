@@ -43,6 +43,15 @@ class BWG_IGF_Admin_Ajax {
 
         // Clear all cache.
         add_action( 'wp_ajax_bwg_igf_clear_all_cache', array( $this, 'clear_all_cache' ) );
+
+        // Connect Instagram account.
+        add_action( 'wp_ajax_bwg_igf_connect_account', array( $this, 'connect_account' ) );
+
+        // Disconnect Instagram account.
+        add_action( 'wp_ajax_bwg_igf_disconnect_account', array( $this, 'disconnect_account' ) );
+
+        // Verify token encryption (for testing/admin).
+        add_action( 'wp_ajax_bwg_igf_verify_token_encryption', array( $this, 'verify_token_encryption' ) );
     }
 
     /**

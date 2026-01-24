@@ -3869,3 +3869,145 @@ Feature #35 remains PASSING. All border radius customization functionality works
 - Credentials: admin / admin123
 
 [Feature #55 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Feature #58 - Dashboard Menu Navigation - Regression Test)
+
+### Feature Tested
+- **Feature #58: Dashboard menu navigates correctly** - STILL PASSING
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Dashboard menu navigates correctly
+- **Description:** Clicking dashboard menu item loads dashboard
+
+### Verification Steps Completed
+
+1. **Step 1: Click BWG Instagram Feed menu item** - ✅ VERIFIED
+   - Clicked the "Instagram Feed" link in the WordPress admin sidebar
+   - Navigation was successful
+
+2. **Step 2: Verify dashboard page loads** - ✅ VERIFIED
+   - Page loaded with "BWG Instagram Feed" heading
+   - "by Boston Web Group" subtitle visible
+   - Quick Stats section displayed: Total Feeds: 2, Connected Accounts: 0
+   - Getting Started section with 4 instructions
+   - Quick Links section with Create New Feed, View All Feeds, Settings buttons
+   - Need Help? section with Visit Support Center link
+
+3. **Step 3: Verify URL is correct** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf
+   - Correct page parameter for the BWG Instagram Feed dashboard
+
+4. **Step 4: Verify no console errors** - ✅ VERIFIED
+   - No JavaScript errors detected in console
+
+### Screenshot
+- feature-58-dashboard-navigation.png - Dashboard page displayed correctly
+
+### Conclusion
+Feature #58 remains PASSING. Dashboard navigation works correctly.
+
+[Testing] Feature #58 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #3 - Regression Test)
+
+### Feature Tested
+- **Feature #3: Admin menu appears after activation** - STILL PASSING
+
+### Feature Details
+- **Category:** functional
+- **Name:** Admin menu appears after activation
+- **Description:** Plugin admin menu item appears in WordPress admin sidebar
+
+### Verification Steps Completed
+
+1. **Step 1: Log in as WordPress administrator** - ✅ VERIFIED
+   - Logged in as admin/admin123
+   - Successfully reached WordPress Dashboard
+
+2. **Step 2: Verify 'BWG Instagram Feed' menu item appears in sidebar** - ✅ VERIFIED
+   - 'Instagram Feed' menu item visible in admin sidebar
+   - Located between Comments and Appearance menus
+
+3. **Step 3: Verify menu has correct icon** - ✅ VERIFIED
+   - Instagram camera icon displayed next to menu item
+   - Icon visible in screenshot: feature-3-admin-menu-regression-test.png
+
+4. **Step 4: Verify submenu items present** - ✅ VERIFIED
+   - Dashboard (admin.php?page=bwg-igf)
+   - Feeds (admin.php?page=bwg-igf-feeds)
+   - Accounts (admin.php?page=bwg-igf-accounts)
+   - Settings (admin.php?page=bwg-igf-settings)
+
+### Additional Verification
+- Clicked Instagram Feed menu to navigate to plugin dashboard
+- Plugin dashboard loaded correctly with:
+  - Quick Stats (Total Feeds: 2, Connected Accounts: 0)
+  - Getting Started section
+  - Quick Links section
+  - Need Help? section
+
+### Console Errors: None detected
+
+### Screenshots
+- feature-3-admin-menu-regression-test.png - Admin sidebar showing Instagram Feed menu
+- feature-3-instagram-feed-dashboard.png - Plugin dashboard page
+
+### Conclusion
+Feature #3 remains PASSING. No regression detected.
+
+[Testing] Feature #3 verified - still passing
+
+
+---
+
+## Session: 2026-01-24 (Feature #60 - Settings Submenu Navigation)
+
+### Feature Completed
+- **Feature #60: Settings submenu navigates correctly** - PASSED
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Settings submenu navigates correctly
+- **Description:** Clicking Settings submenu loads settings page
+
+### Verification Steps Completed
+
+1. **Step 1: Click Settings submenu item** - ✅ VERIFIED
+   - Logged into WordPress admin
+   - Navigated to Instagram Feed dashboard (admin.php?page=bwg-igf)
+   - Located Settings submenu under "Instagram Feed" menu
+   - Clicked on Settings submenu link
+
+2. **Step 2: Verify settings page loads** - ✅ VERIFIED
+   - Settings page loaded successfully with:
+     - "Settings" heading (h1)
+     - "General Settings" section with Default Cache Duration dropdown and Delete Data on Uninstall checkbox
+     - "Instagram API Settings" section with App ID and App Secret fields
+     - "Cache Management" section with Clear All Cache button
+     - "Save Changes" button
+
+3. **Step 3: Verify correct URL** - ✅ VERIFIED
+   - URL correctly shows: `http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings`
+   - This matches the expected settings page URL
+
+### Screenshots
+- feature-60-settings-page.png - Settings page with all sections visible
+
+### Console Errors: None detected
+
+### Current Status
+- Total features: 149
+- Passing: 38 (updated)
+- Percentage: ~25.5%
+
+### WordPress Environment
+- Docker: http://localhost:8088
+- Credentials: admin / admin123
+
+[Feature #60 completed and verified]
