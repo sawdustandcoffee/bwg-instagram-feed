@@ -1,5 +1,73 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #147 - Hover Overlay Displays Correctly)
+
+### Feature Completed
+- **Feature #147: Hover overlay displays correctly** - PASSED ✅
+
+### Feature Details
+- **Category:** style
+- **Name:** Hover overlay displays correctly
+- **Description:** Hover effect overlay shows properly
+
+### Verification Steps Completed
+
+1. **Step 1: Enable overlay hover effect** - ✅ VERIFIED
+   - Feed ID 4 "Feature 140 Performance Test" already has overlay hover effect enabled
+   - Styling settings: `{"hover_effect":"overlay","border_radius":8}`
+   - Multiple feeds have overlay enabled for testing
+
+2. **Step 2: View feed on frontend** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/?page_id=53
+   - Feed displays with 12 posts in a 3x3 grid layout
+   - Posts show placeholder images with "Post 1", "Post 2", etc.
+
+3. **Step 3: Hover over post** - ✅ VERIFIED
+   - Hovered over Post 1 - overlay appeared with stats (❤️ 2341 💬 70)
+   - Hovered over Post 2 - overlay appeared with stats (❤️ 3160 💬 449)
+   - Overlay appears consistently on all posts
+
+4. **Step 4: Verify overlay appears smoothly** - ✅ VERIFIED
+   - Overlay uses CSS transition: `transition: opacity 0.3s ease`
+   - Opacity transitions from 0 to 1 on hover
+   - Animation is smooth and professional
+
+5. **Step 5: Verify overlay color correct** - ✅ VERIFIED
+   - Used browser evaluation to check computed styles
+   - CSS variable `--bwg-igf-overlay-color` = `rgba(0, 0, 0, 0.5)`
+   - Computed background color = `rgba(0, 0, 0, 0.5)`
+   - Custom overlay color setting is properly applied
+
+### Technical Implementation Verified
+- CSS overlay class `.bwg-igf-overlay` (frontend.css lines 67-84)
+- PHP template renders overlay when `$hover_effect === 'overlay'` (feed.php lines 456-469)
+- CSS variable `--bwg-igf-overlay-color` allows customization
+- Overlay contains stats (likes/comments) displayed with emojis
+
+### Screenshots Captured
+- feature-147-initial-feed.png - Initial feed display before hover
+- feature-147-hover-overlay.png - Overlay visible on Post 1 hover
+- feature-147-hover-post2.png - Overlay visible on Post 2 hover
+- feature-147-slider-initial.png - Slider layout also has overlay working
+
+### Console Errors
+- None
+
+### Result
+Feature #147 PASSES. Hover overlay displays correctly:
+1. Overlay appears on hover ✅
+2. Transition is smooth (0.3s ease) ✅
+3. Overlay color is correct (rgba(0, 0, 0, 0.5)) ✅
+4. Stats (likes/comments) displayed correctly ✅
+5. Works on both grid and slider layouts ✅
+
+[Feature #147 completed and verified]
+
+### Progress Update
+- Features passing: 124/149 (83.2%)
+
+---
+
 ## Session: 2026-01-25 (Feature #146 - Pagination Dots Styled Correctly)
 
 ### Feature Completed
@@ -16427,3 +16495,46 @@ Feature #45 PASSES regression test. Copy shortcode button functionality working 
 [Testing] Feature #45 verified - still passing
 [Testing] Session complete - Feature #45 regression test passed
 
+
+
+---
+
+## Session: 2026-01-25 (Testing Agent - Feature #129 Regression Test)
+
+### Feature Tested
+- **Feature #129: Token expiration warning displayed** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** oauth
+- **Name:** Token expiration warning displayed
+- **Description:** Warning shown when token nearing expiration
+
+### Verification Steps Completed
+
+1. **Step 1: Have connected account with token expiring soon** - ✅ VERIFIED
+   - Created test account @test_expiring_account with token expiring in 5 days
+   - Token expires at: 2026-01-30 06:05:45
+
+2. **Step 2: Navigate to Accounts page** - ✅ VERIFIED
+   - Navigated to admin.php?page=bwg-igf-accounts
+   - Page loaded successfully showing Connected Accounts table
+
+3. **Step 3: Verify warning indicator shown** - ✅ VERIFIED
+   - Yellow/amber warning icon (dashicons-warning) displayed next to expiration
+   - "5 days" text shown in amber color indicating warning state
+
+4. **Step 4: Verify warning explains action needed** - ✅ VERIFIED
+   - Clear message displayed: "Token expiring soon. Reconnect your account to refresh the token."
+   - Warning explains the action needed (reconnect account to refresh token)
+
+### Screenshots
+- feature-129-token-warning.png - Accounts page showing expiration warning
+
+### Console Errors
+- None
+
+### Result
+Feature #129 PASSES regression test. Token expiration warning functionality working correctly.
+
+[Testing] Feature #129 verified - still passing
+[Testing] Session complete - Feature #129 regression test passed
