@@ -112,14 +112,20 @@ $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
                     <div class="bwg-igf-github-status" style="margin-top: 15px; padding: 10px; background: #f0f0f1; border-left: 4px solid #2271b1;">
                         <p>
                             <strong><?php esc_html_e( 'Repository:', 'bwg-instagram-feed' ); ?></strong>
-                            <a href="https://github.com/<?php echo esc_attr( $status['owner'] . '/' . $status['repo'] ); ?>" target="_blank" rel="noopener noreferrer">
-                                <?php echo esc_html( $status['owner'] . '/' . $status['repo'] ); ?>
+                            <a href="<?php echo esc_url( $status['github_url'] ?? 'https://github.com/sawdustandcoffee/bwg-instagram-feed' ); ?>" target="_blank" rel="noopener noreferrer">
+                                sawdustandcoffee/bwg-instagram-feed
                             </a>
                         </p>
                         <p>
                             <strong><?php esc_html_e( 'Current Version:', 'bwg-instagram-feed' ); ?></strong>
                             <?php echo esc_html( $status['version'] ); ?>
                         </p>
+                        <?php if ( ! empty( $status['library'] ) ) : ?>
+                        <p>
+                            <strong><?php esc_html_e( 'Update Library:', 'bwg-instagram-feed' ); ?></strong>
+                            <?php echo esc_html( $status['library'] ); ?>
+                        </p>
+                        <?php endif; ?>
                         <?php if ( $release ) : ?>
                             <p>
                                 <strong><?php esc_html_e( 'Latest Version:', 'bwg-instagram-feed' ); ?></strong>
