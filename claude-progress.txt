@@ -1,5 +1,58 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #171 - GitHub Actions workflow extracts version from plugin header)
+
+### Feature Verified
+- **Feature #171: GitHub Actions workflow extracts version from plugin header** - PASSED ✅
+
+### Feature Details
+- **ID:** 171
+- **Category:** functional
+- **Name:** GitHub Actions workflow extracts version from plugin header
+- **Description:** The release workflow reads the Version header from the main plugin file (bwg-instagram-feed.php) and uses it for tagging and release naming.
+
+### Verification Steps Completed
+
+1. **Step 1: Check workflow has step to extract version from plugin file** - ✅ VERIFIED
+   - Workflow has "Extract version from plugin header" step (lines 19-39)
+   - Step ID: `get_version`
+
+2. **Step 2: Verify extraction uses regex or grep to find 'Version: X.X.X'** - ✅ VERIFIED
+   - Line 24: `VERSION=$(grep -m 1 "Version:" bwg-instagram-feed.php | sed 's/.*Version: *\([0-9.]*\).*/\1/')`
+   - Uses grep to find "Version:" line and sed regex to extract version number
+
+3. **Step 3: Confirm extracted version is stored as workflow variable** - ✅ VERIFIED
+   - Line 39: `echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT`
+   - Version used in subsequent steps as `${{ steps.get_version.outputs.VERSION }}`
+
+4. **Step 4: Run workflow and verify version is correctly extracted** - ✅ VERIFIED
+   - Local test: `grep -m 1 "Version:" bwg-instagram-feed.php` returns "* Version: 1.3.6"
+   - Workflow created release v1.3.6 confirming extraction works
+
+5. **Step 5: Check workflow logs show the extracted version number** - ✅ VERIFIED
+   - Lines 34-36 explicitly log:
+     ```
+     echo "=========================================="
+     echo "Extracted version from plugin header: $VERSION"
+     echo "=========================================="
+     ```
+
+### Implementation Details
+- Workflow file: `.github/workflows/release.yml`
+- Version extraction includes error handling (exits with error if version not found)
+- Version used for: tag name, release name, release body, zip file name
+
+### Console Errors
+- None
+
+### Screenshots
+- feature-171-plugin-version-display.png - Shows plugin version 1.3.6 on WordPress Plugins page
+
+### Stats
+- Features Passing: 174/191 (91.1%)
+
+---
+
 ## Session: 2026-01-25 (Feature #170 - GitHub Actions workflow triggers on push to main branch)
 
 ### Feature Implemented
