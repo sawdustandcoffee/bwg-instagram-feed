@@ -16998,3 +16998,222 @@ Feature #74 PASSES. Frontend correctly displays actual Instagram content from th
 ### Progress Update
 - Features passing: 130/149 (87.2%)
 - Commit: a197f54 - Verify Feature #74: Instagram posts displayed are real
+
+---
+
+## Session: 2026-01-25 (Testing Agent - Feature #111 Regression Test)
+
+### Feature Tested
+- **Feature #111: Double-click delete only deletes once** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** idempotency
+- **Name:** Double-click delete only deletes once
+- **Description:** Rapid delete clicks don't cause errors
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to feeds list with a feed** - ✅ VERIFIED
+   - Navigated to WordPress admin feeds list
+   - Created test feeds for deletion testing
+
+2. **Step 2: Rapidly click Delete button** - ✅ VERIFIED
+   - Used double-click action on Delete button
+   - Only one confirmation dialog appeared (not two)
+
+3. **Step 3: Confirm deletion once** - ✅ VERIFIED
+   - Accepted the confirmation dialog once
+   - Feed was deleted successfully
+
+4. **Step 4: Verify no error about already deleted** - ✅ VERIFIED
+   - No console errors related to deletion
+   - No 'Feed not found' or 'already deleted' errors
+
+5. **Step 5: Verify feed deleted successfully** - ✅ VERIFIED
+   - Feed disappeared from the UI list
+   - Database query confirms feeds are deleted
+
+### Protection Mechanism Verified
+- BWGIGFAdmin.isDeleting object exists and tracks in-progress deletions
+- Code prevents duplicate delete operations via feedId tracking
+- Button is visually disabled during deletion
+
+### Screenshots
+- feature-111-feeds-list-before.png - Feeds list before deletion
+- feature-111-after-delete.png - Feeds list after first delete
+- feature-111-double-click-test-complete.png - Final state after double-click test
+
+### Console Errors
+- None (only favicon 404 which is expected)
+
+### Result
+Feature #111 PASSES regression test. Double-click delete protection working correctly.
+
+[Testing] Feature #111 verified - still passing
+[Testing] Session complete - Feature #111 regression test passed
+
+[Testing] Feature #126 verified - still passing
+
+---
+
+## Session: 2026-01-25 (Testing Agent - Feature #64 Regression Test)
+
+### Feature Tested
+- **Feature #64: Back to list button works** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Back to list button works
+- **Description:** Back button from editor returns to feeds list
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor** - ✅ VERIFIED
+   - Navigated to Feeds list page
+   - Clicked on 'Feature 44 Slug Test' feed to open editor
+   - Editor loaded at URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=edit&feed_id=19
+
+2. **Step 2: Click Back or Cancel button** - ✅ VERIFIED
+   - Cancel button visible in feed editor (link style)
+   - Links to: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Clicked Cancel button
+
+3. **Step 3: Verify returns to feeds list** - ✅ VERIFIED
+   - Successfully redirected to feeds list page
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Page title: 'Instagram Feeds'
+   - All feeds visible in table
+
+4. **Step 4: Verify no data lost if not saved** - ✅ VERIFIED
+   - Modified feed name to 'MODIFIED_NAME_NOT_SAVED' without saving
+   - Clicked Cancel button
+   - Feed name remained 'Feature 44 Slug Test' (original)
+   - Unsaved changes were properly discarded
+
+### Screenshots Captured
+- feature-64-feed-editor.png - Feed editor with Cancel button visible
+- feature-64-modified-name.png - Editor with modified (unsaved) name
+- feature-64-back-to-list.png - Feeds list showing original name preserved
+
+### Console Errors
+- None
+
+### Result
+Feature #64 PASSES regression test. Back to list button works correctly.
+
+[Testing] Feature #64 verified - still passing
+[Testing] Session complete - Feature #64 regression test passed
+
+[Testing] Session complete - Feature #126 OAuth denial handling regression test passed
+
+---
+
+## Session: 2026-01-25 (Testing Agent - Feature #102 Regression Test)
+
+### Feature Tested
+- **Feature #102: Form fields have labels** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** accessibility
+- **Name:** Form fields have labels
+- **Description:** All form inputs have associated labels
+
+### Verification Steps Completed
+
+1. **Step 1: Inspect feed editor form** - ✅ VERIFIED
+   - Navigated to feed editor for 'Feature 89 Test Feed' (ID: 12)
+   - Inspected all tabs: Source, Layout, Display, Styling, Popup, Advanced
+
+2. **Step 2: Verify all inputs have visible labels** - ✅ VERIFIED
+   - Source tab: Feed Name, Feed Type, Instagram Username(s) - all have labels
+   - Layout tab: Layout Type, Columns, Gap (px) - all have labels
+   - Display tab: Number of Posts, checkboxes with inline labels
+   - Styling tab: Background Color, Border Radius (px), Hover Effect, Custom CSS
+   - Popup tab: Enable popup/lightbox checkbox with label
+   - Advanced tab: Post Ordering, Cache Duration - all have labels
+
+3. **Step 3: Verify labels are associated via for/id** - ✅ VERIFIED
+   - Tested by clicking label text and confirming input receives focus
+   - Feed Name label → focuses Feed Name textbox
+   - Columns label → focuses Columns spinbutton
+   - Custom CSS label → focuses Custom CSS textarea
+
+4. **Step 4: Verify clicking label focuses input** - ✅ VERIFIED
+   - Clicking 'Feed Name' label text focused the textbox (confirmed [active] state)
+   - Clicking 'Columns' label text focused the spinbutton (confirmed [active] state)
+   - Clicking 'Custom CSS' label text focused the textarea (confirmed [active] state)
+
+### Screenshots Captured
+- feature-102-source-tab-labels.png - Source tab showing labeled fields
+- feature-102-layout-tab-labels.png - Layout tab showing labeled fields
+- feature-102-display-tab-labels.png - Display tab showing labeled fields
+- feature-102-styling-tab-labels.png - Styling tab showing labeled fields
+- feature-102-advanced-tab-labels.png - Advanced tab showing labeled fields
+
+### Console Errors
+- None
+
+### Result
+Feature #102 PASSES regression test. All form inputs have properly associated labels.
+
+[Testing] Feature #102 verified - still passing
+[Testing] Session complete - Feature #102 regression test passed
+
+
+---
+
+## Session: 2026-01-25 (Feature #15 - Delete feed with confirmation)
+
+### Feature Completed
+- **Feature #15: Delete feed with confirmation** - PASSED ✅
+
+### Feature Details
+- **Category:** functional
+- **Name:** Delete feed with confirmation
+- **Description:** User can delete a feed after confirming action
+
+### Verification Steps Completed
+
+1. **Step 1: Ensure a feed exists** - ✅ VERIFIED
+   - Created test feed "FEATURE_15_DELETE_TEST" (ID: 21)
+   - Feed appeared in Feeds list page
+
+2. **Step 2: Navigate to Feeds list** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Feeds table displayed with 11 feeds
+
+3. **Step 3: Click Delete on a feed** - ✅ VERIFIED
+   - Clicked "Delete" link in Actions column for FEATURE_15_DELETE_TEST
+
+4. **Step 4: Verify confirmation dialog appears** - ✅ VERIFIED
+   - JavaScript confirm dialog appeared with message: "Are you sure you want to delete this feed?"
+   - Dialog requires user to confirm or cancel action
+
+5. **Step 5: Confirm deletion** - ✅ VERIFIED
+   - Clicked OK/Accept on the confirmation dialog
+   - AJAX request sent to delete the feed
+
+6. **Step 6: Verify feed is removed from list** - ✅ VERIFIED
+   - Success message displayed: "Feed deleted successfully!"
+   - FEATURE_15_DELETE_TEST no longer appears in the feeds table
+   - Table now shows 10 feeds instead of 11
+
+7. **Step 7: Verify feed data deleted from database** - ✅ VERIFIED
+   - PHP verification script confirmed: "Feed #21 (FEATURE_15_DELETE_TEST) has been deleted from database"
+   - SELECT query returns null for id=21
+
+### Screenshots Captured
+- feature-15-feeds-list-before-delete.png - Feeds list showing test feed
+- feature-15-after-delete-success.png - After deletion with success message
+
+### Console Errors
+- None
+
+### Result
+Feature #15 PASSES. Delete feed with confirmation working correctly.
+
+[Feature #15 completed and verified]
+
+### Progress Update
+- Features passing: 132/149 (88.6%)
+- Commit: 746b113 - Verify Feature #15: Delete feed with confirmation - PASSED
