@@ -15,185 +15,109 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from plugin header
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version and auto-bump if needed
         id: get_version
         run: |
-          # Extract version from plugin header using grep and sed
-          # Looks for 'Version: X.X.X' pattern in the plugin file header
-          VERSION=$(grep -m 1 "Version:" bwg-instagram-feed.php | sed 's/.*Version: *\([0-9.]*\).*/\1/')
+          # Extract current version from plugin header
+          CURRENT_VERSION=$(grep -m 1 "Version:" bwg-instagram-feed.php | sed 's/.*Version: *\([0-9.]*\).*/\1/')
 
-          # Validate that we extracted a version
-          if [ -z "$VERSION" ]; then
+          if [ -z "$CURRENT_VERSION" ]; then
             echo "::error::Could not extract version from plugin header"
-            echo "Make sure bwg-instagram-feed.php contains 'Version: X.X.X' in the plugin header"
             exit 1
           fi
 
-          # Log the extracted version for visibility in workflow logs
-          echo "=========================================="
-          echo "Extracted version from plugin header: $VERSION"
-          echo "=========================================="
+          echo "Current version in file: $CURRENT_VERSION"
 
-          # Store as workflow output variable
+          # Check if this version tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/v${CURRENT_VERSION}$"; then
+            echo "Version v${CURRENT_VERSION} already released. Auto-bumping patch version..."
+
+            # Parse version components
+            MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+            MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+            PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+
+            # Increment patch
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+            echo "New version: $NEW_VERSION"
+
+            # Update version in plugin file header
+            sed -i "s/Version: *${CURRENT_VERSION}/Version: ${NEW_VERSION}/" bwg-instagram-feed.php
+
+            # Update BWG_IGF_VERSION constant
+            sed -i "s/define( 'BWG_IGF_VERSION', '${CURRENT_VERSION}' )/define( 'BWG_IGF_VERSION', '${NEW_VERSION}' )/" bwg-instagram-feed.php
+
+            # Update readme.txt stable tag
+            if [ -f "readme.txt" ]; then
+              sed -i "s/Stable tag: *${CURRENT_VERSION}/Stable tag: ${NEW_VERSION}/" readme.txt
+            fi
+
+            # Commit the version bump
+            git add bwg-instagram-feed.php readme.txt
+            git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
+            git push
+
+            VERSION="$NEW_VERSION"
+          else
+            VERSION="$CURRENT_VERSION"
+          fi
+
+          echo "=========================================="
+          echo "Release version: $VERSION"
+          echo "=========================================="
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Verify readme.txt stable tag matches plugin version
-        run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
-
-          echo "Validating readme.txt stable tag matches plugin version..."
-
-          # Check if readme.txt exists
-          if [ ! -f "readme.txt" ]; then
-            echo "::error::readme.txt file not found!"
-            echo "WordPress plugins require a readme.txt with a Stable tag header."
-            exit 1
-          fi
-
-          # Extract Stable tag from readme.txt
-          STABLE_TAG=$(grep -m 1 "^Stable tag:" readme.txt | sed 's/Stable tag: *//')
-
-          if [ -z "$STABLE_TAG" ]; then
-            echo "::error::Could not extract Stable tag from readme.txt"
-            echo "Make sure readme.txt contains 'Stable tag: X.X.X' in the header"
-            exit 1
-          fi
-
-          echo "Plugin version: $VERSION"
-          echo "Readme.txt stable tag: $STABLE_TAG"
-
-          # Compare versions
-          if [ "$VERSION" != "$STABLE_TAG" ]; then
-            echo "::error::================================================================="
-            echo "::error::Version mismatch!"
-            echo "::error::================================================================="
-            echo "::error::"
-            echo "::error::Plugin header version: $VERSION"
-            echo "::error::readme.txt Stable tag: $STABLE_TAG"
-            echo "::error::"
-            echo "::error::These must match for WordPress.org compatibility."
-            echo "::error::Please update readme.txt to have 'Stable tag: $VERSION'"
-            echo "::error::"
-            echo "::error::================================================================="
-            exit 1
-          fi
-
-          echo "=========================================="
-          echo "✓ Version match confirmed: $VERSION"
-          echo "=========================================="
-
-      - name: Check if version already exists
-        run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
-          TAG="v${VERSION}"
-
-          echo "Checking if tag ${TAG} already exists..."
-
-          # Check if the tag already exists in the repository
-          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
-            echo "::error::================================================================="
-            echo "::error::Release ${TAG} already exists!"
-            echo "::error::================================================================="
-            echo "::error::"
-            echo "::error::A release with version ${VERSION} has already been published."
-            echo "::error::To create a new release, you must bump the version number."
-            echo "::error::"
-            echo "::error::To fix this:"
-            echo "::error::  1. Edit bwg-instagram-feed.php"
-            echo "::error::  2. Update the 'Version:' in the plugin header"
-            echo "::error::  3. Update the BWG_IGF_VERSION constant"
-            echo "::error::  4. Commit and push the changes"
-            echo "::error::"
-            echo "::error::================================================================="
-            exit 1
-          fi
-
-          echo "✓ Tag ${TAG} does not exist. Proceeding with release."
 
       - name: Create plugin zip
         run: |
-          set -e  # Exit immediately on any error
+          set -e
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
 
           echo "Creating distribution directory..."
           mkdir -p dist/bwg-instagram-feed
 
-          # Verify required files exist before copying
-          echo "Verifying required files exist..."
-          MISSING_FILES=""
+          # Verify required files exist
+          for file in bwg-instagram-feed.php uninstall.php; do
+            if [ ! -f "$file" ]; then
+              echo "::error::Required file missing: $file"
+              exit 1
+            fi
+          done
 
-          if [ ! -f "bwg-instagram-feed.php" ]; then
-            MISSING_FILES="$MISSING_FILES bwg-instagram-feed.php"
-          fi
-          if [ ! -f "uninstall.php" ]; then
-            MISSING_FILES="$MISSING_FILES uninstall.php"
-          fi
-          if [ ! -d "assets" ]; then
-            MISSING_FILES="$MISSING_FILES assets/"
-          fi
-          if [ ! -d "includes" ]; then
-            MISSING_FILES="$MISSING_FILES includes/"
-          fi
-          if [ ! -d "templates" ]; then
-            MISSING_FILES="$MISSING_FILES templates/"
-          fi
+          for dir in assets includes templates; do
+            if [ ! -d "$dir" ]; then
+              echo "::error::Required directory missing: $dir"
+              exit 1
+            fi
+          done
 
-          if [ -n "$MISSING_FILES" ]; then
-            echo "::error::Required files/directories are missing:$MISSING_FILES"
-            echo "Please ensure all required plugin files are committed to the repository."
-            exit 1
-          fi
-
-          echo "✓ All required files found. Copying to distribution directory..."
-
-          # Copy only the files needed for the plugin
+          # Copy production files only
           cp bwg-instagram-feed.php dist/bwg-instagram-feed/
           cp uninstall.php dist/bwg-instagram-feed/
+          [ -f "readme.txt" ] && cp readme.txt dist/bwg-instagram-feed/
+          [ -f "README.md" ] && cp README.md dist/bwg-instagram-feed/
 
-          # README.md is optional
-          if [ -f "README.md" ]; then
-            cp README.md dist/bwg-instagram-feed/
-          fi
-
-          # readme.txt is required for WordPress.org compatibility
-          if [ -f "readme.txt" ]; then
-            cp readme.txt dist/bwg-instagram-feed/
-          fi
-
-          # Copy directories
           cp -r assets dist/bwg-instagram-feed/
           cp -r includes dist/bwg-instagram-feed/
           cp -r templates dist/bwg-instagram-feed/
+          [ -d "languages" ] && cp -r languages dist/bwg-instagram-feed/
 
-          # languages directory is optional
-          if [ -d "languages" ]; then
-            cp -r languages dist/bwg-instagram-feed/
-          fi
-
-          # Create the zip file
-          echo "Creating zip file..."
+          # Create zip
           cd dist
-          if ! zip -r bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip bwg-instagram-feed; then
-            echo "::error::Failed to create plugin zip file"
-            echo "Check that the zip command is available and there's enough disk space."
-            exit 1
-          fi
+          zip -r "bwg-instagram-feed-${VERSION}.zip" bwg-instagram-feed
+          cp "bwg-instagram-feed-${VERSION}.zip" bwg-instagram-feed.zip
 
-          # Verify zip was created successfully
-          if [ ! -f "bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip" ]; then
-            echo "::error::Zip file was not created successfully"
-            exit 1
-          fi
-
-          ZIP_SIZE=$(stat -c%s "bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip" 2>/dev/null || stat -f%z "bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip")
-          echo "=========================================="
-          echo "✓ Plugin zip created successfully!"
-          echo "File: bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip"
-          echo "Size: $ZIP_SIZE bytes"
-          echo "=========================================="
-
-          # Also create a generic latest zip for easy download
-          cp bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip bwg-instagram-feed.zip
+          echo "✓ Plugin zip created: bwg-instagram-feed-${VERSION}.zip"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -205,16 +129,12 @@ jobs:
             ## BWG Instagram Feed v${{ steps.get_version.outputs.VERSION }}
 
             ### Installation
-            1. Download `bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip`
+            1. Download `bwg-instagram-feed.zip`
             2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
             3. Upload the zip file and activate
 
-            ### Updates
-            Configure the GitHub repository URL in Settings to receive automatic update notifications.
-
             ---
             **Changelog** (auto-generated from commits below)
-          append_body: true
           files: |
             dist/bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip
             dist/bwg-instagram-feed.zip
