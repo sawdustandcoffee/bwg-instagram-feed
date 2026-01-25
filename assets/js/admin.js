@@ -31,6 +31,7 @@
             this.initBeforeUnloadWarning(); // Feature #112: Warn before page refresh during save
             this.initFeedSearch(); // Feature #117: Search feeds by name
             this.initFeedTypeToggle(); // Feature #130: Toggle between public and connected account
+            this.initFollowButtonToggle(); // Feature #27: Toggle follow button options
         },
 
         bindEvents: function() {
@@ -213,6 +214,36 @@
 
             // Check on change
             $autoplay.on('change', toggleAutoplaySpeed);
+        },
+
+        initFollowButtonToggle: function() {
+            var $followButton = $('#bwg-igf-show-follow-button');
+            var $followOptions = $('#bwg-igf-follow-button-options');
+
+            if (!$followButton.length) {
+                return;
+            }
+
+            function toggleFollowButtonOptions() {
+                if ($followButton.is(':checked')) {
+                    $followOptions.slideDown(200);
+                } else {
+                    $followOptions.slideUp(200);
+                }
+                // Update preview to reflect follow button visibility
+                BWGIGFAdmin.updatePreview();
+            }
+
+            // Check on page load
+            toggleFollowButtonOptions();
+
+            // Check on change
+            $followButton.on('change', toggleFollowButtonOptions);
+
+            // Update preview when button text or style changes
+            $('#bwg-igf-follow-button-text, #bwg-igf-follow-button-style').on('change input', function() {
+                BWGIGFAdmin.updatePreview();
+            });
         },
 
         initPostCountValidation: function() {
@@ -505,6 +536,115 @@
             // Replace .bwg-igf-feed with .bwg-igf-preview-content for admin preview
             var previewCSS = customCSS.replace(/\.bwg-igf-feed/g, '.bwg-igf-preview-content');
             $('#bwg-igf-custom-css-preview').text(previewCSS);
+
+            // Handle account name header visibility (Feature #24)
+            var $previewWrapper = $preview.closest('.bwg-igf-preview');
+            var $accountHeader = $previewWrapper.find('.bwg-igf-preview-account-header');
+            if (settings.showAccountName) {
+                if (!$accountHeader.length) {
+                    // Create account header element
+                    var username = $('#bwg-igf-username').val() || 'instagram';
+                    // Parse comma-separated usernames
+                    var usernames = username.split(',').map(function(u) { return u.trim(); }).filter(function(u) { return u.length > 0; });
+                    var displayName = usernames.length > 0 ? '@' + usernames[0] : '@instagram';
+                    if (usernames.length > 1) {
+                        displayName = usernames.map(function(u) { return '@' + u; }).join(', ');
+                    }
+                    var headerHtml = '<div class="bwg-igf-preview-account-header" style="display: flex; align-items: center; padding: 10px 15px; margin-bottom: 10px; background: #fafafa; border-radius: 8px; border: 1px solid #efefef;">' +
+                        '<span style="display: flex; align-items: center; gap: 8px;">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" style="fill: #e1306c;"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>' +
+                        '<span style="font-size: 14px; font-weight: 600; color: #262626;">' + BWGIGFAdmin.escapeHtml(displayName) + '</span>' +
+                        '</span></div>';
+                    $preview.before(headerHtml);
+                } else {
+                    // Update username in existing header
+                    var username = $('#bwg-igf-username').val() || 'instagram';
+                    var usernames = username.split(',').map(function(u) { return u.trim(); }).filter(function(u) { return u.length > 0; });
+                    var displayName = usernames.length > 0 ? '@' + usernames[0] : '@instagram';
+                    if (usernames.length > 1) {
+                        displayName = usernames.map(function(u) { return '@' + u; }).join(', ');
+                    }
+                    $accountHeader.find('span:last-child').text(displayName);
+                    $accountHeader.show();
+                }
+            } else {
+                $accountHeader.hide();
+            }
+
+            // Handle caption visibility in preview (Feature #26)
+            if (settings.showCaption) {
+                $preview.find('.bwg-igf-item').each(function() {
+                    if (!$(this).find('.bwg-igf-caption').length) {
+                        $(this).append('<div class="bwg-igf-caption" style="padding: 8px 10px; font-size: 12px; line-height: 1.4; color: #262626; background: #fafafa; border-top: 1px solid #efefef;">Sample caption text for preview...</div>');
+                    } else {
+                        $(this).find('.bwg-igf-caption').show();
+                    }
+                });
+                // Adjust item aspect ratio when caption is shown
+                $preview.find('.bwg-igf-item').css('aspect-ratio', 'auto');
+                $preview.find('.bwg-igf-item img').css({'aspect-ratio': '1 / 1', 'height': 'auto'});
+            } else {
+                $preview.find('.bwg-igf-caption').hide();
+                // Restore default aspect ratio
+                $preview.find('.bwg-igf-item').css('aspect-ratio', '');
+                $preview.find('.bwg-igf-item img').css({'aspect-ratio': '', 'height': ''});
+            }
+
+            // Handle post count in preview (Feature #28)
+            var maxPreviewItems = 50; // Maximum items we can show in preview
+            var $items = $preview.find('.bwg-igf-item');
+            var currentItemCount = $items.length;
+            var desiredCount = Math.min(Math.max(settings.postCount, 1), maxPreviewItems);
+
+            // Add or remove items to match the post count
+            if (currentItemCount < desiredCount) {
+                // Need to add more items
+                for (var i = currentItemCount; i < desiredCount; i++) {
+                    var newItem = '<div class="bwg-igf-item"><img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3Crect fill=\'%23e1306c\' width=\'1\' height=\'1\'/%3E%3C/svg%3E" alt="Preview placeholder"></div>';
+                    $preview.append(newItem);
+                }
+            } else if (currentItemCount > desiredCount) {
+                // Need to remove items
+                $items.slice(desiredCount).remove();
+            }
+
+            // Re-apply caption visibility to any new items
+            if (settings.showCaption) {
+                $preview.find('.bwg-igf-item').each(function() {
+                    if (!$(this).find('.bwg-igf-caption').length) {
+                        $(this).append('<div class="bwg-igf-caption" style="padding: 8px 10px; font-size: 12px; line-height: 1.4; color: #262626; background: #fafafa; border-top: 1px solid #efefef;">Sample caption text for preview...</div>');
+                    }
+                });
+            }
+
+            // Re-apply border radius to any new items
+            $preview.find('.bwg-igf-item').css('border-radius', settings.borderRadius + 'px');
+
+            // Handle follow button visibility (Feature #27)
+            var $followButtonWrapper = $previewWrapper.find('.bwg-igf-preview-follow-wrapper');
+            if (settings.showFollowButton) {
+                var buttonText = settings.followButtonText || 'Follow on Instagram';
+                var buttonStyle = settings.followButtonStyle || 'gradient';
+                var username = $('#bwg-igf-username').val() || 'instagram';
+                var firstUsername = username.split(',')[0].trim() || 'instagram';
+
+                if (!$followButtonWrapper.length) {
+                    // Create follow button element
+                    var followHtml = '<div class="bwg-igf-preview-follow-wrapper" style="text-align: center; margin-top: 15px;">' +
+                        '<a href="#" class="bwg-igf-follow bwg-igf-follow-' + BWGIGFAdmin.escapeHtml(buttonStyle) + '" onclick="return false;" style="pointer-events: none;">' +
+                        BWGIGFAdmin.escapeHtml(buttonText) +
+                        '</a></div>';
+                    $preview.after(followHtml);
+                } else {
+                    // Update existing button text and style
+                    var $button = $followButtonWrapper.find('.bwg-igf-follow');
+                    $button.text(buttonText);
+                    $button.attr('class', 'bwg-igf-follow bwg-igf-follow-' + buttonStyle);
+                    $followButtonWrapper.show();
+                }
+            } else {
+                $followButtonWrapper.hide();
+            }
         },
 
         getFormSettings: function() {
@@ -525,7 +665,13 @@
                 borderRadius: $('#bwg-igf-border-radius').val() || 0,
                 hoverEffect: $('#bwg-igf-hover-effect').val() || 'none',
                 backgroundColor: bgColor || '',
-                customCSS: $('#bwg-igf-custom-css').val() || ''
+                customCSS: $('#bwg-igf-custom-css').val() || '',
+                showAccountName: $('#bwg-igf-show-account-name').is(':checked'),
+                showCaption: $('input[name="show_caption"]').is(':checked'),
+                showFollowButton: $('#bwg-igf-show-follow-button').is(':checked'),
+                followButtonText: $('#bwg-igf-follow-button-text').val() || 'Follow on Instagram',
+                followButtonStyle: $('#bwg-igf-follow-button-style').val() || 'gradient',
+                postCount: parseInt($('#bwg-igf-post-count').val(), 10) || 9
             };
         },
 
