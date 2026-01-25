@@ -105,10 +105,9 @@
     object-fit: cover;
 }
 
-/* Keyboard focus styles for feed items */
+/* Keyboard focus styles for feed items - only show on keyboard navigation */
 .bwg-igf-item:focus {
-    outline: 3px solid #e1306c;
-    outline-offset: 2px;
+    outline: none;
 }
 
 .bwg-igf-item:focus-visible {
@@ -181,6 +180,21 @@
     padding: 10px;
     box-sizing: border-box;
     overflow: hidden;
+}
+
+/* Overlay caption text */
+.bwg-igf-overlay-caption {
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Engagement stats */

@@ -552,6 +552,11 @@ if ( ! empty( $custom_css ) ) :
                 <?php if ( 'overlay' === $hover_effect ) : ?>
                     <div class="bwg-igf-overlay">
                         <div class="bwg-igf-overlay-content">
+                            <?php if ( ! empty( $post['caption'] ) ) : ?>
+                                <div class="bwg-igf-overlay-caption">
+                                    <?php echo esc_html( wp_trim_words( $post['caption'], 15, '...' ) ); ?>
+                                </div>
+                            <?php endif; ?>
                             <div class="bwg-igf-stats">
                                 <?php if ( ! empty( $display_settings['show_likes'] ) ) : ?>
                                     <span class="bwg-igf-stat">❤️ <?php echo esc_html( $post['likes'] ?? 0 ); ?></span>
