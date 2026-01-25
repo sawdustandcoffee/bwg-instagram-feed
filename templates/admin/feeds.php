@@ -11,7 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $action = isset( $_GET['action'] ) ? sanitize_text_field( wp_unslash( $_GET['action'] ) ) : 'list';
-$feed_id = isset( $_GET['feed_id'] ) ? absint( $_GET['feed_id'] ) : 0;
+// Support both 'feed_id' and 'id' URL parameters for feed identification
+$feed_id = isset( $_GET['feed_id'] ) ? absint( $_GET['feed_id'] ) : ( isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0 );
 
 if ( 'edit' === $action || 'new' === $action ) {
     include BWG_IGF_PLUGIN_DIR . 'templates/admin/feed-editor.php';

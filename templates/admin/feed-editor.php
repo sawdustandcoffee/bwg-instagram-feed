@@ -10,11 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+global $wpdb;
+
 $feed = null;
 $is_edit_action = isset( $_GET['action'] ) && 'edit' === $_GET['action'];
 
 if ( $feed_id > 0 ) {
-    global $wpdb;
     $feed = $wpdb->get_row( $wpdb->prepare(
         "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d",
         $feed_id
@@ -111,6 +112,37 @@ $is_new = empty( $feed );
                             <input type="text" id="bwg-igf-username" name="instagram_usernames" value="<?php echo $feed ? esc_attr( $feed->instagram_usernames ) : ''; ?>" placeholder="<?php esc_attr_e( 'username or username1, username2', 'bwg-instagram-feed' ); ?>">
                             <span class="bwg-igf-validation-indicator"></span>
                             <p class="description"><?php esc_html_e( 'Enter one or more Instagram usernames (comma-separated for multiple).', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <?php
+                        // Get connected accounts for the dropdown
+                        global $wpdb;
+                        $connected_accounts = $wpdb->get_results(
+                            "SELECT id, username, account_type, status FROM {$wpdb->prefix}bwg_igf_accounts WHERE status = 'active' ORDER BY username ASC"
+                        );
+                        $selected_account_id = $feed ? absint( $feed->connected_account_id ) : 0;
+                        ?>
+                        <div class="bwg-igf-field" id="bwg-igf-connected-account-field" style="display: none;">
+                            <label for="bwg-igf-connected-account"><?php esc_html_e( 'Connected Account', 'bwg-instagram-feed' ); ?></label>
+                            <?php if ( empty( $connected_accounts ) ) : ?>
+                                <p class="description" style="color: #d63638;">
+                                    <?php esc_html_e( 'No connected Instagram accounts found.', 'bwg-instagram-feed' ); ?>
+                                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-accounts' ) ); ?>">
+                                        <?php esc_html_e( 'Connect an account', 'bwg-instagram-feed' ); ?>
+                                    </a>
+                                </p>
+                                <input type="hidden" name="connected_account_id" value="">
+                            <?php else : ?>
+                                <select id="bwg-igf-connected-account" name="connected_account_id">
+                                    <option value=""><?php esc_html_e( '— Select an account —', 'bwg-instagram-feed' ); ?></option>
+                                    <?php foreach ( $connected_accounts as $account ) : ?>
+                                        <option value="<?php echo esc_attr( $account->id ); ?>" <?php selected( $selected_account_id, $account->id ); ?>>
+                                            @<?php echo esc_html( $account->username ); ?> (<?php echo esc_html( ucfirst( $account->account_type ) ); ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="description"><?php esc_html_e( 'Select a connected Instagram account to display posts from.', 'bwg-instagram-feed' ); ?></p>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -289,6 +321,32 @@ $is_new = empty( $feed );
 
                     <!-- Advanced Tab -->
                     <div id="bwg-igf-tab-advanced" class="bwg-igf-tab-content">
+                        <?php
+                        // Get filter settings from feed
+                        $filter_settings = $feed && ! empty( $feed->filter_settings ) ? json_decode( $feed->filter_settings, true ) : array();
+                        $hashtag_include = isset( $filter_settings['hashtag_include'] ) ? $filter_settings['hashtag_include'] : '';
+                        $hashtag_exclude = isset( $filter_settings['hashtag_exclude'] ) ? $filter_settings['hashtag_exclude'] : '';
+                        ?>
+
+                        <!-- Hashtag Filters (Connected Feeds Only) -->
+                        <div class="bwg-igf-connected-filters" id="bwg-igf-connected-filters" style="display: none;">
+                            <h4 style="margin-top: 0; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #ddd;"><?php esc_html_e( 'Hashtag Filters', 'bwg-instagram-feed' ); ?></h4>
+
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-hashtag-include"><?php esc_html_e( 'Include Hashtags', 'bwg-instagram-feed' ); ?></label>
+                                <input type="text" id="bwg-igf-hashtag-include" name="hashtag_include" value="<?php echo esc_attr( $hashtag_include ); ?>" placeholder="<?php esc_attr_e( 'travel, photography, nature', 'bwg-instagram-feed' ); ?>">
+                                <p class="description"><?php esc_html_e( 'Only show posts containing these hashtags (comma-separated, without #). Leave empty to show all posts.', 'bwg-instagram-feed' ); ?></p>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-hashtag-exclude"><?php esc_html_e( 'Exclude Hashtags', 'bwg-instagram-feed' ); ?></label>
+                                <input type="text" id="bwg-igf-hashtag-exclude" name="hashtag_exclude" value="<?php echo esc_attr( $hashtag_exclude ); ?>" placeholder="<?php esc_attr_e( 'ad, sponsored, promo', 'bwg-instagram-feed' ); ?>">
+                                <p class="description"><?php esc_html_e( 'Hide posts containing these hashtags (comma-separated, without #).', 'bwg-instagram-feed' ); ?></p>
+                            </div>
+
+                            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+                        </div>
+
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-ordering"><?php esc_html_e( 'Post Ordering', 'bwg-instagram-feed' ); ?></label>
                             <select id="bwg-igf-ordering" name="ordering">
