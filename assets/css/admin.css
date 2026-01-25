@@ -436,3 +436,176 @@ button.bwg-igf-saving .spinner {
     margin: 0 5px 0 0;
     vertical-align: middle;
 }
+
+/* ==========================================================================
+   Accessibility - Focus Visible Styles (Feature #101)
+   ========================================================================== */
+
+/*
+ * Clear focus ring on all focusable elements for accessibility.
+ * Uses :focus-visible for keyboard navigation (not mouse clicks).
+ * Fallback to :focus for browsers without :focus-visible support.
+ */
+
+/* Tab buttons in feed editor */
+.bwg-igf-editor-tab:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: -2px;
+}
+
+.bwg-igf-editor-tab:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: -2px;
+    background-color: #f0f6fc;
+}
+
+/* Remove default outline for mouse users where :focus-visible is supported */
+.bwg-igf-editor-tab:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Links within the plugin admin interface */
+.bwg-igf-breadcrumb-link:focus,
+.bwg-igf-widget a:focus,
+.bwg-igf-editor-footer a:focus,
+.wrap[class*="bwg-igf"] a:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.bwg-igf-breadcrumb-link:focus-visible,
+.bwg-igf-widget a:focus-visible,
+.bwg-igf-editor-footer a:focus-visible,
+.wrap[class*="bwg-igf"] a:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Remove default outline for mouse users where :focus-visible is supported */
+.bwg-igf-breadcrumb-link:focus:not(:focus-visible),
+.bwg-igf-widget a:focus:not(:focus-visible),
+.bwg-igf-editor-footer a:focus:not(:focus-visible),
+.wrap[class*="bwg-igf"] a:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Buttons within the plugin admin interface */
+.bwg-igf-editor-footer .button:focus,
+.bwg-igf-widget .button:focus,
+.wrap[class*="bwg-igf"] .button:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px #fff, 0 0 0 3px #2271b1;
+}
+
+.bwg-igf-editor-footer .button:focus-visible,
+.bwg-igf-widget .button:focus-visible,
+.wrap[class*="bwg-igf"] .button:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px #fff, 0 0 0 3px #2271b1;
+}
+
+/* Remove default outline for mouse users where :focus-visible is supported */
+.bwg-igf-editor-footer .button:focus:not(:focus-visible),
+.bwg-igf-widget .button:focus:not(:focus-visible),
+.wrap[class*="bwg-igf"] .button:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Form inputs - text, number, select, textarea */
+.bwg-igf-field input[type="text"]:focus,
+.bwg-igf-field input[type="number"]:focus,
+.bwg-igf-field select:focus,
+.bwg-igf-field textarea:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.bwg-igf-field input[type="text"]:focus-visible,
+.bwg-igf-field input[type="number"]:focus-visible,
+.bwg-igf-field select:focus-visible,
+.bwg-igf-field textarea:focus-visible {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
+
+/* Checkboxes - custom focus ring */
+.bwg-igf-field input[type="checkbox"]:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.bwg-igf-field input[type="checkbox"]:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.bwg-igf-field input[type="checkbox"]:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Copy shortcode button */
+.bwg-igf-copy-shortcode:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.bwg-igf-copy-shortcode:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.bwg-igf-copy-shortcode:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Table action links (Edit, Duplicate, Delete) */
+.wp-list-table .row-actions a:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 1px;
+    border-radius: 2px;
+}
+
+.wp-list-table .row-actions a:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 1px;
+    border-radius: 2px;
+}
+
+.wp-list-table .row-actions a:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+    .bwg-igf-editor-tab:focus,
+    .bwg-igf-editor-tab:focus-visible {
+        outline-width: 3px;
+        outline-color: #000;
+    }
+
+    .bwg-igf-breadcrumb-link:focus,
+    .bwg-igf-breadcrumb-link:focus-visible,
+    .bwg-igf-widget a:focus,
+    .bwg-igf-widget a:focus-visible,
+    .wrap[class*="bwg-igf"] a:focus,
+    .wrap[class*="bwg-igf"] a:focus-visible {
+        outline-width: 3px;
+        outline-color: #000;
+    }
+
+    .bwg-igf-editor-footer .button:focus,
+    .bwg-igf-editor-footer .button:focus-visible,
+    .bwg-igf-widget .button:focus,
+    .bwg-igf-widget .button:focus-visible {
+        outline-width: 3px;
+        outline-color: #000;
+        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000;
+    }
+}
