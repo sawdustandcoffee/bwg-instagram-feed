@@ -1,5 +1,60 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #170 - GitHub Actions workflow triggers on push to main branch)
+
+### Feature Implemented
+- **Feature #170: GitHub Actions workflow triggers on push to main branch** - PASSED ✅
+
+### Feature Details
+- **ID:** 170
+- **Category:** functional
+- **Name:** GitHub Actions workflow triggers on push to main branch
+- **Description:** A GitHub Actions workflow file exists at .github/workflows/release.yml that automatically triggers when code is pushed to the main branch.
+
+### Verification Steps Completed
+
+1. **Step 1: Verify .github/workflows/release.yml file exists** - ✅ VERIFIED
+   - File exists at `.github/workflows/release.yml`
+
+2. **Step 2: Check workflow contains 'on: push: branches: [main]' trigger** - ✅ VERIFIED
+   - Updated workflow trigger from `tags: - 'v*'` to `branches: - main`
+   - Also updated version extraction to read from plugin header instead of git tag
+   - Added `tag_name` parameter to create releases properly
+
+3. **Step 3: Push a commit to main branch** - ✅ VERIFIED
+   - Committed: 66a3fbe "Feature #170: GitHub Actions workflow triggers on push to main branch"
+   - Pushed to origin/main successfully
+
+4. **Step 4: Verify GitHub Actions workflow starts automatically** - ✅ VERIFIED
+   - WebFetch confirmed workflow "Release #5" started automatically
+   - Status showed "In progress" immediately after push
+
+5. **Step 5: Check Actions tab shows the workflow running** - ✅ VERIFIED
+   - Workflow completed successfully
+   - Created release v1.3.6 automatically on push
+
+### Changes Made
+**File Modified:** `.github/workflows/release.yml`
+- Changed trigger: `on: push: tags: - 'v*'` → `on: push: branches: - main`
+- Updated version extraction: Now reads from plugin header using grep/sed
+- Added `tag_name` parameter to release step for proper tag creation
+
+**File Modified:** `bwg-instagram-feed.php`
+- Version bumped: 1.3.5 → 1.3.6
+
+### GitHub Release Created
+- **Version:** v1.3.6
+- **Timestamp:** Jan 25, 2026 21:21
+- **Created by:** github-actions (automated)
+
+### Console Errors
+- None
+
+### Statistics
+- Features Passing: 173/191 (90.6%)
+
+---
+
 ## Session: 2026-01-25 (Feature #174 - GitHub Actions workflow uploads packaged zip as release asset)
 
 ### Feature Verified
