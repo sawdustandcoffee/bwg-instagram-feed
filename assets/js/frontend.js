@@ -126,14 +126,18 @@
                     itemClass += ' bwg-igf-slider-slide';
                 }
 
+                // Convert image URLs to proxy URLs to bypass CORS
+                var thumbnailUrl = self.getProxyUrl(post.thumbnail || '');
+                var fullImageUrl = self.getProxyUrl(post.full_image || '');
+
                 html += '<div class="' + itemClass + '"';
-                html += ' data-full-image="' + self.escapeAttr(post.full_image || '') + '"';
+                html += ' data-full-image="' + self.escapeAttr(fullImageUrl) + '"';
                 html += ' data-caption="' + self.escapeAttr(post.caption || '') + '"';
                 html += ' data-likes="' + (post.likes || 0) + '"';
                 html += ' data-comments="' + (post.comments || 0) + '"';
                 html += ' data-link="' + self.escapeAttr(post.link || '') + '"';
                 html += '>';
-                html += '<img src="' + self.escapeAttr(post.thumbnail || '') + '"';
+                html += '<img src="' + self.escapeAttr(thumbnailUrl) + '"';
                 html += ' alt="' + self.escapeAttr(post.caption || 'Instagram post') + '"';
                 html += ' loading="lazy">';
 
@@ -252,6 +256,25 @@
         escapeAttr: function(str) {
             if (!str) return '';
             return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        },
+
+        /**
+         * Convert an Instagram CDN URL to a proxy URL
+         * This is needed to bypass CORS restrictions when loading images dynamically
+         * @param {string} url - The original Instagram CDN URL
+         * @return {string} The proxy URL, or empty string if no URL provided
+         */
+        getProxyUrl: function(url) {
+            if (!url) return '';
+
+            // Check if proxy base URL is configured
+            if (typeof bwgIgfFrontend === 'undefined' || !bwgIgfFrontend.proxyBaseUrl) {
+                // Fallback: return original URL if proxy not configured
+                return url;
+            }
+
+            // Encode the URL and append to proxy base
+            return bwgIgfFrontend.proxyBaseUrl + '?url=' + encodeURIComponent(url);
         },
 
         /**
