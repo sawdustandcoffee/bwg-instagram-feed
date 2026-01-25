@@ -1,5 +1,69 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #115 - New feed has correct default values)
+
+### Feature Completed
+- **Feature #115: New feed has correct default values** - PASSED ✅
+
+### Feature Details
+- **Category:** defaults
+- **Name:** New feed has correct default values
+- **Description:** Feed creation form shows sensible defaults
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Add New Feed** - ✅ VERIFIED
+   - Navigated to `http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=new`
+   - "Create New Feed" page loads correctly
+
+2. **Step 2: Verify post count has default (e.g., 9)** - ✅ VERIFIED
+   - **Number of Posts: 9** (Display tab)
+   - This is a sensible default showing 9 posts in a 3x3 grid
+
+3. **Step 3: Verify grid is default layout** - ✅ VERIFIED
+   - **Layout Type: Grid** (Layout tab)
+   - Grid is selected by default
+
+4. **Step 4: Verify default columns (e.g., 3)** - ✅ VERIFIED
+   - **Columns: 3** (Layout tab)
+   - 3 columns is the default, creating a nice 3x3 grid
+
+5. **Step 5: Verify default cache duration set** - ✅ VERIFIED
+   - **Cache Duration: 1 Hour** (Advanced tab)
+   - 1 hour is a sensible default balancing freshness with API rate limits
+
+### Additional Defaults Verified
+
+| Setting | Default Value | Tab |
+|---------|---------------|-----|
+| Feed Type | Public (Username) | Source |
+| Gap | 10px | Layout |
+| Show like count | ✓ Checked | Display |
+| Show comment count | ✓ Checked | Display |
+| Show caption | ☐ Unchecked | Display |
+| Show Follow button | ✓ Checked | Display |
+| Background Color | Empty (transparent) | Styling |
+| Border Radius | 0px | Styling |
+| Hover Effect | None | Styling |
+| Post Ordering | Newest First | Advanced |
+| Enable popup/lightbox | ✓ Checked | Popup |
+
+### Screenshots
+- feature-115-source-tab-defaults.png - Source tab with Feed Type default
+- feature-115-layout-tab-defaults.png - Layout tab showing Grid default with 3 columns
+- feature-115-display-tab-defaults.png - Display tab showing Number of Posts default (9)
+- feature-115-advanced-tab-defaults.png - Advanced tab showing Cache Duration default (1 Hour)
+
+### Console Errors
+- None
+
+### Result
+Feature #115 PASSES. All default values are sensible and appropriate for typical Instagram feed usage.
+
+[Feature #115 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #112 - Refresh during save handled)
 
 ### Feature Completed
