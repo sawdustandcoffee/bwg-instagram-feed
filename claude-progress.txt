@@ -20912,3 +20912,78 @@ Feature #88 PASSES regression test. Validation errors properly clear when fixed.
 ### Version Bump
 - Updated from v1.2.0 to v1.3.0
 
+
+### Git Operations
+- Commit: 60e5485 - "Release v1.3.0 - Feature #165: Feed Size Settings"
+- Pushed to: https://github.com/sawdustandcoffee/bwg-instagram-feed.git
+- Branch: main
+
+### GitHub Release (Manual Step Required)
+Unable to create release automatically (gh CLI and MCP GitHub tools require permission).
+
+To create the release manually:
+1. Go to: https://github.com/sawdustandcoffee/bwg-instagram-feed/releases/new
+2. Tag: v1.3.0
+3. Title: BWG Instagram Feed v1.3.0
+4. Release notes:
+   - Feed Size Settings feature
+   - Feed Width, Max Width, Padding options
+   - Image Height Mode (Square/Original/Fixed)
+   - All 165 features complete
+
+### Session Complete
+- Feature #165 implemented and marked as passing
+- Version bumped from 1.2.0 to 1.3.0
+- All changes committed and pushed to GitHub
+- 100% feature completion achieved (165/165)
+
+---
+
+## Session: 2026-01-25 (Feature #166 Verification - BATCH COMPLETE!)
+
+### Feature Verified
+- **Feature #166: Plugin version is displayed on the main dashboard** - PASSED
+
+### Feature Details
+- **ID:** 166
+- **Category:** functional
+- **Name:** Plugin version is displayed on the main dashboard
+- **Description:** The plugin version number (from BWG_IGF_VERSION constant) should be displayed on the main plugin dashboard page in the WordPress admin.
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to the BWG Instagram Feed main dashboard** - VERIFIED
+   - Logged into WordPress admin at http://localhost:8088/wp-admin/
+   - Navigated to Instagram Feed > Dashboard (admin.php?page=bwg-igf)
+
+2. **Step 2: Verify the plugin version number is visible** - VERIFIED
+   - Version number "Version 1.3.0" displayed prominently in the header area
+   - Located below "BWG Instagram Feed" heading and "by Boston Web Group" subtitle
+
+3. **Step 3: Verify the version displayed matches BWG_IGF_VERSION** - VERIFIED
+   - BWG_IGF_VERSION constant in bwg-instagram-feed.php line 25: '1.3.0'
+   - Header comment Version in bwg-instagram-feed.php line 6: 1.3.0
+   - Both match the displayed "Version 1.3.0"
+
+4. **Step 4: Verify clear, readable format** - VERIFIED
+   - Format: "Version 1.3.0" - clear, professional display
+   - Uses WordPress standard "Version %s" translation pattern
+
+5. **Step 5: Screenshot showing version number** - VERIFIED
+   - Screenshot saved: feature-166-version-displayed.png
+   - Shows BWG Instagram Feed header with version clearly visible
+
+### Implementation Location
+- Template: templates/admin/dashboard.php (line 21)
+
+### Console Errors
+- None
+
+### Result
+Feature #166 PASSES. All verification steps confirmed working.
+
+### BATCH COMPLETE!
+- **Features Passing: 166/166 (100.0%)**
+- All features implemented and verified
+- Plugin ready for release v1.3.1
+
