@@ -673,10 +673,14 @@
         createPopup: function() {
             this.popup = document.createElement('div');
             this.popup.className = 'bwg-igf-popup';
+            // Add ARIA attributes for accessibility
+            this.popup.setAttribute('role', 'dialog');
+            this.popup.setAttribute('aria-modal', 'true');
+            this.popup.setAttribute('aria-label', 'Instagram post lightbox');
             this.popup.innerHTML = [
-                '<button class="bwg-igf-popup-close" aria-label="Close">&times;</button>',
-                '<button class="bwg-igf-popup-nav bwg-igf-popup-prev" aria-label="Previous">&lsaquo;</button>',
-                '<button class="bwg-igf-popup-nav bwg-igf-popup-next" aria-label="Next">&rsaquo;</button>',
+                '<button class="bwg-igf-popup-close" aria-label="Close lightbox">&times;</button>',
+                '<button class="bwg-igf-popup-nav bwg-igf-popup-prev" aria-label="Previous post">&lsaquo;</button>',
+                '<button class="bwg-igf-popup-nav bwg-igf-popup-next" aria-label="Next post">&rsaquo;</button>',
                 '<div class="bwg-igf-popup-content">',
                 '  <img class="bwg-igf-popup-image" src="" alt="">',
                 '  <div class="bwg-igf-popup-details">',
@@ -688,6 +692,9 @@
             ].join('');
 
             document.body.appendChild(this.popup);
+
+            // Store focusable elements for focus trapping
+            this.focusableElements = null;
         },
 
         bindEvents: function() {
@@ -731,7 +738,7 @@
                 self.next();
             });
 
-            // Keyboard navigation
+            // Keyboard navigation and focus trapping
             document.addEventListener('keydown', function(e) {
                 if (!self.popup.classList.contains('active')) return;
 
@@ -745,19 +752,64 @@
                     case 'ArrowRight':
                         self.next();
                         break;
+                    case 'Tab':
+                        // Focus trapping - keep focus within popup
+                        self.handleTabKey(e);
+                        break;
                 }
             });
         },
 
+        /**
+         * Handle Tab key for focus trapping within popup
+         * @param {KeyboardEvent} e - The keyboard event
+         */
+        handleTabKey: function(e) {
+            if (!this.focusableElements || this.focusableElements.length === 0) {
+                e.preventDefault();
+                return;
+            }
+
+            var firstFocusable = this.focusableElements[0];
+            var lastFocusable = this.focusableElements[this.focusableElements.length - 1];
+
+            if (e.shiftKey) {
+                // Shift+Tab: if on first element, wrap to last
+                if (document.activeElement === firstFocusable) {
+                    e.preventDefault();
+                    lastFocusable.focus();
+                }
+            } else {
+                // Tab: if on last element, wrap to first
+                if (document.activeElement === lastFocusable) {
+                    e.preventDefault();
+                    firstFocusable.focus();
+                }
+            }
+        },
+
         open: function(index) {
+            var self = this;
             this.currentIndex = index;
             this.updateContent();
             this.popup.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            // Focus management
+            // Focus management - store the trigger element
             this.lastFocusedElement = document.activeElement;
-            this.popup.querySelector('.bwg-igf-popup-close').focus();
+
+            // Cache focusable elements for focus trapping
+            this.focusableElements = this.popup.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+
+            // Use setTimeout to ensure the popup is fully visible before focusing
+            setTimeout(function() {
+                var closeBtn = self.popup.querySelector('.bwg-igf-popup-close');
+                if (closeBtn) {
+                    closeBtn.focus();
+                }
+            }, 50);
         },
 
         close: function() {

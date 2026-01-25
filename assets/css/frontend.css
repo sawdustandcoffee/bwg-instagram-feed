@@ -28,6 +28,18 @@
     position: relative;
     overflow: hidden;
     border-radius: var(--bwg-igf-border-radius, 0);
+    cursor: pointer;
+}
+
+/* Keyboard focus styles for feed items */
+.bwg-igf-item:focus {
+    outline: 3px solid #e1306c;
+    outline-offset: 2px;
+}
+
+.bwg-igf-item:focus-visible {
+    outline: 3px solid #e1306c;
+    outline-offset: 2px;
 }
 
 .bwg-igf-item img {
@@ -239,6 +251,13 @@
     color: #fff;
 }
 
+.bwg-igf-popup-link:focus,
+.bwg-igf-popup-link:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
 .bwg-igf-popup-close {
     position: absolute;
     top: 20px;
@@ -250,6 +269,21 @@
     color: #fff;
     font-size: 30px;
     cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.bwg-igf-popup-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+/* Focus styles for popup controls */
+.bwg-igf-popup-close:focus,
+.bwg-igf-popup-close:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .bwg-igf-popup-nav {
@@ -267,6 +301,13 @@
 }
 
 .bwg-igf-popup-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.bwg-igf-popup-nav:focus,
+.bwg-igf-popup-nav:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
     background: rgba(255, 255, 255, 0.2);
 }
 
