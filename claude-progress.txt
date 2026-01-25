@@ -13228,3 +13228,192 @@ Feature #122 PASSES. Cache expiration works correctly:
 - Cache duration is configurable (15min to 24hr)
 
 [Feature #122 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #104 Regression Test)
+
+### Feature Tested
+- **Feature #104: Popup modal is keyboard accessible** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** accessibility
+- **Name:** Popup modal is keyboard accessible
+- **Description:** Lightbox can be used entirely via keyboard
+
+### Verification Steps Completed
+
+1. **Step 1: Tab to feed post on frontend** - ✅ VERIFIED
+   - Navigated to Instagram Feed Test page (page_id=14)
+   - Pressed Tab key to move through page elements
+   - Successfully tabbed to feed item (DIV with class `bwg-igf-item bwg-igf-slider-slide`)
+   - Feed items have `tabIndex: 0` making them keyboard focusable
+
+2. **Step 2: Press Enter to open popup** - ✅ VERIFIED
+   - Pressed Enter key while focused on feed item
+   - Lightbox dialog opened successfully
+   - Dialog has proper role="dialog" and aria-label="Instagram post lightbox"
+
+3. **Step 3: Verify focus moves to popup** - ✅ VERIFIED
+   - Focus automatically moved to "Close lightbox" button inside dialog
+   - This is proper accessibility behavior (focus should move into modal)
+
+4. **Step 4: Tab through popup controls** - ✅ VERIFIED
+   - Tabbing through controls follows logical order:
+     - Close lightbox button (×)
+     - Previous post button (‹)
+     - Next post button (›)
+     - View on Instagram link
+   - Focus is **trapped within the modal** - tabbing from last element wraps to first
+   - All buttons have proper aria-labels
+
+5. **Step 5: Press Escape to close** - ✅ VERIFIED
+   - Pressed Escape key while in popup
+   - Popup closed successfully
+   - Dialog element removed from DOM
+
+6. **Step 6: Verify focus returns to trigger element** - ✅ VERIFIED
+   - Focus returned to the original feed item that was clicked
+   - Element still has class `bwg-igf-item bwg-igf-slider-slide`
+   - Visible focus ring displayed on the element
+
+### Accessibility Features Verified
+- Feed items are focusable (tabindex="0")
+- Enter key opens lightbox
+- Focus moves into modal on open
+- Focus trap keeps user within modal
+- All interactive elements have aria-labels
+- Escape key closes modal
+- Focus returns to trigger on close
+
+### Console Errors
+- None
+
+### Screenshots
+- feature-104-keyboard-accessible-feed.png - Feed with focus ring on Post 1 after popup closed
+
+### Result
+Feature #104 PASSES regression test. The popup modal is fully keyboard accessible:
+- Tab navigation works to reach feed posts
+- Enter key opens the lightbox
+- Focus is properly managed within the modal
+- Escape key closes the modal
+- Focus correctly returns to the triggering element
+
+[Testing] Feature #104 verified - still passing
+[Testing] Session complete - Feature #104 regression test passed
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #114 Regression Test)
+
+### Feature Tested
+- **Feature #114: Shortcode shows error for deleted feed** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** cascade
+- **Name:** Shortcode shows error for deleted feed
+- **Description:** Shortcode handles deleted feed gracefully
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed, add shortcode to page** - ✅ VERIFIED
+   - Created new feed 'FEATURE_114_DELETED_FEED_TEST' (ID: 39)
+   - Shortcode: [bwg_igf id="39"]
+   - Created page 'Feature 114 Deleted Feed Test' (page_id=47)
+   - Added shortcode to the page and published
+   - Verified page displayed feed correctly before deletion
+
+2. **Step 2: Delete the feed** - ✅ VERIFIED
+   - Navigated to Feeds admin page
+   - Clicked Delete link for FEATURE_114_DELETED_FEED_TEST
+   - Confirmed deletion dialog
+   - Feed removed from the list
+
+3. **Step 3: View page with shortcode** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/?page_id=47
+   - Page loaded successfully
+
+4. **Step 4: Verify friendly error message shown** - ✅ VERIFIED
+   - Error message displayed: "Feed not found or inactive."
+   - Message shown in styled container (pink background)
+   - User-friendly, non-technical message
+
+5. **Step 5: Verify no PHP error** - ✅ VERIFIED
+   - No PHP errors on the page
+   - No console errors
+   - Page renders cleanly with proper layout
+
+### Screenshots
+- feature-114-deleted-feed-error-message.png - Shows friendly error message displayed
+
+### Console Errors
+- None
+
+### Result
+Feature #114 PASSES regression test. The shortcode correctly handles deleted feeds:
+- Shows "Feed not found or inactive." instead of PHP error
+- Page continues to render without breaking
+- Error message is user-friendly and styled appropriately
+
+[Testing] Feature #114 verified - still passing
+[Testing] Session complete - Feature #114 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Feature #121 - Updated timestamp changes on edit)
+
+### Feature Completed
+- **Feature #121: Updated timestamp changes on edit** - PASSED ✅
+
+### Feature Details
+- **Category:** temporal
+- **Name:** Updated timestamp changes on edit
+- **Description:** Feed modification updates timestamp
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed, note created_at** - ✅ VERIFIED
+   - Created feed 'FEATURE_121_TIMESTAMP_TEST' (ID: 35)
+   - Initial timestamps both set to: 2026-01-25 01:30:14
+   - Verified created_at === updated_at for new feed
+
+2. **Step 2: Wait a minute** - ✅ VERIFIED
+   - Waited ~3 minutes before editing
+   - Re-logged into WordPress admin
+
+3. **Step 3: Edit and save feed** - ✅ VERIFIED
+   - Modified feed name to 'FEATURE_121_TIMESTAMP_TEST_EDITED'
+   - Clicked 'Save Changes' button
+   - Success message: 'Feed updated successfully!'
+
+4. **Step 4: Verify updated_at is newer than created_at** - ✅ VERIFIED
+   - Created At: 2026-01-25 01:30:14
+   - Updated At: 2026-01-25 01:33:18
+   - Time difference: 184 seconds (3+ minutes)
+   - updated_at is NEWER than created_at ✅
+
+### Technical Implementation
+- Database schema has: updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+- PHP code in save_feed() explicitly sets: $data['updated_at'] = current_time( 'mysql' )
+- Both mechanisms ensure timestamp updates on edit
+
+### Screenshots
+- feature-121-edit-success.png - Feed editor after successful save
+
+### Console Errors
+- None
+
+### Cleanup
+- Test feed (ID 35) deleted after verification
+
+### Result
+Feature #121 PASSES. The updated_at timestamp correctly changes when a feed is edited:
+- New feeds have matching created_at and updated_at
+- Editing and saving a feed updates the updated_at timestamp
+- Timestamp difference verified (184 seconds in this test)
+
+[Feature #121 completed and verified]
+
