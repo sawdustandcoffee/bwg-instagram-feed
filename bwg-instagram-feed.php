@@ -85,6 +85,11 @@ final class BWG_Instagram_Feed {
     public function activate() {
         $this->create_tables();
         $this->set_default_options();
+
+        // Schedule image proxy cache cleanup cron job.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
+        BWG_IGF_Image_Proxy::schedule_cleanup();
+
         flush_rewrite_rules();
     }
 
@@ -92,6 +97,10 @@ final class BWG_Instagram_Feed {
      * Plugin deactivation.
      */
     public function deactivate() {
+        // Unschedule image proxy cache cleanup cron job.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
+        BWG_IGF_Image_Proxy::unschedule_cleanup();
+
         flush_rewrite_rules();
     }
 
