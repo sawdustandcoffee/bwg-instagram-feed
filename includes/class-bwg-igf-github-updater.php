@@ -23,6 +23,9 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
  *
  * Integrates with WordPress plugin update system to check GitHub for new versions.
  * Uses the Plugin Update Checker library (v5.5) for reliable update detection.
+ *
+ * Supports optional private repository authentication via GitHub personal access token.
+ * Set the token in wp_options as 'bwg_igf_github_token' to enable authentication.
  */
 class BWG_IGF_GitHub_Updater {
 
@@ -32,6 +35,14 @@ class BWG_IGF_GitHub_Updater {
      * @var string
      */
     const GITHUB_REPO_URL = 'https://github.com/sawdustandcoffee/bwg-instagram-feed';
+
+    /**
+     * WordPress option key for GitHub access token.
+     * Used for private repository authentication.
+     *
+     * @var string
+     */
+    const GITHUB_TOKEN_OPTION = 'bwg_igf_github_token';
 
     /**
      * Class instance.
@@ -97,6 +108,78 @@ class BWG_IGF_GitHub_Updater {
         // Enable release assets - this tells PUC to download the .zip file
         // attached to GitHub releases instead of the source code zip.
         $this->update_checker->getVcsApi()->enableReleaseAssets();
+
+        // Configure authentication for private repository support (if token is provided).
+        $this->configure_authentication();
+    }
+
+    /**
+     * Configure GitHub authentication for private repository access.
+     *
+     * If a GitHub personal access token is stored in WordPress options,
+     * this method will configure the Plugin Update Checker to use it
+     * for API requests and downloads.
+     *
+     * To enable private repository authentication:
+     * 1. Create a GitHub personal access token with 'repo' scope
+     * 2. Store it using: update_option('bwg_igf_github_token', 'your_token_here');
+     *
+     * Note: For public repositories, authentication is optional but can help
+     * avoid API rate limits.
+     */
+    private function configure_authentication() {
+        if ( ! $this->update_checker ) {
+            return;
+        }
+
+        // Get the GitHub token from WordPress options.
+        $github_token = $this->get_github_token();
+
+        if ( ! empty( $github_token ) ) {
+            // Set the authentication token on the VCS API.
+            // This enables access to private repositories and higher API rate limits.
+            $this->update_checker->getVcsApi()->setAuthentication( $github_token );
+        }
+    }
+
+    /**
+     * Get the GitHub access token from WordPress options.
+     *
+     * @return string The GitHub token, or empty string if not set.
+     */
+    public function get_github_token() {
+        return get_option( self::GITHUB_TOKEN_OPTION, '' );
+    }
+
+    /**
+     * Set the GitHub access token.
+     *
+     * @param string $token The GitHub personal access token.
+     * @return bool True on success, false on failure.
+     */
+    public function set_github_token( $token ) {
+        if ( empty( $token ) ) {
+            delete_option( self::GITHUB_TOKEN_OPTION );
+            return true;
+        }
+
+        $result = update_option( self::GITHUB_TOKEN_OPTION, sanitize_text_field( $token ) );
+
+        // Reconfigure authentication if the update checker is already initialized.
+        if ( $this->update_checker && ! empty( $token ) ) {
+            $this->update_checker->getVcsApi()->setAuthentication( $token );
+        }
+
+        return $result;
+    }
+
+    /**
+     * Check if authentication is enabled.
+     *
+     * @return bool True if a GitHub token is configured.
+     */
+    public function is_authentication_enabled() {
+        return ! empty( $this->get_github_token() );
     }
 
     /**
@@ -161,11 +244,13 @@ class BWG_IGF_GitHub_Updater {
      */
     public function get_status() {
         return array(
-            'configured'     => $this->is_configured(),
-            'github_url'     => self::GITHUB_REPO_URL,
-            'version'        => BWG_IGF_VERSION,
-            'library'        => 'Plugin Update Checker v5.5',
-            'release_assets' => true,
+            'configured'            => $this->is_configured(),
+            'github_url'            => self::GITHUB_REPO_URL,
+            'version'               => BWG_IGF_VERSION,
+            'library'               => 'Plugin Update Checker v5.5',
+            'release_assets'        => true,
+            'authentication_enabled' => $this->is_authentication_enabled(),
+            'private_repo_support'  => true, // Feature #184: Always indicate support is available.
         );
     }
 
