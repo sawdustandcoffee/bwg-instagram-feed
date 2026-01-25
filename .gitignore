@@ -1,9 +1,41 @@
 # SQLite database lock files
 *.db-shm
 *.db-wal
+*.db
 
-# Agent lock file
+# Agent/development files
 .agent.lock
+prompts/
+app_spec.txt
+init.sh
+CLAUDE.md
+
+# Test/debug PHP files in root (keep only main plugin files)
+check_*.php
+test_*.php
+setup_*.php
+create_*.php
+delete_*.php
+update_*.php
+cleanup_*.php
+verify_*.php
+find_*.php
+list_*.php
+count_*.php
+fix_*.php
+reset_*.php
+restore_*.php
+populate_*.php
+simulate_*.php
+mock_*.php
+clear_*.php
+recreate_*.php
+get_*.php
+force_*.php
+auth_*.php
+
+# Playwright/testing screenshots
+.playwright-mcp/
 
 # IDE files
 .idea/
@@ -32,6 +64,7 @@ uploads/
 dist/
 build/
 
-# Docker volumes
+# Docker/local dev
+docker-compose.yml
 wordpress_data/
 db_data/

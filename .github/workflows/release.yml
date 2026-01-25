@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create plugin zip
+        run: |
+          # Create a clean directory for the plugin
+          mkdir -p dist/bwg-instagram-feed
+
+          # Copy only the files needed for the plugin
+          cp bwg-instagram-feed.php dist/bwg-instagram-feed/
+          cp uninstall.php dist/bwg-instagram-feed/
+          cp README.md dist/bwg-instagram-feed/
+
+          # Copy directories
+          cp -r assets dist/bwg-instagram-feed/
+          cp -r includes dist/bwg-instagram-feed/
+          cp -r templates dist/bwg-instagram-feed/
+          cp -r languages dist/bwg-instagram-feed/
+
+          # Create the zip file
+          cd dist
+          zip -r bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip bwg-instagram-feed
+
+          # Also create a generic latest zip for easy download
+          cp bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip bwg-instagram-feed.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: BWG Instagram Feed v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## BWG Instagram Feed v${{ steps.get_version.outputs.VERSION }}
+
+            ### Installation
+            1. Download `bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip`
+            2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
+            3. Upload the zip file and activate
+
+            ### Updates
+            Configure the GitHub repository URL in Settings to receive automatic update notifications.
+          files: |
+            dist/bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip
+            dist/bwg-instagram-feed.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
