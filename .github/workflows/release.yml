@@ -66,6 +66,7 @@ jobs:
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
           name: BWG Instagram Feed v${{ steps.get_version.outputs.VERSION }}
+          generate_release_notes: true
           body: |
             ## BWG Instagram Feed v${{ steps.get_version.outputs.VERSION }}
 
@@ -76,6 +77,10 @@ jobs:
 
             ### Updates
             Configure the GitHub repository URL in Settings to receive automatic update notifications.
+
+            ---
+            **Changelog** (auto-generated from commits below)
+          append_body: true
           files: |
             dist/bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip
             dist/bwg-instagram-feed.zip
