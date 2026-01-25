@@ -32,6 +32,7 @@
             this.initFeedSearch(); // Feature #117: Search feeds by name
             this.initFeedTypeToggle(); // Feature #130: Toggle between public and connected account
             this.initFollowButtonToggle(); // Feature #27: Toggle follow button options
+            this.initPopupToggle(); // Feature #29: Toggle popup options visibility
         },
 
         bindEvents: function() {
@@ -244,6 +245,32 @@
             $('#bwg-igf-follow-button-text, #bwg-igf-follow-button-style').on('change input', function() {
                 BWGIGFAdmin.updatePreview();
             });
+        },
+
+        /**
+         * Feature #29: Toggle popup options visibility based on popup enable checkbox
+         */
+        initPopupToggle: function() {
+            var $popupEnabled = $('#bwg-igf-popup-enabled');
+            var $popupOptions = $('#bwg-igf-popup-options');
+
+            if (!$popupEnabled.length) {
+                return;
+            }
+
+            function togglePopupOptions() {
+                if ($popupEnabled.is(':checked')) {
+                    $popupOptions.slideDown(200);
+                } else {
+                    $popupOptions.slideUp(200);
+                }
+            }
+
+            // Check on page load
+            togglePopupOptions();
+
+            // Check on change
+            $popupEnabled.on('change', togglePopupOptions);
         },
 
         initPostCountValidation: function() {

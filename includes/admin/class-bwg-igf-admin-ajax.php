@@ -247,10 +247,13 @@ class BWG_IGF_Admin_Ajax {
         $post_count = isset( $_POST['post_count'] ) ? absint( $_POST['post_count'] ) : 9;
         // Enforce post count range: minimum 1, maximum 50.
         $post_count = max( 1, min( 50, $post_count ) );
+        $show_account_name = isset( $_POST['show_account_name'] ) ? 1 : 0;
         $show_likes = isset( $_POST['show_likes'] ) ? 1 : 0;
         $show_comments = isset( $_POST['show_comments'] ) ? 1 : 0;
         $show_caption = isset( $_POST['show_caption'] ) ? 1 : 0;
         $show_follow_button = isset( $_POST['show_follow_button'] ) ? 1 : 0;
+        $follow_button_text = isset( $_POST['follow_button_text'] ) ? sanitize_text_field( wp_unslash( $_POST['follow_button_text'] ) ) : '';
+        $follow_button_style = isset( $_POST['follow_button_style'] ) ? sanitize_text_field( wp_unslash( $_POST['follow_button_style'] ) ) : 'gradient';
 
         // Get styling settings.
         $background_color = isset( $_POST['background_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['background_color'] ) ) : '';
@@ -260,6 +263,10 @@ class BWG_IGF_Admin_Ajax {
 
         // Get popup settings.
         $popup_enabled = isset( $_POST['popup_enabled'] ) ? 1 : 0;
+        $popup_show_caption = isset( $_POST['popup_show_caption'] ) ? 1 : 0;
+        $popup_show_likes = isset( $_POST['popup_show_likes'] ) ? 1 : 0;
+        $popup_show_comments = isset( $_POST['popup_show_comments'] ) ? 1 : 0;
+        $popup_show_instagram_link = isset( $_POST['popup_show_instagram_link'] ) ? 1 : 0;
 
         // Get advanced settings.
         $ordering = isset( $_POST['ordering'] ) ? sanitize_text_field( wp_unslash( $_POST['ordering'] ) ) : 'newest';
@@ -283,10 +290,13 @@ class BWG_IGF_Admin_Ajax {
         ) );
 
         $display_settings = wp_json_encode( array(
-            'show_likes'         => $show_likes,
-            'show_comments'      => $show_comments,
-            'show_caption'       => $show_caption,
-            'show_follow_button' => $show_follow_button,
+            'show_account_name'    => $show_account_name,
+            'show_likes'           => $show_likes,
+            'show_comments'        => $show_comments,
+            'show_caption'         => $show_caption,
+            'show_follow_button'   => $show_follow_button,
+            'follow_button_text'   => $follow_button_text,
+            'follow_button_style'  => $follow_button_style,
         ) );
 
         $styling_settings = wp_json_encode( array(
@@ -297,7 +307,11 @@ class BWG_IGF_Admin_Ajax {
         ) );
 
         $popup_settings = wp_json_encode( array(
-            'enabled' => $popup_enabled,
+            'enabled'             => (bool) $popup_enabled,
+            'show_caption'        => (bool) $popup_show_caption,
+            'show_likes'          => (bool) $popup_show_likes,
+            'show_comments'       => (bool) $popup_show_comments,
+            'show_instagram_link' => (bool) $popup_show_instagram_link,
         ) );
 
         $filter_settings = wp_json_encode( array(

@@ -232,6 +232,17 @@ $is_new = empty( $feed );
 
                     <!-- Display Tab -->
                     <div id="bwg-igf-tab-display" class="bwg-igf-tab-content">
+                        <?php
+                        // Get display settings from feed
+                        $display_settings = $feed && ! empty( $feed->display_settings ) ? json_decode( $feed->display_settings, true ) : array();
+                        $show_account_name = isset( $display_settings['show_account_name'] ) ? (bool) $display_settings['show_account_name'] : false;
+                        $show_likes = isset( $display_settings['show_likes'] ) ? (bool) $display_settings['show_likes'] : true;
+                        $show_comments = isset( $display_settings['show_comments'] ) ? (bool) $display_settings['show_comments'] : true;
+                        $show_caption = isset( $display_settings['show_caption'] ) ? (bool) $display_settings['show_caption'] : false;
+                        $show_follow_button = isset( $display_settings['show_follow_button'] ) ? (bool) $display_settings['show_follow_button'] : true;
+                        $follow_button_text = isset( $display_settings['follow_button_text'] ) ? $display_settings['follow_button_text'] : '';
+                        $follow_button_style = isset( $display_settings['follow_button_style'] ) ? $display_settings['follow_button_style'] : 'gradient';
+                        ?>
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-post-count"><?php esc_html_e( 'Number of Posts', 'bwg-instagram-feed' ); ?></label>
                             <input type="number" id="bwg-igf-post-count" name="post_count" value="<?php echo $feed ? esc_attr( $feed->post_count ) : '9'; ?>" min="1" max="50">
@@ -239,30 +250,57 @@ $is_new = empty( $feed );
 
                         <div class="bwg-igf-field">
                             <label>
-                                <input type="checkbox" name="show_likes" value="1" checked>
+                                <input type="checkbox" id="bwg-igf-show-account-name" name="show_account_name" value="1" <?php checked( $show_account_name, true ); ?>>
+                                <?php esc_html_e( 'Show account name', 'bwg-instagram-feed' ); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e( 'Display the Instagram username in the feed header.', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label>
+                                <input type="checkbox" name="show_likes" value="1" <?php checked( $show_likes, true ); ?>>
                                 <?php esc_html_e( 'Show like count', 'bwg-instagram-feed' ); ?>
                             </label>
                         </div>
 
                         <div class="bwg-igf-field">
                             <label>
-                                <input type="checkbox" name="show_comments" value="1" checked>
+                                <input type="checkbox" name="show_comments" value="1" <?php checked( $show_comments, true ); ?>>
                                 <?php esc_html_e( 'Show comment count', 'bwg-instagram-feed' ); ?>
                             </label>
                         </div>
 
                         <div class="bwg-igf-field">
                             <label>
-                                <input type="checkbox" name="show_caption" value="1">
+                                <input type="checkbox" name="show_caption" value="1" <?php checked( $show_caption, true ); ?>>
                                 <?php esc_html_e( 'Show caption', 'bwg-instagram-feed' ); ?>
                             </label>
                         </div>
 
                         <div class="bwg-igf-field">
                             <label>
-                                <input type="checkbox" name="show_follow_button" value="1" checked>
+                                <input type="checkbox" id="bwg-igf-show-follow-button" name="show_follow_button" value="1" <?php checked( $show_follow_button, true ); ?>>
                                 <?php esc_html_e( 'Show "Follow on Instagram" button', 'bwg-instagram-feed' ); ?>
                             </label>
+                        </div>
+
+                        <!-- Follow Button Options (shown when follow button is enabled) -->
+                        <div class="bwg-igf-follow-button-options" id="bwg-igf-follow-button-options" style="<?php echo $show_follow_button ? '' : 'display: none;'; ?>">
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-follow-button-text"><?php esc_html_e( 'Button Text', 'bwg-instagram-feed' ); ?></label>
+                                <input type="text" id="bwg-igf-follow-button-text" name="follow_button_text" value="<?php echo esc_attr( $follow_button_text ); ?>" placeholder="<?php esc_attr_e( 'Follow on Instagram', 'bwg-instagram-feed' ); ?>">
+                                <p class="description"><?php esc_html_e( 'Customize the follow button text. Leave empty for default.', 'bwg-instagram-feed' ); ?></p>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-follow-button-style"><?php esc_html_e( 'Button Style', 'bwg-instagram-feed' ); ?></label>
+                                <select id="bwg-igf-follow-button-style" name="follow_button_style">
+                                    <option value="gradient" <?php selected( $follow_button_style, 'gradient' ); ?>><?php esc_html_e( 'Instagram Gradient', 'bwg-instagram-feed' ); ?></option>
+                                    <option value="solid" <?php selected( $follow_button_style, 'solid' ); ?>><?php esc_html_e( 'Solid Color', 'bwg-instagram-feed' ); ?></option>
+                                    <option value="outline" <?php selected( $follow_button_style, 'outline' ); ?>><?php esc_html_e( 'Outline', 'bwg-instagram-feed' ); ?></option>
+                                    <option value="minimal" <?php selected( $follow_button_style, 'minimal' ); ?>><?php esc_html_e( 'Minimal', 'bwg-instagram-feed' ); ?></option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -310,11 +348,54 @@ $is_new = empty( $feed );
 
                     <!-- Popup Tab -->
                     <div id="bwg-igf-tab-popup" class="bwg-igf-tab-content">
+                        <?php
+                        // Get popup settings from feed
+                        $popup_settings_data = $feed && ! empty( $feed->popup_settings ) ? json_decode( $feed->popup_settings, true ) : array();
+                        $popup_enabled = isset( $popup_settings_data['enabled'] ) ? (bool) $popup_settings_data['enabled'] : true;
+                        $popup_show_caption = isset( $popup_settings_data['show_caption'] ) ? (bool) $popup_settings_data['show_caption'] : true;
+                        $popup_show_likes = isset( $popup_settings_data['show_likes'] ) ? (bool) $popup_settings_data['show_likes'] : true;
+                        $popup_show_comments = isset( $popup_settings_data['show_comments'] ) ? (bool) $popup_settings_data['show_comments'] : true;
+                        $popup_show_instagram_link = isset( $popup_settings_data['show_instagram_link'] ) ? (bool) $popup_settings_data['show_instagram_link'] : true;
+                        ?>
                         <div class="bwg-igf-field">
                             <label>
-                                <input type="checkbox" name="popup_enabled" value="1" checked>
+                                <input type="checkbox" id="bwg-igf-popup-enabled" name="popup_enabled" value="1" <?php checked( $popup_enabled, true ); ?>>
                                 <?php esc_html_e( 'Enable popup/lightbox', 'bwg-instagram-feed' ); ?>
                             </label>
+                            <p class="description"><?php esc_html_e( 'Opens posts in a lightbox when clicked.', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <!-- Additional Popup Options (shown when popup is enabled) -->
+                        <div class="bwg-igf-popup-options" id="bwg-igf-popup-options" style="<?php echo $popup_enabled ? '' : 'display: none;'; ?>">
+                            <h4 style="margin-top: 20px; margin-bottom: 15px; padding-top: 15px; border-top: 1px solid #ddd;"><?php esc_html_e( 'Popup Display Options', 'bwg-instagram-feed' ); ?></h4>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" name="popup_show_caption" value="1" <?php checked( $popup_show_caption, true ); ?>>
+                                    <?php esc_html_e( 'Show caption in popup', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" name="popup_show_likes" value="1" <?php checked( $popup_show_likes, true ); ?>>
+                                    <?php esc_html_e( 'Show like count in popup', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" name="popup_show_comments" value="1" <?php checked( $popup_show_comments, true ); ?>>
+                                    <?php esc_html_e( 'Show comment count in popup', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" name="popup_show_instagram_link" value="1" <?php checked( $popup_show_instagram_link, true ); ?>>
+                                    <?php esc_html_e( 'Show "View on Instagram" link', 'bwg-instagram-feed' ); ?>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
