@@ -1,5 +1,73 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #178 - Plugin Update Checker library is included in plugin)
+
+### Feature Implemented
+- **Feature #178: Plugin Update Checker library is included in plugin** - PASSED ✅
+
+### Feature Details
+- **ID:** 178
+- **Category:** functional
+- **Name:** Plugin Update Checker library is included in plugin
+- **Description:** The Plugin Update Checker library by YahnisElsts is included in the plugin's vendor or includes directory, properly namespaced to avoid conflicts with other plugins using the same library.
+
+### Verification Steps Completed
+
+1. **Step 1: Check for plugin-update-checker directory in plugin** - ✅ VERIFIED
+   - Library installed at `includes/lib/plugin-update-checker/`
+   - Contains all required files and directories
+
+2. **Step 2: Verify library files exist (Puc directory with PHP files)** - ✅ VERIFIED
+   - `Puc/` directory exists with v5 and v5p5 subdirectories
+   - PHP files include: Autoloader.php, PucFactory.php, UpdateChecker.php, etc.
+   - Vcs/ subdirectory contains GitHubApi.php for GitHub integration
+
+3. **Step 3: Check library is loaded via require/include in main plugin file** - ✅ VERIFIED
+   - Added `init_plugin_update_checker()` method in bwg-instagram-feed.php
+   - Method requires: `includes/lib/plugin-update-checker/plugin-update-checker.php`
+   - PUC configured to point to GitHub repo: `https://github.com/sawdustandcoffee/bwg-instagram-feed/`
+
+4. **Step 4: Verify no PHP errors when plugin is activated** - ✅ VERIFIED
+   - Plugin dashboard loads without PHP errors
+   - No JavaScript console errors
+   - All plugin functionality works correctly
+
+5. **Step 5: Check library version is reasonably current (v5.x)** - ✅ VERIFIED
+   - Library version: 5.5 (latest stable release)
+   - File header: "Plugin Update Checker Library 5.5"
+   - Copyright: 2024 Janis Elsts
+
+### Implementation Details
+- **Library Location:** `includes/lib/plugin-update-checker/`
+- **Integration Method:** Created `init_plugin_update_checker()` method called from `load_admin_ajax()`
+- **GitHub Configuration:**
+  - Repository URL: `https://github.com/sawdustandcoffee/bwg-instagram-feed/`
+  - Branch: main
+  - Release assets enabled for downloading packaged zip
+
+### PUC Configuration Code
+```php
+$update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+    'https://github.com/sawdustandcoffee/bwg-instagram-feed/',
+    BWG_IGF_PLUGIN_FILE,
+    'bwg-instagram-feed'
+);
+$update_checker->setBranch( 'main' );
+$update_checker->getVcsApi()->enableReleaseAssets();
+```
+
+### Screenshots
+- feature-178-puc-no-errors.png - Shows plugin dashboard loading without errors
+
+### Console Errors
+- None
+
+### Stats
+- Features Passing: 178/191 (93.2%)
+- Commit: 65a1c91 - "Feature #178: Include Plugin Update Checker library (YahnisElsts v5.5)"
+
+---
+
 ## Session: 2026-01-25 (Feature #171 - GitHub Actions workflow extracts version from plugin header)
 
 ### Feature Verified
@@ -21927,4 +21995,59 @@ Feature #177 PASSES. All verification steps confirmed working.
 
 ### Result
 Feature #176 PASSES. All verification steps confirmed working.
+
+
+
+---
+
+## Session: 2026-01-25 (Testing Agent - Feature #6 Regression Test)
+
+### Feature Tested
+- **Feature #6: Settings page loads correctly** - ✅ PASSED (No Regression)
+
+### Feature Details
+- **ID:** 6
+- **Category:** functional
+- **Name:** Settings page loads correctly
+- **Description:** Plugin settings page renders with all options
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Settings submenu** - ✅ PASSED
+   - Successfully navigated to admin.php?page=bwg-igf-settings
+
+2. **Step 2: Verify page title displays** - ✅ PASSED
+   - "Settings" heading (h1) visible at top of page
+
+3. **Step 3: Verify general settings section visible** - ✅ PASSED
+   - "General Settings" section displayed with proper formatting
+
+4. **Step 4: Verify cache duration option present** - ✅ PASSED
+   - Dropdown with options: 15 Minutes, 30 Minutes, 1 Hour, 6 Hours, 12 Hours, 24 Hours
+   - Default value: 1 Hour
+
+5. **Step 5: Verify uninstall behavior option present** - ✅ PASSED
+   - "Delete Data on Uninstall" checkbox present
+   - Warning text displayed about permanent deletion
+
+6. **Step 6: Verify Instagram App credentials fields present** - ✅ PASSED
+   - "Instagram API Settings" section visible
+   - "Instagram App ID" textbox present
+   - "Instagram App Secret" textbox present
+
+7. **Step 7: Verify Save Changes button is functional** - ✅ PASSED
+   - Clicked Save Changes button
+   - "Settings saved." confirmation message displayed
+
+### Console Errors
+- None
+
+### Screenshots
+- feature-6-settings-page.png
+- feature-6-settings-saved.png
+
+### Result
+Feature #6 PASSES regression test. All verification steps confirmed working.
+
+[Testing] Feature #6 verified - still passing
 
