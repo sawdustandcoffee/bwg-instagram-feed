@@ -12404,3 +12404,60 @@ Feature #116 PASSES. The Cancel functionality works correctly:
 - Reopening the form shows the original/saved values from the database
 
 [Feature #116 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Feature #114 - Shortcode shows error for deleted feed)
+
+### Feature Completed
+- **Feature #114: Shortcode shows error for deleted feed** - PASSED
+
+### Feature Details
+- **Category:** cascade
+- **Name:** Shortcode shows error for deleted feed
+- **Description:** Shortcode handles deleted feed gracefully
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed, add shortcode to page** - VERIFIED
+   - Created feed ID 33 (FEATURE_114_DELETE_TEST) via PHP script
+   - Created page ID 45 (Feature 114 Test Page) with shortcode [bwg_igf id="33"]
+   - Page displayed the feed content correctly before deletion
+
+2. **Step 2: Delete the feed** - VERIFIED
+   - Deleted feed ID 33 from wp_bwg_igf_feeds table via PHP script
+
+3. **Step 3: View page with shortcode** - VERIFIED
+   - Navigated to http://localhost:8088/?page_id=45
+   - Page rendered successfully without hanging or crashing
+
+4. **Step 4: Verify friendly error message shown** - VERIFIED
+   - Message "Feed not found or inactive." displayed in styled error container
+   - Error has light pink/red background styling (CSS class: bwg-igf-error)
+   - Message is user-friendly and doesn't expose technical details
+   - Error styling matches plugin design system
+
+5. **Step 5: Verify no PHP error** - VERIFIED
+   - No PHP Fatal, Warning, Notice, or Deprecated errors on the page
+   - No JavaScript console errors
+   - Page renders cleanly with proper HTML structure
+
+### Implementation Details
+The shortcode error handling is implemented in templates/frontend/feed.php (lines 35-38):
+- Early return prevents further processing when feed is not found
+- Proper escaping with esc_html__() for security and i18n support
+- Clean error message that doesn't expose database details or feed IDs
+- Styled error container for visual consistency
+
+### Screenshots
+- feature-114-deleted-feed-error.png - Error message after feed deletion
+- feature-114-after-deletion.png - Full page screenshot showing error state
+
+### Console Errors
+- None
+
+### Current Status
+- Feature #114 marked as passing
+- Credentials: admin / admin123 (password reset during session)
+
+[Feature #114 completed and verified]
