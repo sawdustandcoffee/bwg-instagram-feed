@@ -1,5 +1,59 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #185 - Version is defined in main plugin file header)
+
+### Feature Verified
+- **Feature #185: Version is defined in main plugin file header** - PASSED
+
+### Feature Details
+- **ID:** 185
+- **Category:** functional
+- **Name:** Version is defined in main plugin file header
+- **Description:** The plugin version is defined in the standard WordPress plugin header format in the main plugin file. This is the single source of truth for version number.
+
+### Verification Steps Completed
+
+1. **Step 1: Open main plugin file (bwg-instagram-feed.php)** - VERIFIED
+   - Located at /home/buckneri/projects/bwg-instagram-feed/bwg-instagram-feed.php
+   - File is the main plugin entry point
+
+2. **Step 2: Verify plugin header contains 'Version: X.X.X' line** - VERIFIED
+   - Line 6 contains: Version: 1.3.7
+   - Part of the standard WordPress plugin header comment block
+
+3. **Step 3: Verify format follows WordPress standards** - VERIFIED
+   - Format: Version: 1.3.7
+   - Follows semantic versioning (MAJOR.MINOR.PATCH)
+   - Located in plugin header comment block as required by WordPress
+
+4. **Step 4: Check WordPress reads this version correctly on Plugins page** - VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/plugins.php
+   - BWG Instagram Feed shows "Version 1.3.7" in the Description column
+   - Screenshot: feature-185-plugins-page-version.png
+
+5. **Step 5: Verify this matches what PUC reports as installed version** - VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings
+   - GitHub Updates section shows:
+     - Current Version: 1.3.7
+     - Latest Version: 1.3.7 (Up to date)
+     - Update Library: Plugin Update Checker v5.5
+   - Screenshot: feature-185-github-updates-section.png
+
+### Also Verified
+- BWG_IGF_VERSION constant defined on line 25: define( 'BWG_IGF_VERSION', '1.3.7' );
+- Both header and constant match, ensuring consistency
+
+### Console Errors
+- None
+
+### Result
+Feature #185 PASSES. All verification steps confirmed working.
+
+### Stats
+- Features Passing: 184/191 (96.3%)
+
+---
+
 ## Session: 2026-01-25 (Feature #183 - Plugin Update Checker downloads release asset zip)
 
 ### Feature Verified
