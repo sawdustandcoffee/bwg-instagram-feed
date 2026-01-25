@@ -89,6 +89,107 @@ class BWG_IGF_GitHub_Updater {
      */
     private function __construct() {
         $this->init_update_checker();
+        $this->init_multisite_support();
+    }
+
+    /**
+     * Initialize multisite support for update notices.
+     *
+     * On multisite with network-activated plugins, the standard plugin update
+     * notice doesn't show on the Network Admin Plugins page. This method adds
+     * the necessary hooks to display update notices properly.
+     */
+    private function init_multisite_support() {
+        if ( ! is_multisite() ) {
+            return;
+        }
+
+        // Add update notice row for network admin plugins page.
+        add_action( 'after_plugin_row_' . plugin_basename( BWG_IGF_PLUGIN_FILE ), array( $this, 'show_network_update_notice' ), 10, 2 );
+
+        // Also hook into the network plugins page to ensure transient is checked.
+        add_action( 'network_admin_plugin_action_links_' . plugin_basename( BWG_IGF_PLUGIN_FILE ), array( $this, 'maybe_check_for_updates' ), 10, 1 );
+    }
+
+    /**
+     * Show update notice on network admin plugins page.
+     *
+     * @param string $file   Plugin basename.
+     * @param array  $plugin Plugin data.
+     */
+    public function show_network_update_notice( $file, $plugin ) {
+        if ( ! is_network_admin() ) {
+            return;
+        }
+
+        // Get update information from transient.
+        $update_plugins = get_site_transient( 'update_plugins' );
+
+        $plugin_file = plugin_basename( BWG_IGF_PLUGIN_FILE );
+
+        // Check if there's an update available for this plugin.
+        if ( ! isset( $update_plugins->response[ $plugin_file ] ) ) {
+            return;
+        }
+
+        $update = $update_plugins->response[ $plugin_file ];
+        $current_version = BWG_IGF_VERSION;
+
+        // Only show if the available version is actually newer.
+        if ( version_compare( $update->new_version, $current_version, '<=' ) ) {
+            return;
+        }
+
+        // Get the number of columns in the plugins table.
+        $wp_list_table = _get_list_table( 'WP_Plugins_List_Table' );
+        $colspan = $wp_list_table->get_column_count();
+
+        // Build the update message.
+        $details_url = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_file . '&section=changelog&TB_iframe=true&width=772&height=931' );
+        $update_url  = wp_nonce_url(
+            self_admin_url( 'update.php?action=upgrade-plugin&plugin=' . $plugin_file ),
+            'upgrade-plugin_' . $plugin_file
+        );
+
+        echo '<tr class="plugin-update-tr active" id="' . esc_attr( $plugin_file . '-update' ) . '" data-slug="' . esc_attr( dirname( $plugin_file ) ) . '" data-plugin="' . esc_attr( $plugin_file ) . '">';
+        echo '<td colspan="' . esc_attr( $colspan ) . '" class="plugin-update colspanchange">';
+        echo '<div class="update-message notice inline notice-warning notice-alt"><p>';
+
+        printf(
+            /* translators: 1: Plugin name, 2: Version number, 3: Update URL, 4: Additional info. */
+            __( 'There is a new version of %1$s available. <a href="%2$s" class="update-link" aria-label="Update %1$s now">Update now to version %3$s</a>.', 'bwg-instagram-feed' ),
+            '<strong>' . esc_html( $plugin['Name'] ) . '</strong>',
+            esc_url( $update_url ),
+            esc_html( $update->new_version )
+        );
+
+        echo '</p></div>';
+        echo '</td>';
+        echo '</tr>';
+    }
+
+    /**
+     * Maybe trigger an update check when viewing network plugins page.
+     *
+     * This ensures the update transient is populated when an admin views
+     * the network plugins page.
+     *
+     * @param array $actions Plugin action links.
+     * @return array
+     */
+    public function maybe_check_for_updates( $actions ) {
+        // Only check if the transient is empty or expired.
+        $update_plugins = get_site_transient( 'update_plugins' );
+        $plugin_file = plugin_basename( BWG_IGF_PLUGIN_FILE );
+
+        if ( empty( $update_plugins ) || ! isset( $update_plugins->checked[ $plugin_file ] ) ) {
+            // Trigger an update check.
+            if ( $this->update_checker ) {
+                $this->update_checker->checkForUpdates();
+            }
+        }
+
+        return $actions;
     }
 
     /**
@@ -305,10 +406,19 @@ class BWG_IGF_GitHub_Updater {
      */
     public function check_now() {
         $this->clear_cache();
+
+        // For multisite, also clear the site-wide update transient to force refresh.
+        if ( is_multisite() ) {
+            delete_site_transient( 'update_plugins' );
+        }
+
         $release = $this->get_github_release( true );
 
         // Record the timestamp of this check (Feature #191).
         $this->set_last_checked();
+
+        // Force WordPress to recheck plugin updates.
+        wp_clean_plugins_cache( true );
 
         return $release;
     }
