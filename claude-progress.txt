@@ -13912,3 +13912,65 @@ Feature #126 PASSES. OAuth callback correctly handles user denial:
 - User can retry connection immediately
 
 [Feature #126 completed and verified]
+
+---
+
+## Session: 2026-01-25 (Feature #129 - Token expiration warning displayed)
+
+### Feature Completed
+- **Feature #129: Token expiration warning displayed** - PASSED ✅
+
+### Feature Details
+- **Category:** oauth
+- **Name:** Token expiration warning displayed
+- **Description:** Warning shown when token nearing expiration
+
+### Verification Steps Completed
+
+1. **Step 1: Have connected account with token expiring soon** - ✅ VERIFIED
+   - Created test account `@test_expiring_account_129` with token expiring in 5 days
+   - Also created `@test_expired_account_129` with already expired token
+
+2. **Step 2: Navigate to Accounts page** - ✅ VERIFIED
+   - Navigated to admin.php?page=bwg-igf-accounts
+   - Connected Accounts table displayed with all test accounts
+
+3. **Step 3: Verify warning indicator shown** - ✅ VERIFIED
+   - Warning icon (dashicons-warning) displayed for accounts with tokens expiring within 7 days
+   - Yellow/orange icon for "expiring soon" (within 7 days)
+   - Red icon for "expired" tokens
+
+4. **Step 4: Verify warning explains action needed** - ✅ VERIFIED
+   - For expiring tokens (within 7 days): "Token expiring soon. Reconnect your account to refresh the token."
+   - For expired tokens: "Token has expired. Please reconnect your account to continue using this feed."
+   - For valid tokens (>7 days): Just shows the expiration date (e.g., "March 26, 2026")
+
+### Implementation Details
+The token expiration warning is implemented in `templates/admin/accounts.php`:
+- Lines 282-292: Handles expired tokens (days_left <= 0)
+- Lines 293-311: Handles expiring tokens (days_left <= 7)
+- Lines 312-313: Handles valid tokens (shows date)
+
+Features:
+- Uses WordPress dashicons-warning icon
+- Color-coded: Red (#dc3232) for expired, Yellow (#dba617) for expiring
+- Clear action message telling user to "reconnect your account"
+
+### Screenshots
+- feature-129-before-warning.png - Accounts page before implementation
+- feature-129-warning-displayed.png - Warning showing for expiring token
+- feature-129-all-warnings.png - Both expired and expiring warnings displayed
+
+### Console Errors
+- None
+
+### Cleanup
+- Test accounts deleted after verification
+
+### Result
+Feature #129 PASSES. Token expiration warnings are correctly displayed:
+- Warning icon shown for tokens expiring within 7 days ✅
+- Warning explains action needed (reconnect account) ✅
+- Different styling for expired vs expiring tokens ✅
+
+[Feature #129 completed and verified]
