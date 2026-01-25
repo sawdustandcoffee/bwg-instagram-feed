@@ -115,8 +115,7 @@ $is_new = empty( $feed );
                         </div>
 
                         <?php
-                        // Get connected accounts for the dropdown
-                        global $wpdb;
+                        // Get connected accounts for the dropdown - $wpdb already declared at top of file
                         $connected_accounts = $wpdb->get_results(
                             "SELECT id, username, account_type, status FROM {$wpdb->prefix}bwg_igf_accounts WHERE status = 'active' ORDER BY username ASC"
                         );
