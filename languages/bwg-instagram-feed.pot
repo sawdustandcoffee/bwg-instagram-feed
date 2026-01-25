@@ -1,0 +1,921 @@
+# Copyright (C) 2024 Boston Web Group
+# This file is distributed under the same license as the BWG Instagram Feed plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: BWG Instagram Feed 1.0.0\n"
+"Report-Msgid-Bugs-To: https://bostonwebgroup.com/plugins/instagram-feed\n"
+"POT-Creation-Date: 2024-01-24 12:00:00+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: WP-CLI 2.8.1\n"
+"X-Domain: bwg-instagram-feed\n"
+
+#. Plugin Name of the plugin
+msgid "BWG Instagram Feed"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://bostonwebgroup.com/plugins/instagram-feed"
+msgstr ""
+
+#. Description of the plugin
+msgid "Display Instagram feeds on your WordPress website with customizable layouts, styling, and both public and connected account support."
+msgstr ""
+
+#. Author of the plugin
+msgid "Boston Web Group"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://bostonwebgroup.com"
+msgstr ""
+
+#: bwg-instagram-feed.php:246
+msgid "Instagram Feed"
+msgstr ""
+
+#: bwg-instagram-feed.php:257 bwg-instagram-feed.php:258 templates/admin/feed-editor.php:49
+msgid "Dashboard"
+msgstr ""
+
+#: bwg-instagram-feed.php:266
+msgid "All Feeds"
+msgstr ""
+
+#: bwg-instagram-feed.php:267 templates/admin/feed-editor.php:53
+msgid "Feeds"
+msgstr ""
+
+#: bwg-instagram-feed.php:275
+msgid "Connected Accounts"
+msgstr ""
+
+#: bwg-instagram-feed.php:276
+msgid "Accounts"
+msgstr ""
+
+#: bwg-instagram-feed.php:284 bwg-instagram-feed.php:285 templates/admin/settings.php:37
+msgid "Settings"
+msgstr ""
+
+#: bwg-instagram-feed.php:327
+msgid "Are you sure you want to delete this feed?"
+msgstr ""
+
+#: bwg-instagram-feed.php:328
+msgid "Saving..."
+msgstr ""
+
+#: bwg-instagram-feed.php:329
+msgid "Saved!"
+msgstr ""
+
+#: bwg-instagram-feed.php:330
+msgid "An error occurred. Please try again."
+msgstr ""
+
+#: bwg-instagram-feed.php:331 includes/admin/class-bwg-igf-admin-ajax.php:125
+msgid "Feed name is required."
+msgstr ""
+
+#: bwg-instagram-feed.php:332 includes/admin/class-bwg-igf-admin-ajax.php:441
+msgid "Feed deleted successfully!"
+msgstr ""
+
+#: includes/blocks/class-bwg-igf-instagram-feed-block.php:118
+msgid "Display an Instagram feed on your page."
+msgstr ""
+
+#: includes/blocks/class-bwg-igf-instagram-feed-block.php:120
+msgid "Select a Feed"
+msgstr ""
+
+#: includes/blocks/class-bwg-igf-instagram-feed-block.php:121
+msgid "No feeds found. Please create a feed first."
+msgstr ""
+
+#: includes/blocks/class-bwg-igf-instagram-feed-block.php:122
+msgid "Create a Feed"
+msgstr ""
+
+#: includes/blocks/class-bwg-igf-instagram-feed-block.php:123
+msgid "Feed"
+msgstr ""
+
+#: includes/blocks/class-bwg-igf-instagram-feed-block.php:124 templates/admin/feed-editor.php:415
+msgid "Preview"
+msgstr ""
+
+#: includes/frontend/class-bwg-igf-frontend-ajax.php:45 includes/admin/class-bwg-igf-admin-ajax.php:67
+msgid "Security check failed."
+msgstr ""
+
+#: includes/frontend/class-bwg-igf-frontend-ajax.php:53 includes/admin/class-bwg-igf-admin-ajax.php:408 includes/admin/class-bwg-igf-admin-ajax.php:455 includes/admin/class-bwg-igf-admin-ajax.php:565
+msgid "Invalid feed ID."
+msgstr ""
+
+#: includes/frontend/class-bwg-igf-frontend-ajax.php:65 templates/frontend/feed.php:36
+msgid "Feed not found or inactive."
+msgstr ""
+
+#: includes/frontend/class-bwg-igf-frontend-ajax.php:89 includes/admin/class-bwg-igf-admin-ajax.php:605
+#, php-format
+msgid "Could not fetch Instagram posts: %s"
+msgstr ""
+
+#: includes/frontend/class-bwg-igf-frontend-ajax.php:194 includes/admin/class-bwg-igf-admin-ajax.php:695
+msgid "No Instagram username configured."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:53
+msgid "Username is required."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:71 includes/class-bwg-igf-instagram-api.php:186
+msgid "This Instagram account is private."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:113
+#, php-format
+msgid "Failed to fetch Instagram profile: %s"
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:120 includes/class-bwg-igf-instagram-api.php:172 includes/class-bwg-igf-instagram-api.php:181 includes/class-bwg-igf-instagram-api.php:303 includes/class-bwg-igf-instagram-api.php:308
+msgid "Instagram user not found."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:127 includes/class-bwg-igf-instagram-api.php:143 includes/class-bwg-igf-instagram-api.php:284 includes/class-bwg-igf-instagram-api.php:296 includes/class-bwg-igf-instagram-api.php:691 includes/class-bwg-igf-instagram-api.php:708
+msgid "Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:150
+#, php-format
+msgid "Instagram returned HTTP error: %d"
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:615
+msgid "Invalid username format."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:633
+msgid "This account is private."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:714
+#, php-format
+msgid "Instagram API error: %s"
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:771
+msgid "Unknown error during token refresh."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:776
+msgid "No access token returned from refresh."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:806
+msgid "Connected account not found or inactive."
+msgstr ""
+
+#: includes/class-bwg-igf-instagram-api.php:813
+msgid "Failed to decrypt access token."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:71
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:137
+msgid "Please select a connected Instagram account."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:152
+msgid "The selected connected account is not valid or has been disconnected."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:162
+msgid "Instagram username is required for public feeds."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:173
+msgid "Please enter at least one valid Instagram username."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:187
+#, php-format
+msgid "\"%s\" is not a valid Instagram username format."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:200 includes/admin/class-bwg-igf-admin-ajax.php:526
+#, php-format
+msgid "Instagram user \"@%s\" was not found. Please check the spelling and try again."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:206
+#, php-format
+msgid "The Instagram account \"@%s\" is private. Only public accounts can be displayed."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:212
+#, php-format
+msgid "Error validating \"@%1$s\": %2$s"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:362
+msgid "Failed to update feed."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:366
+msgid "Feed updated successfully!"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:383
+msgid "Failed to create feed."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:389
+msgid "Feed created successfully!"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:420 includes/admin/class-bwg-igf-admin-ajax.php:468 includes/admin/class-bwg-igf-admin-ajax.php:577
+msgid "Feed not found."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:431
+msgid "Failed to delete feed."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:485
+msgid "Failed to duplicate feed."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:489
+msgid "Feed duplicated successfully!"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:503 includes/admin/class-bwg-igf-admin-ajax.php:840
+msgid "Username is required."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:509
+msgid "Invalid username format. Instagram usernames can only contain letters, numbers, periods, and underscores."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:533
+#, php-format
+msgid "The Instagram account \"@%s\" is private. Only public accounts can be displayed in feeds."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:548
+#, php-format
+msgid "Instagram user \"@%s\" is valid and public."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:645
+#, php-format
+msgid "Cache refreshed successfully! Fetched %d posts."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:809
+msgid "All cache cleared successfully!"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:832
+msgid "Access token is required."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:836
+msgid "Instagram user ID is required."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:853
+msgid "Failed to encrypt access token."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:886
+msgid "Failed to update account."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:890
+msgid "Instagram account reconnected successfully!"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:911
+msgid "Failed to connect account."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:917
+msgid "Instagram account connected successfully!"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:934 includes/admin/class-bwg-igf-admin-ajax.php:965
+msgid "Invalid account ID."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:945
+msgid "Failed to disconnect account."
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:948
+msgid "Account disconnected successfully!"
+msgstr ""
+
+#: includes/admin/class-bwg-igf-admin-ajax.php:977
+msgid "Account not found."
+msgstr ""
+
+#: templates/frontend/feed.php:365
+msgid "Rate Limit Reached"
+msgstr ""
+
+#: templates/frontend/feed.php:373
+msgid "Loading Instagram feed..."
+msgstr ""
+
+#: templates/frontend/feed.php:417
+msgid "Private Account"
+msgstr ""
+
+#: templates/frontend/feed.php:419
+msgid "User Not Found"
+msgstr ""
+
+#: templates/frontend/feed.php:421
+msgid "No Posts Found"
+msgstr ""
+
+#: templates/frontend/feed.php:430
+msgid "This feed doesn't have any posts to display yet. Please check the Instagram username or try again later."
+msgstr ""
+
+#: templates/frontend/feed.php:476
+msgid "Previous"
+msgstr ""
+
+#: templates/frontend/feed.php:477
+msgid "Next"
+msgstr ""
+
+#: templates/admin/feeds.php:25
+msgid "Instagram Feeds"
+msgstr ""
+
+#: templates/admin/feeds.php:27
+msgid "Add New Feed"
+msgstr ""
+
+#: templates/admin/feeds.php:45
+msgid "No feeds yet!"
+msgstr ""
+
+#: templates/admin/feeds.php:46
+msgid "Create your first Instagram feed to display on your website."
+msgstr ""
+
+#: templates/admin/feeds.php:48
+msgid "Create Your First Feed"
+msgstr ""
+
+#: templates/admin/feeds.php:54
+msgid "Search Feeds"
+msgstr ""
+
+#: templates/admin/feeds.php:55
+msgid "Search feeds by name..."
+msgstr ""
+
+#: templates/admin/feeds.php:61
+msgid "Name"
+msgstr ""
+
+#: templates/admin/feeds.php:62
+msgid "Type"
+msgstr ""
+
+#: templates/admin/feeds.php:63
+msgid "Status"
+msgstr ""
+
+#: templates/admin/feeds.php:64
+msgid "Shortcode"
+msgstr ""
+
+#: templates/admin/feeds.php:65
+msgid "Actions"
+msgstr ""
+
+#: templates/admin/feeds.php:94 templates/admin/feed-editor.php:57
+msgid "Edit"
+msgstr ""
+
+#: templates/admin/feeds.php:97
+msgid "Duplicate"
+msgstr ""
+
+#: templates/admin/feeds.php:100
+msgid "Delete"
+msgstr ""
+
+#: templates/admin/accounts.php:187
+msgid "Connected Instagram Accounts"
+msgstr ""
+
+#: templates/admin/accounts.php:203
+msgid "Connect an Account"
+msgstr ""
+
+#: templates/admin/accounts.php:204
+msgid "Connect your Instagram account to access more features like hashtag filtering and reliable data access."
+msgstr ""
+
+#: templates/admin/accounts.php:212
+msgid "Please configure your Instagram App credentials in Settings before connecting an account."
+msgstr ""
+
+#: templates/admin/accounts.php:214
+msgid "Go to Settings"
+msgstr ""
+
+#: templates/admin/accounts.php:230
+msgid "Connect Instagram Account"
+msgstr ""
+
+#: templates/admin/accounts.php:233
+msgid "You will be redirected to Instagram to authorize the connection."
+msgstr ""
+
+#: templates/admin/accounts.php:239
+msgid "Connected Accounts"
+msgstr ""
+
+#: templates/admin/accounts.php:253
+msgid "No accounts connected yet."
+msgstr ""
+
+#: templates/admin/accounts.php:258
+msgid "Username"
+msgstr ""
+
+#: templates/admin/accounts.php:260
+msgid "Expires"
+msgstr ""
+
+#: templates/admin/accounts.php:287
+msgid "Expired"
+msgstr ""
+
+#: templates/admin/accounts.php:289
+msgid "Token has expired. Please reconnect your account to continue using this feed."
+msgstr ""
+
+#: templates/admin/accounts.php:302
+#, php-format
+msgid "%d days"
+msgstr ""
+
+#: templates/admin/accounts.php:308
+msgid "Token expiring soon. Reconnect your account to refresh the token."
+msgstr ""
+
+#: templates/admin/accounts.php:316
+msgid "N/A"
+msgstr ""
+
+#: templates/admin/accounts.php:322
+msgid "Verify Encryption"
+msgstr ""
+
+#: templates/admin/accounts.php:327
+msgid "Disconnect"
+msgstr ""
+
+#: templates/admin/settings.php:26
+msgid "Settings saved."
+msgstr ""
+
+#: templates/admin/settings.php:44
+msgid "General Settings"
+msgstr ""
+
+#: templates/admin/settings.php:49
+msgid "Default Cache Duration"
+msgstr ""
+
+#: templates/admin/settings.php:53 templates/admin/feed-editor.php:368
+msgid "15 Minutes"
+msgstr ""
+
+#: templates/admin/settings.php:54 templates/admin/feed-editor.php:369
+msgid "30 Minutes"
+msgstr ""
+
+#: templates/admin/settings.php:55 templates/admin/feed-editor.php:370
+msgid "1 Hour"
+msgstr ""
+
+#: templates/admin/settings.php:56 templates/admin/feed-editor.php:371
+msgid "6 Hours"
+msgstr ""
+
+#: templates/admin/settings.php:57 templates/admin/feed-editor.php:372
+msgid "12 Hours"
+msgstr ""
+
+#: templates/admin/settings.php:58 templates/admin/feed-editor.php:373
+msgid "24 Hours"
+msgstr ""
+
+#: templates/admin/settings.php:60
+msgid "How long to cache Instagram data before fetching fresh content."
+msgstr ""
+
+#: templates/admin/settings.php:65
+msgid "Delete Data on Uninstall"
+msgstr ""
+
+#: templates/admin/settings.php:70
+msgid "Delete all plugin data when uninstalling"
+msgstr ""
+
+#: templates/admin/settings.php:72
+msgid "Warning: This will permanently delete all feeds, settings, and connected accounts."
+msgstr ""
+
+#: templates/admin/settings.php:79
+msgid "Instagram API Settings"
+msgstr ""
+
+#: templates/admin/settings.php:81
+msgid "To use connected accounts, you need to create an Instagram App. Visit the Meta Developer Portal to create one."
+msgstr ""
+
+#: templates/admin/settings.php:87
+msgid "Instagram App ID"
+msgstr ""
+
+#: templates/admin/settings.php:95
+msgid "Instagram App Secret"
+msgstr ""
+
+#: templates/admin/settings.php:105
+msgid "GitHub Updates"
+msgstr ""
+
+#: templates/admin/settings.php:107
+msgid "Configure automatic updates from GitHub. Enter your GitHub repository URL to receive plugin updates."
+msgstr ""
+
+#: templates/admin/settings.php:113
+msgid "GitHub Repository URL"
+msgstr ""
+
+#: templates/admin/settings.php:117
+msgid "Example: https://github.com/bostonwebgroup/bwg-instagram-feed"
+msgstr ""
+
+#: templates/admin/settings.php:133
+msgid "Update Status:"
+msgstr ""
+
+#: templates/admin/settings.php:134
+msgid "Configured"
+msgstr ""
+
+#: templates/admin/settings.php:138
+msgid "Current Version:"
+msgstr ""
+
+#: templates/admin/settings.php:143
+msgid "Latest Version:"
+msgstr ""
+
+#: templates/admin/settings.php:147
+msgid "Update available!"
+msgstr ""
+
+#: templates/admin/settings.php:151
+msgid "Up to date"
+msgstr ""
+
+#: templates/admin/settings.php:157
+msgid "Could not fetch release information from GitHub."
+msgstr ""
+
+#: templates/admin/settings.php:162
+msgid "Check for Updates Now"
+msgstr ""
+
+#: templates/admin/settings.php:173
+msgid "Cache Management"
+msgstr ""
+
+#: templates/admin/settings.php:176
+msgid "Clear All Cache"
+msgstr ""
+
+#: templates/admin/settings.php:179
+msgid "Clear all cached Instagram data. Fresh data will be fetched on the next page load."
+msgstr ""
+
+#: templates/admin/settings.php:183 templates/admin/feed-editor.php:408
+msgid "Save Changes"
+msgstr ""
+
+#: templates/admin/feed-editor.php:29
+msgid "Feed Not Found"
+msgstr ""
+
+#: templates/admin/feed-editor.php:31
+msgid "The feed you are trying to edit does not exist or has been deleted."
+msgstr ""
+
+#: templates/admin/feed-editor.php:35
+msgid "Return to Feeds List"
+msgstr ""
+
+#: templates/admin/feed-editor.php:47
+msgid "Breadcrumb"
+msgstr ""
+
+#: templates/admin/feed-editor.php:57
+msgid "Create"
+msgstr ""
+
+#: templates/admin/feed-editor.php:63
+msgid "Create New Feed"
+msgstr ""
+
+#: templates/admin/feed-editor.php:63
+msgid "Edit Feed"
+msgstr ""
+
+#: templates/admin/feed-editor.php:75
+msgid "Source"
+msgstr ""
+
+#: templates/admin/feed-editor.php:78
+msgid "Layout"
+msgstr ""
+
+#: templates/admin/feed-editor.php:81
+msgid "Display"
+msgstr ""
+
+#: templates/admin/feed-editor.php:84
+msgid "Styling"
+msgstr ""
+
+#: templates/admin/feed-editor.php:87
+msgid "Popup"
+msgstr ""
+
+#: templates/admin/feed-editor.php:90
+msgid "Advanced"
+msgstr ""
+
+#: templates/admin/feed-editor.php:98
+msgid "Feed Name"
+msgstr ""
+
+#: templates/admin/feed-editor.php:103
+msgid "Feed Type"
+msgstr ""
+
+#: templates/admin/feed-editor.php:105
+msgid "Public (Username)"
+msgstr ""
+
+#: templates/admin/feed-editor.php:106
+msgid "Connected Account"
+msgstr ""
+
+#: templates/admin/feed-editor.php:111
+msgid "Instagram Username(s)"
+msgstr ""
+
+#: templates/admin/feed-editor.php:112
+msgid "username or username1, username2"
+msgstr ""
+
+#: templates/admin/feed-editor.php:114
+msgid "Enter one or more Instagram usernames (comma-separated for multiple)."
+msgstr ""
+
+#: templates/admin/feed-editor.php:129
+msgid "No connected Instagram accounts found."
+msgstr ""
+
+#: templates/admin/feed-editor.php:131
+msgid "Connect an account"
+msgstr ""
+
+#: templates/admin/feed-editor.php:137
+msgid "-- Select an account --"
+msgstr ""
+
+#: templates/admin/feed-editor.php:144
+msgid "Select a connected Instagram account to display posts from."
+msgstr ""
+
+#: templates/admin/feed-editor.php:166
+msgid "Layout Type"
+msgstr ""
+
+#: templates/admin/feed-editor.php:168
+msgid "Grid"
+msgstr ""
+
+#: templates/admin/feed-editor.php:169
+msgid "Slider"
+msgstr ""
+
+#: templates/admin/feed-editor.php:176
+msgid "Columns"
+msgstr ""
+
+#: templates/admin/feed-editor.php:181
+msgid "Gap (px)"
+msgstr ""
+
+#: templates/admin/feed-editor.php:189
+msgid "Slides to Show"
+msgstr ""
+
+#: templates/admin/feed-editor.php:194
+msgid "Slides to Scroll"
+msgstr ""
+
+#: templates/admin/feed-editor.php:201
+msgid "Enable Autoplay"
+msgstr ""
+
+#: templates/admin/feed-editor.php:206
+msgid "Autoplay Speed (ms)"
+msgstr ""
+
+#: templates/admin/feed-editor.php:208
+msgid "Time between slides in milliseconds (1000ms = 1 second)"
+msgstr ""
+
+#: templates/admin/feed-editor.php:214
+msgid "Show Navigation Arrows"
+msgstr ""
+
+#: templates/admin/feed-editor.php:221
+msgid "Show Pagination Dots"
+msgstr ""
+
+#: templates/admin/feed-editor.php:228
+msgid "Infinite Loop"
+msgstr ""
+
+#: templates/admin/feed-editor.php:237
+msgid "Number of Posts"
+msgstr ""
+
+#: templates/admin/feed-editor.php:244
+msgid "Show like count"
+msgstr ""
+
+#: templates/admin/feed-editor.php:251
+msgid "Show comment count"
+msgstr ""
+
+#: templates/admin/feed-editor.php:258
+msgid "Show caption"
+msgstr ""
+
+#: templates/admin/feed-editor.php:265
+msgid "Show \"Follow on Instagram\" button"
+msgstr ""
+
+#: templates/admin/feed-editor.php:273
+msgid "Background Color"
+msgstr ""
+
+#: templates/admin/feed-editor.php:275
+msgid "Leave empty for transparent/no background."
+msgstr ""
+
+#: templates/admin/feed-editor.php:279
+msgid "Border Radius (px)"
+msgstr ""
+
+#: templates/admin/feed-editor.php:284
+msgid "Hover Effect"
+msgstr ""
+
+#: templates/admin/feed-editor.php:293
+msgid "None"
+msgstr ""
+
+#: templates/admin/feed-editor.php:294
+msgid "Zoom"
+msgstr ""
+
+#: templates/admin/feed-editor.php:295
+msgid "Overlay"
+msgstr ""
+
+#: templates/admin/feed-editor.php:296
+msgid "Brightness"
+msgstr ""
+
+#: templates/admin/feed-editor.php:301
+msgid "Custom CSS"
+msgstr ""
+
+#: templates/admin/feed-editor.php:308
+msgid "Add custom CSS to style your feed. Use .bwg-igf-feed as the container selector."
+msgstr ""
+
+#: templates/admin/feed-editor.php:317
+msgid "Enable popup/lightbox"
+msgstr ""
+
+#: templates/admin/feed-editor.php:333
+msgid "Hashtag Filters"
+msgstr ""
+
+#: templates/admin/feed-editor.php:336
+msgid "Include Hashtags"
+msgstr ""
+
+#: templates/admin/feed-editor.php:337
+msgid "travel, photography, nature"
+msgstr ""
+
+#: templates/admin/feed-editor.php:338
+msgid "Only show posts containing these hashtags (comma-separated, without #). Leave empty to show all posts."
+msgstr ""
+
+#: templates/admin/feed-editor.php:342
+msgid "Exclude Hashtags"
+msgstr ""
+
+#: templates/admin/feed-editor.php:343
+msgid "ad, sponsored, promo"
+msgstr ""
+
+#: templates/admin/feed-editor.php:344
+msgid "Hide posts containing these hashtags (comma-separated, without #)."
+msgstr ""
+
+#: templates/admin/feed-editor.php:351
+msgid "Post Ordering"
+msgstr ""
+
+#: templates/admin/feed-editor.php:353
+msgid "Newest First"
+msgstr ""
+
+#: templates/admin/feed-editor.php:354
+msgid "Oldest First"
+msgstr ""
+
+#: templates/admin/feed-editor.php:355
+msgid "Random"
+msgstr ""
+
+#: templates/admin/feed-editor.php:356
+msgid "Most Liked"
+msgstr ""
+
+#: templates/admin/feed-editor.php:357
+msgid "Most Commented"
+msgstr ""
+
+#: templates/admin/feed-editor.php:366
+msgid "Cache Duration"
+msgstr ""
+
+#: templates/admin/feed-editor.php:376
+msgid "Warning: Short cache durations may cause rate limiting from Instagram. Consider using a longer duration unless you need very frequent updates."
+msgstr ""
+
+#: templates/admin/feed-editor.php:382
+msgid "Refresh Cache Now"
+msgstr ""
+
+#: templates/admin/feed-editor.php:393
+msgid "Last refreshed: "
+msgstr ""
+
+#: templates/admin/feed-editor.php:395
+msgid "Cache not yet created"
+msgstr ""
+
+#: templates/admin/feed-editor.php:405
+msgid "Cancel"
+msgstr ""
+
+#: templates/admin/feed-editor.php:408
+msgid "Create Feed"
+msgstr ""
