@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -16,9 +16,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get version from tag
+      - name: Extract version from plugin header
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          # Extract version from plugin header using grep and sed
+          # Looks for 'Version: X.X.X' pattern in the plugin file header
+          VERSION=$(grep -m 1 "Version:" bwg-instagram-feed.php | sed 's/.*Version: *\([0-9.]*\).*/\1/')
+
+          # Validate that we extracted a version
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not extract version from plugin header"
+            echo "Make sure bwg-instagram-feed.php contains 'Version: X.X.X' in the plugin header"
+            exit 1
+          fi
+
+          # Log the extracted version for visibility in workflow logs
+          echo "=========================================="
+          echo "Extracted version from plugin header: $VERSION"
+          echo "=========================================="
+
+          # Store as workflow output variable
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Create plugin zip
         run: |
@@ -46,6 +64,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
           name: BWG Instagram Feed v${{ steps.get_version.outputs.VERSION }}
           body: |
             ## BWG Instagram Feed v${{ steps.get_version.outputs.VERSION }}
