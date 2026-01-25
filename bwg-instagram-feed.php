@@ -129,6 +129,10 @@ final class BWG_Instagram_Feed {
 
         // Load frontend AJAX handlers - needed for async feed loading.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/frontend/class-bwg-igf-frontend-ajax.php';
+
+        // Load GitHub updater for plugin updates.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-github-updater.php';
+        BWG_IGF_GitHub_Updater::get_instance();
     }
 
     /**

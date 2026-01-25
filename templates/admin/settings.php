@@ -16,6 +16,12 @@ if ( isset( $_POST['bwg_igf_save_settings'] ) && check_admin_referer( 'bwg_igf_s
     update_option( 'bwg_igf_delete_data_on_uninstall', isset( $_POST['delete_data_on_uninstall'] ) ? 1 : 0 );
     update_option( 'bwg_igf_instagram_app_id', sanitize_text_field( $_POST['instagram_app_id'] ) );
     update_option( 'bwg_igf_instagram_app_secret', sanitize_text_field( $_POST['instagram_app_secret'] ) );
+    update_option( 'bwg_igf_github_repo_url', esc_url_raw( $_POST['github_repo_url'] ) );
+
+    // Clear GitHub update cache when settings change.
+    if ( class_exists( 'BWG_IGF_GitHub_Updater' ) ) {
+        BWG_IGF_GitHub_Updater::get_instance()->clear_cache();
+    }
 
     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'bwg-instagram-feed' ) . '</p></div>';
 }
@@ -24,6 +30,7 @@ $default_cache = get_option( 'bwg_igf_default_cache_duration', 3600 );
 $delete_data = get_option( 'bwg_igf_delete_data_on_uninstall', 0 );
 $app_id = get_option( 'bwg_igf_instagram_app_id', '' );
 $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
+$github_repo_url = get_option( 'bwg_igf_github_repo_url', '' );
 ?>
 <div class="wrap">
     <div class="bwg-igf-header">
@@ -92,6 +99,74 @@ $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
                     </td>
                 </tr>
             </table>
+        </div>
+
+        <div class="bwg-igf-widget" style="margin-top: 20px;">
+            <h2><?php esc_html_e( 'GitHub Updates', 'bwg-instagram-feed' ); ?></h2>
+            <p class="description">
+                <?php esc_html_e( 'Configure automatic updates from GitHub. Enter your GitHub repository URL to receive plugin updates.', 'bwg-instagram-feed' ); ?>
+            </p>
+
+            <table class="form-table">
+                <tr>
+                    <th scope="row">
+                        <label for="github_repo_url"><?php esc_html_e( 'GitHub Repository URL', 'bwg-instagram-feed' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="url" name="github_repo_url" id="github_repo_url" value="<?php echo esc_attr( $github_repo_url ); ?>" class="regular-text" placeholder="https://github.com/owner/repo">
+                        <p class="description"><?php esc_html_e( 'Example: https://github.com/bostonwebgroup/bwg-instagram-feed', 'bwg-instagram-feed' ); ?></p>
+                    </td>
+                </tr>
+            </table>
+
+            <?php
+            // Show current update status if configured.
+            if ( class_exists( 'BWG_IGF_GitHub_Updater' ) ) {
+                $updater = BWG_IGF_GitHub_Updater::get_instance();
+                $status = $updater->get_status();
+
+                if ( $status['configured'] ) {
+                    $release = $updater->get_github_release();
+                    ?>
+                    <div class="bwg-igf-github-status" style="margin-top: 15px; padding: 10px; background: #f0f0f1; border-left: 4px solid #2271b1;">
+                        <p>
+                            <strong><?php esc_html_e( 'Update Status:', 'bwg-instagram-feed' ); ?></strong>
+                            <?php esc_html_e( 'Configured', 'bwg-instagram-feed' ); ?> -
+                            <?php echo esc_html( $status['owner'] . '/' . $status['repo'] ); ?>
+                        </p>
+                        <p>
+                            <strong><?php esc_html_e( 'Current Version:', 'bwg-instagram-feed' ); ?></strong>
+                            <?php echo esc_html( $status['version'] ); ?>
+                        </p>
+                        <?php if ( $release ) : ?>
+                            <p>
+                                <strong><?php esc_html_e( 'Latest Version:', 'bwg-instagram-feed' ); ?></strong>
+                                <?php echo esc_html( $release->version ); ?>
+                                <?php if ( version_compare( $release->version, $status['version'], '>' ) ) : ?>
+                                    <span style="color: #d63638; font-weight: bold;">
+                                        (<?php esc_html_e( 'Update available!', 'bwg-instagram-feed' ); ?>)
+                                    </span>
+                                <?php else : ?>
+                                    <span style="color: #00a32a;">
+                                        (<?php esc_html_e( 'Up to date', 'bwg-instagram-feed' ); ?>)
+                                    </span>
+                                <?php endif; ?>
+                            </p>
+                        <?php else : ?>
+                            <p style="color: #d63638;">
+                                <?php esc_html_e( 'Could not fetch release information from GitHub.', 'bwg-instagram-feed' ); ?>
+                            </p>
+                        <?php endif; ?>
+                        <p>
+                            <button type="button" class="button bwg-igf-check-updates" id="bwg-igf-check-updates">
+                                <?php esc_html_e( 'Check for Updates Now', 'bwg-instagram-feed' ); ?>
+                            </button>
+                        </p>
+                    </div>
+                    <?php
+                }
+            }
+            ?>
         </div>
 
         <div class="bwg-igf-widget" style="margin-top: 20px;">
