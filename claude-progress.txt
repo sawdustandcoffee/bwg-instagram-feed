@@ -1,5 +1,70 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #113 - Deleting feed clears its cache)
+
+### Feature Completed
+- **Feature #113: Deleting feed clears its cache** - PASSED ✅
+
+### Feature Details
+- **Category:** cascade
+- **Name:** Deleting feed clears its cache
+- **Description:** Feed cache entries removed when feed deleted
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed and load it to populate cache** - ✅ VERIFIED
+   - Used existing feed 'RAPID_DELETE_TEST_111' (ID: 31)
+   - Created cache entry with `populate_cache_for_feed.php`
+   - Cache entry confirmed: Feed ID 31, Key: feed_31
+
+2. **Step 2: Verify cache entry exists in database** - ✅ VERIFIED
+   - Used `check_cache_entries.php` to verify:
+   - Cache entry ID 5 for Feed ID 31 existed before deletion
+
+3. **Step 3: Delete the feed** - ✅ VERIFIED
+   - Navigated to Feeds list in WordPress admin
+   - Clicked Delete for 'RAPID_DELETE_TEST_111'
+   - Confirmed deletion in dialog
+   - "Feed deleted successfully!" message displayed
+
+4. **Step 4: Verify cache entries for that feed are gone** - ✅ VERIFIED
+   - Re-ran `check_cache_entries.php`
+   - Feed ID 31 no longer in feeds table
+   - NO cache entries for Feed ID 31 - completely removed
+   - Only Feed ID 1 and 17 cache entries remain (as expected)
+
+### Implementation Details
+The cache deletion is handled in `includes/admin/class-bwg-igf-admin-ajax.php`:
+```php
+// In delete_feed() method (lines 392-397)
+// Delete associated cache.
+$wpdb->delete(
+    $wpdb->prefix . 'bwg_igf_cache',
+    array( 'feed_id' => $feed_id ),
+    array( '%d' )
+);
+```
+
+### Test Scripts Created
+- `test_cache_delete_feature113.php` - Automated PHP test for cache deletion
+- `check_cache_entries.php` - Utility to view current cache state
+- `populate_cache_for_feed.php` - Utility to create test cache entries
+
+### Screenshots
+- feature-113-feeds-list-before-delete.png - Feeds list showing RAPID_DELETE_TEST_111
+- feature-113-feed-deleted-success.png - Feeds list after deletion (feed removed)
+
+### Console Errors
+- None (only favicon 404 which is unrelated)
+
+### Current Status
+- Feature #113 marked as passing
+- All cache entries correctly cascade-deleted when feed is deleted
+
+[Feature #113 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #115 - New feed has correct default values)
 
 ### Feature Completed
@@ -12290,3 +12355,52 @@ Feature #41 PASSES regression test. All manual cache refresh functionality worki
 [Testing] Feature #41 verified - still passing
 [Testing] Session complete - Feature #41 regression test passed
 
+
+---
+
+## Session: 2026-01-24 (Feature #116 - Reset form clears to defaults)
+
+### Feature Completed
+- **Feature #116: Reset form clears to defaults** - PASSED
+
+### Feature Details
+- **Category:** defaults
+- **Name:** Reset form clears to defaults
+- **Description:** Reset or clear button restores default values
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor** - VERIFIED
+   - Opened "Test Feed" (feed_id=1) in the feed editor
+   - Original values: Feed Name="Test Feed", Username="testuser"
+
+2. **Step 2: Change several settings** - VERIFIED
+   - Changed Feed Name to "MODIFIED_NAME_FEATURE_116"
+   - Changed Username to "modifieduser_feature116"
+   - Screenshot: feature-116-step2-changes-made.png
+
+3. **Step 3: Click Reset or Cancel without saving** - VERIFIED
+   - Clicked "Cancel" button (link to feeds list)
+   - Changes were NOT saved (Cancel navigates away without saving)
+
+4. **Step 4: Reopen form** - VERIFIED
+   - Clicked on "Test Feed" again to reopen the editor
+
+5. **Step 5: Verify original/default values shown** - VERIFIED
+   - Feed Name: "Test Feed" (original value restored)
+   - Username: "testuser" (original value restored)
+   - Screenshot: feature-116-step5-original-values-restored.png
+
+### Technical Implementation
+The Cancel button is implemented as a link that navigates back to the feeds list without submitting the form. Since the form uses AJAX submission (handled by JavaScript), any unsaved changes are not persisted. When the form is reopened, it reloads from the database, showing the original values.
+
+### Console Errors
+- None
+
+### Result
+Feature #116 PASSES. The Cancel functionality works correctly:
+- Making changes to the form without saving does not persist those changes
+- Clicking Cancel navigates back to the feeds list
+- Reopening the form shows the original/saved values from the database
+
+[Feature #116 completed and verified]
