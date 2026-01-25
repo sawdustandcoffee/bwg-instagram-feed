@@ -12748,3 +12748,104 @@ Feature #118 PASSES. All search functionality works correctly:
 - Feature #118 marked as passing
 
 [Feature #118 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #90 Regression Test)
+
+### Feature Tested
+- **Feature #90: Success notification on feed delete** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** feedback
+- **Name:** Success notification on feed delete
+- **Description:** Clear success message after deleting feed
+
+### Verification Steps Completed
+
+1. **Step 1: Delete a feed** - ✅ VERIFIED
+   - Created test feed 'DELETE_TEST_FEATURE90' (ID: 34)
+   - Clicked 'Delete' link for the test feed
+
+2. **Step 2: Confirm deletion** - ✅ VERIFIED
+   - Confirmation dialog appeared: 'Are you sure you want to delete this feed?'
+   - Accepted the dialog to proceed with deletion
+
+3. **Step 3: Verify success message appears** - ✅ VERIFIED
+   - AJAX request completed successfully (no console errors)
+   - Success message 'Feed deleted successfully!' is shown via BWGIGFAdmin.showNotice()
+   - Message auto-dismisses after 5 seconds
+
+4. **Step 4: Verify message indicates feed was deleted** - ✅ VERIFIED
+   - Feed row fades out with animation
+   - 'DELETE_TEST_FEATURE90' no longer appears in the feeds list
+   - First row is now 'TEST_DOUBLECLICK_110' confirming deletion worked
+
+### Technical Notes
+- Initial attempts failed due to session expiration (nonce mismatch)
+- After fresh login with valid session, delete functionality worked correctly
+- The success notification uses showNotice() method which displays WordPress-style notice
+- Notification auto-dismisses after 5 seconds as designed
+
+### Console Errors
+- None after successful deletion
+
+### Result
+Feature #90 PASSES regression test. The success notification on feed delete functionality works correctly:
+- Confirmation dialog prevents accidental deletion
+- AJAX delete request processes successfully
+- Success notification is displayed
+- Feed is removed from the list with animation
+
+[Testing] Feature #90 verified - still passing
+[Testing] Session complete - Feature #90 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #106 Regression Test)
+
+### Feature Tested
+- **Feature #106: Direct URL access to feeds list** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** url
+- **Name:** Direct URL access to feeds list
+- **Description:** Can bookmark and access feeds page directly
+
+### Verification Steps Completed
+
+1. **Step 1: Note URL of feeds list page** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+
+2. **Step 2-3: Close browser and paste URL** - ✅ VERIFIED
+   - Navigated directly to feeds URL from fresh session
+   - WordPress correctly redirected to login page
+
+3. **Step 4: Log in if needed** - ✅ VERIFIED
+   - Login page displayed with redirect_to parameter preserved
+   - Logged in with admin credentials (password reset via WP-CLI)
+
+4. **Step 5: Verify correct page loads** - ✅ VERIFIED
+   - Redirected to feeds list page after login
+   - Page title: 'All Feeds ‹ BWG Instagram Test — WordPress'
+   - 'Instagram Feeds' heading with 'Add New Feed' button visible
+   - Search box present
+   - Table showing all 15 feeds with Name, Type, Status, Shortcode, Actions columns
+   - All feeds have proper Edit/Duplicate/Delete links
+
+### Screenshots
+- feature-106-feeds-list-page.png - Feeds list page after direct URL access
+
+### Console Errors
+- None (favicon 404 is benign)
+
+### Result
+Feature #106 PASSES regression test. Direct URL access to feeds list works correctly:
+- URL can be bookmarked and accessed directly
+- WordPress properly redirects to login when needed
+- redirect_to parameter preserves target page
+- After authentication, user arrives at the correct page
+
+[Testing] Feature #106 verified - still passing
+[Testing] Session complete - Feature #106 regression test passed
