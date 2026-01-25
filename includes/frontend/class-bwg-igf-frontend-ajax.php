@@ -172,30 +172,17 @@ class BWG_IGF_Frontend_Ajax {
         $post_count = absint( $feed->post_count ) ?: 9;
 
         if ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
-            // Fetch using connected account.
-            global $wpdb;
-
-            $account = $wpdb->get_row(
-                $wpdb->prepare(
-                    "SELECT access_token FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d AND status = 'active'",
-                    $feed->connected_account_id
-                )
-            );
-
-            if ( ! $account ) {
-                return new WP_Error( 'no_account', __( 'Connected account not found or inactive.', 'bwg-instagram-feed' ) );
-            }
-
+            // Fetch using connected account with automatic token refresh.
             // Load encryption class if needed.
             if ( ! class_exists( 'BWG_IGF_Encryption' ) ) {
                 require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-encryption.php';
             }
 
-            // Decrypt the access token.
-            $access_token = BWG_IGF_Encryption::decrypt( $account->access_token );
+            // maybe_refresh_token checks expiration and refreshes if within 7 days.
+            $access_token = $instagram_api->maybe_refresh_token( $feed->connected_account_id );
 
-            if ( ! $access_token ) {
-                return new WP_Error( 'decrypt_failed', __( 'Failed to decrypt access token.', 'bwg-instagram-feed' ) );
+            if ( is_wp_error( $access_token ) ) {
+                return $access_token;
             }
 
             return $instagram_api->fetch_connected_posts( $access_token, $post_count );

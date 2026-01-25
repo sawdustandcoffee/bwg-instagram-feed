@@ -739,4 +739,118 @@ class BWG_IGF_Instagram_API {
 
         return $posts;
     }
+
+    /**
+     * Refresh an Instagram access token.
+     *
+     * Instagram long-lived tokens can be refreshed if they haven't expired yet.
+     * This should be called when a token is near expiration (within 7 days).
+     *
+     * @param string $access_token Current valid access token.
+     * @return array|WP_Error Array with new token data or WP_Error on failure.
+     */
+    public function refresh_access_token( $access_token ) {
+        $refresh_url = sprintf(
+            'https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=%s',
+            rawurlencode( $access_token )
+        );
+
+        $response = wp_remote_get( $refresh_url, array(
+            'timeout' => $this->timeout,
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code( $response );
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+
+        if ( 200 !== $status_code || isset( $data['error'] ) ) {
+            $error_message = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error during token refresh.', 'bwg-instagram-feed' );
+            return new WP_Error( 'token_refresh_failed', $error_message );
+        }
+
+        if ( ! isset( $data['access_token'] ) ) {
+            return new WP_Error( 'token_refresh_failed', __( 'No access token returned from refresh.', 'bwg-instagram-feed' ) );
+        }
+
+        return array(
+            'access_token' => $data['access_token'],
+            'token_type'   => isset( $data['token_type'] ) ? $data['token_type'] : 'bearer',
+            'expires_in'   => isset( $data['expires_in'] ) ? intval( $data['expires_in'] ) : ( 60 * DAY_IN_SECONDS ),
+        );
+    }
+
+    /**
+     * Check if a token needs refreshing and refresh it if necessary.
+     *
+     * Tokens are refreshed when they expire within 7 days.
+     *
+     * @param int $account_id The account ID in the database.
+     * @return string|WP_Error The access token (refreshed if needed) or WP_Error.
+     */
+    public function maybe_refresh_token( $account_id ) {
+        global $wpdb;
+
+        // Get the account with expiration info.
+        $account = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT id, access_token, expires_at FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d AND status = 'active'",
+                $account_id
+            )
+        );
+
+        if ( ! $account ) {
+            return new WP_Error( 'account_not_found', __( 'Connected account not found or inactive.', 'bwg-instagram-feed' ) );
+        }
+
+        // Decrypt the access token.
+        $access_token = BWG_IGF_Encryption::decrypt( $account->access_token );
+
+        if ( ! $access_token ) {
+            return new WP_Error( 'decrypt_failed', __( 'Failed to decrypt access token.', 'bwg-instagram-feed' ) );
+        }
+
+        // Check if token expires within 7 days.
+        $expires_timestamp = strtotime( $account->expires_at );
+        $seven_days_from_now = time() + ( 7 * DAY_IN_SECONDS );
+
+        if ( $expires_timestamp > $seven_days_from_now ) {
+            // Token is still valid for more than 7 days, no refresh needed.
+            return $access_token;
+        }
+
+        // Token expires soon, attempt to refresh it.
+        $refresh_result = $this->refresh_access_token( $access_token );
+
+        if ( is_wp_error( $refresh_result ) ) {
+            // Refresh failed, but we can still use the current token until it actually expires.
+            error_log( 'BWG Instagram Feed: Token refresh failed for account ' . $account_id . ': ' . $refresh_result->get_error_message() );
+            return $access_token;
+        }
+
+        // Successfully refreshed - update the database.
+        $new_encrypted_token = BWG_IGF_Encryption::encrypt( $refresh_result['access_token'] );
+        $new_expires_at = gmdate( 'Y-m-d H:i:s', time() + $refresh_result['expires_in'] );
+
+        $update_result = $wpdb->update(
+            $wpdb->prefix . 'bwg_igf_accounts',
+            array(
+                'access_token'   => $new_encrypted_token,
+                'expires_at'     => $new_expires_at,
+                'last_refreshed' => current_time( 'mysql' ),
+            ),
+            array( 'id' => $account_id ),
+            array( '%s', '%s', '%s' ),
+            array( '%d' )
+        );
+
+        if ( false === $update_result ) {
+            error_log( 'BWG Instagram Feed: Failed to save refreshed token for account ' . $account_id );
+        }
+
+        return $refresh_result['access_token'];
+    }
 }
