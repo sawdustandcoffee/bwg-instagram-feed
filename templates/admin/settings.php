@@ -160,9 +160,14 @@ $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
                             </p>
                         <?php endif; ?>
                         <p>
+                            <strong><?php esc_html_e( 'Last Checked:', 'bwg-instagram-feed' ); ?></strong>
+                            <span id="bwg-igf-last-checked"><?php echo esc_html( $status['last_checked_formatted'] ?? __( 'Never', 'bwg-instagram-feed' ) ); ?></span>
+                        </p>
+                        <p>
                             <button type="button" class="button bwg-igf-check-updates" id="bwg-igf-check-updates">
                                 <?php esc_html_e( 'Check for Updates Now', 'bwg-instagram-feed' ); ?>
                             </button>
+                            <span id="bwg-igf-check-updates-status" style="margin-left: 10px;"></span>
                         </p>
                     </div>
                     <?php
