@@ -182,6 +182,75 @@ if ( $is_rate_limited ) {
 // Apply ordering based on feed settings
 $ordering = isset( $feed->ordering ) ? $feed->ordering : 'newest';
 
+// Apply hashtag filters (Feature #131, #132) - only for connected feeds
+$filter_settings = json_decode( $feed->filter_settings, true ) ?: array();
+$hashtag_include = isset( $filter_settings['hashtag_include'] ) ? trim( $filter_settings['hashtag_include'] ) : '';
+$hashtag_exclude = isset( $filter_settings['hashtag_exclude'] ) ? trim( $filter_settings['hashtag_exclude'] ) : '';
+
+if ( ! empty( $posts ) && 'connected' === $feed->feed_type ) {
+    // Parse included hashtags (comma-separated, without #)
+    $included_hashtags = array();
+    if ( ! empty( $hashtag_include ) ) {
+        $included_hashtags = array_map( 'trim', explode( ',', $hashtag_include ) );
+        $included_hashtags = array_filter( $included_hashtags ); // Remove empty values
+        $included_hashtags = array_map( 'strtolower', $included_hashtags ); // Lowercase for case-insensitive matching
+        // Remove # prefix if present
+        $included_hashtags = array_map( function( $tag ) {
+            return ltrim( $tag, '#' );
+        }, $included_hashtags );
+    }
+
+    // Parse excluded hashtags (comma-separated, without #)
+    $excluded_hashtags = array();
+    if ( ! empty( $hashtag_exclude ) ) {
+        $excluded_hashtags = array_map( 'trim', explode( ',', $hashtag_exclude ) );
+        $excluded_hashtags = array_filter( $excluded_hashtags ); // Remove empty values
+        $excluded_hashtags = array_map( 'strtolower', $excluded_hashtags ); // Lowercase for case-insensitive matching
+        // Remove # prefix if present
+        $excluded_hashtags = array_map( function( $tag ) {
+            return ltrim( $tag, '#' );
+        }, $excluded_hashtags );
+    }
+
+    // Apply filtering if there are any filter settings
+    if ( ! empty( $included_hashtags ) || ! empty( $excluded_hashtags ) ) {
+        $posts = array_filter( $posts, function( $post ) use ( $included_hashtags, $excluded_hashtags ) {
+            $caption = isset( $post['caption'] ) ? strtolower( $post['caption'] ) : '';
+
+            // Extract hashtags from caption
+            preg_match_all( '/#([a-zA-Z0-9_]+)/', $caption, $matches );
+            $post_hashtags = ! empty( $matches[1] ) ? array_map( 'strtolower', $matches[1] ) : array();
+
+            // Check exclude filter first - if any excluded hashtag is present, skip this post
+            if ( ! empty( $excluded_hashtags ) ) {
+                foreach ( $excluded_hashtags as $hashtag ) {
+                    if ( in_array( $hashtag, $post_hashtags, true ) ) {
+                        return false; // Exclude this post
+                    }
+                }
+            }
+
+            // Check include filter - if include tags specified, at least one must be present
+            if ( ! empty( $included_hashtags ) ) {
+                $has_included = false;
+                foreach ( $included_hashtags as $hashtag ) {
+                    if ( in_array( $hashtag, $post_hashtags, true ) ) {
+                        $has_included = true;
+                        break;
+                    }
+                }
+                if ( ! $has_included ) {
+                    return false; // Skip this post
+                }
+            }
+
+            return true; // Keep this post
+        } );
+        // Re-index array after filtering
+        $posts = array_values( $posts );
+    }
+}
+
 if ( ! empty( $posts ) ) {
     switch ( $ordering ) {
         case 'newest':
