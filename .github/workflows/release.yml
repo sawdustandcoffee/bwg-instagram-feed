@@ -38,6 +38,51 @@ jobs:
           # Store as workflow output variable
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
+      - name: Verify readme.txt stable tag matches plugin version
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+
+          echo "Validating readme.txt stable tag matches plugin version..."
+
+          # Check if readme.txt exists
+          if [ ! -f "readme.txt" ]; then
+            echo "::error::readme.txt file not found!"
+            echo "WordPress plugins require a readme.txt with a Stable tag header."
+            exit 1
+          fi
+
+          # Extract Stable tag from readme.txt
+          STABLE_TAG=$(grep -m 1 "^Stable tag:" readme.txt | sed 's/Stable tag: *//')
+
+          if [ -z "$STABLE_TAG" ]; then
+            echo "::error::Could not extract Stable tag from readme.txt"
+            echo "Make sure readme.txt contains 'Stable tag: X.X.X' in the header"
+            exit 1
+          fi
+
+          echo "Plugin version: $VERSION"
+          echo "Readme.txt stable tag: $STABLE_TAG"
+
+          # Compare versions
+          if [ "$VERSION" != "$STABLE_TAG" ]; then
+            echo "::error::================================================================="
+            echo "::error::Version mismatch!"
+            echo "::error::================================================================="
+            echo "::error::"
+            echo "::error::Plugin header version: $VERSION"
+            echo "::error::readme.txt Stable tag: $STABLE_TAG"
+            echo "::error::"
+            echo "::error::These must match for WordPress.org compatibility."
+            echo "::error::Please update readme.txt to have 'Stable tag: $VERSION'"
+            echo "::error::"
+            echo "::error::================================================================="
+            exit 1
+          fi
+
+          echo "=========================================="
+          echo "✓ Version match confirmed: $VERSION"
+          echo "=========================================="
+
       - name: Check if version already exists
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
@@ -108,6 +153,11 @@ jobs:
           # README.md is optional
           if [ -f "README.md" ]; then
             cp README.md dist/bwg-instagram-feed/
+          fi
+
+          # readme.txt is required for WordPress.org compatibility
+          if [ -f "readme.txt" ]; then
+            cp readme.txt dist/bwg-instagram-feed/
           fi
 
           # Copy directories

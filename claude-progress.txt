@@ -1,5 +1,65 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #187 - Version constant is available for code use)
+
+### Feature Verified
+- **Feature #187: Version constant is available for code use** - PASSED ✅
+
+### Feature Details
+- **ID:** 187
+- **Category:** functional
+- **Name:** Version constant is available for code use
+- **Description:** A PHP constant (e.g., BWG_IGF_VERSION) is defined based on the plugin header version, making the version easily accessible throughout the codebase for cache busting and API calls.
+
+### Verification Steps Completed
+
+1. **Step 1: Check main plugin file defines a version constant** - ✅ VERIFIED
+   - Line 25 in bwg-instagram-feed.php: `define( 'BWG_IGF_VERSION', '1.3.7' );`
+
+2. **Step 2: Verify constant name follows pattern (BWG_IGF_VERSION or similar)** - ✅ VERIFIED
+   - Constant is named `BWG_IGF_VERSION`
+   - Follows standard WordPress plugin naming convention (PLUGIN_PREFIX_VERSION)
+
+3. **Step 3: Verify constant value matches plugin header version** - ✅ VERIFIED
+   - Plugin header (line 6): `Version: 1.3.7`
+   - Constant (line 25): `BWG_IGF_VERSION = '1.3.7'`
+   - Both values match exactly
+
+4. **Step 4: Check constant is used for wp_enqueue_script/style version parameter** - ✅ VERIFIED
+   - admin.css: `?ver=1.3.7`
+   - admin.js: `?ver=1.3.7`
+   - frontend.css: `?ver=1.3.7`
+   - frontend.js: `?ver=1.3.7`
+   - block-editor.js: `?ver=1.3.7`
+   - block-editor-style.css: `?ver=1.3.7`
+
+5. **Step 5: Verify constant is accessible from other plugin files** - ✅ VERIFIED
+   - Used in `includes/blocks/class-bwg-igf-instagram-feed-block.php` (lines 58, 67)
+   - Used in `templates/admin/dashboard.php` (line 21) - displays "Version 1.3.7"
+   - Used in `includes/class-bwg-igf-github-updater.php` (line 249)
+
+### Browser Verification
+- Navigated to BWG Instagram Feed Dashboard
+- Version "1.3.7" displayed in header
+- All scripts/styles loading with `?ver=1.3.7` cache buster
+- No console errors
+
+### Screenshots
+- feature-187-version-constant-dashboard.png
+- feature-187-frontend-scripts-version.png
+
+### Console Errors
+- None
+
+### Result
+Feature #187 PASSES. All verification steps confirmed working.
+
+### Stats
+- Features Passing: 186/191 (97.4%)
+- Feature #187 completed and verified
+
+---
+
 ## Session: 2026-01-25 (Feature #185 - Version is defined in main plugin file header)
 
 ### Feature Verified
