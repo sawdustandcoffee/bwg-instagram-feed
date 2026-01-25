@@ -27,7 +27,14 @@ $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
 ?>
 <div class="wrap">
     <div class="bwg-igf-header">
-        <h1><?php esc_html_e( 'Settings', 'bwg-instagram-feed' ); ?></h1>
+        <div class="bwg-igf-logo">
+            <span class="bwg-igf-logo-icon dashicons dashicons-instagram"></span>
+        </div>
+        <div class="bwg-igf-branding">
+            <h1><?php esc_html_e( 'Settings', 'bwg-instagram-feed' ); ?></h1>
+            <span class="bwg-igf-brand-tagline"><?php esc_html_e( 'BWG Instagram Feed', 'bwg-instagram-feed' ); ?></span>
+            <span class="bwg-igf-version"><?php /* translators: %s: plugin version number */ printf( esc_html__( 'Version %s', 'bwg-instagram-feed' ), esc_html( BWG_IGF_VERSION ) ); ?></span>
+        </div>
     </div>
 
     <form method="post" action="">
@@ -115,6 +122,13 @@ $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
                             <a href="<?php echo esc_url( $status['github_url'] ?? 'https://github.com/sawdustandcoffee/bwg-instagram-feed' ); ?>" target="_blank" rel="noopener noreferrer">
                                 sawdustandcoffee/bwg-instagram-feed
                             </a>
+                        </p>
+                        <p>
+                            <strong><?php esc_html_e( 'Releases:', 'bwg-instagram-feed' ); ?></strong>
+                            <a href="https://github.com/sawdustandcoffee/bwg-instagram-feed/releases" target="_blank" rel="noopener noreferrer">
+                                <?php esc_html_e( 'View All Releases', 'bwg-instagram-feed' ); ?>
+                            </a>
+                            <span class="description" style="margin-left: 10px;"><?php esc_html_e( '(Release history, changelog, and previous versions)', 'bwg-instagram-feed' ); ?></span>
                         </p>
                         <p>
                             <strong><?php esc_html_e( 'Current Version:', 'bwg-instagram-feed' ); ?></strong>
