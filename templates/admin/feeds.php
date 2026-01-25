@@ -48,7 +48,13 @@ if ( 'edit' === $action || 'new' === $action ) {
             </a>
         </div>
     <?php else : ?>
-        <table class="wp-list-table widefat fixed striped">
+        <!-- Search box for filtering feeds (Feature #117) -->
+        <div class="bwg-igf-feeds-search" style="margin-bottom: 15px;">
+            <label for="bwg-igf-feed-search" class="screen-reader-text"><?php esc_html_e( 'Search Feeds', 'bwg-instagram-feed' ); ?></label>
+            <input type="search" id="bwg-igf-feed-search" class="regular-text" placeholder="<?php esc_attr_e( 'Search feeds by name...', 'bwg-instagram-feed' ); ?>" autocomplete="off">
+            <span id="bwg-igf-feed-search-count" style="margin-left: 10px; color: #666;"></span>
+        </div>
+        <table class="wp-list-table widefat fixed striped" id="bwg-igf-feeds-table">
             <thead>
                 <tr>
                     <th><?php esc_html_e( 'Name', 'bwg-instagram-feed' ); ?></th>

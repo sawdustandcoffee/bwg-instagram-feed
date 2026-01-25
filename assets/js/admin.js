@@ -29,6 +29,7 @@
             this.initPostCountValidation();
             this.initColumnCountValidation();
             this.initBeforeUnloadWarning(); // Feature #112: Warn before page refresh during save
+            this.initFeedSearch(); // Feature #117: Search feeds by name
         },
 
         bindEvents: function() {
@@ -247,6 +248,80 @@
                     return e.returnValue;
                 }
             });
+        },
+
+        /**
+         * Feature #117: Initialize feed search/filter functionality
+         * Filters the feeds list table based on search input
+         * Feature #119: Show "No feeds found" message when search returns no results
+         */
+        initFeedSearch: function() {
+            var $searchInput = $('#bwg-igf-feed-search');
+            var $feedsTable = $('#bwg-igf-feeds-table');
+            var $searchCount = $('#bwg-igf-feed-search-count');
+
+            if (!$searchInput.length || !$feedsTable.length) {
+                return;
+            }
+
+            // Handle search input
+            $searchInput.on('input keyup', function() {
+                var searchTerm = $(this).val().toLowerCase().trim();
+                var $tbody = $feedsTable.find('tbody');
+                var $rows = $tbody.find('tr:not(.bwg-igf-no-results-row)');
+                var visibleCount = 0;
+                var totalCount = $rows.length;
+
+                // Remove any existing "no results" message
+                $tbody.find('.bwg-igf-no-results-row').remove();
+
+                $rows.each(function() {
+                    var $row = $(this);
+                    var feedName = $row.find('td:first-child').text().toLowerCase();
+
+                    if (searchTerm === '' || feedName.indexOf(searchTerm) !== -1) {
+                        $row.show();
+                        visibleCount++;
+                    } else {
+                        $row.hide();
+                    }
+                });
+
+                // Update count display
+                if (searchTerm !== '') {
+                    $searchCount.text(visibleCount + ' of ' + totalCount + ' feeds');
+
+                    // Feature #119: Show "No feeds found" message when no matches
+                    if (visibleCount === 0) {
+                        var $noResultsRow = $('<tr class="bwg-igf-no-results-row"><td colspan="5" style="text-align: center; padding: 20px; color: #666;"><span class="dashicons dashicons-search" style="font-size: 24px; width: 24px; height: 24px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;"></span>No feeds found matching "<strong>' + BWGIGFAdmin.escapeHtml(searchTerm) + '</strong>".<br><small>Try a different search term or <a href="#" class="bwg-igf-clear-search">clear the search</a>.</small></td></tr>');
+                        $tbody.append($noResultsRow);
+                    }
+                } else {
+                    $searchCount.text('');
+                }
+            });
+
+            // Clear search on Escape key
+            $searchInput.on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    $(this).val('').trigger('input');
+                }
+            });
+
+            // Feature #119: Clear search when clicking the "clear the search" link
+            $(document).on('click', '.bwg-igf-clear-search', function(e) {
+                e.preventDefault();
+                $searchInput.val('').trigger('input').focus();
+            });
+        },
+
+        /**
+         * Helper function to escape HTML special characters
+         */
+        escapeHtml: function(text) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
         },
 
         initColumnCountValidation: function() {
