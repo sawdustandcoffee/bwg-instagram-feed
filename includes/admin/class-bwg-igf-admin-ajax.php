@@ -52,6 +52,9 @@ class BWG_IGF_Admin_Ajax {
 
         // Verify token encryption (for testing/admin).
         add_action( 'wp_ajax_bwg_igf_verify_token_encryption', array( $this, 'verify_token_encryption' ) );
+
+        // Check for GitHub updates.
+        add_action( 'wp_ajax_bwg_igf_check_github_updates', array( $this, 'check_github_updates' ) );
     }
 
     /**
@@ -125,6 +128,32 @@ class BWG_IGF_Admin_Ajax {
         // Get feed type and usernames.
         $feed_type = isset( $_POST['feed_type'] ) ? sanitize_text_field( wp_unslash( $_POST['feed_type'] ) ) : 'public';
         $instagram_usernames = isset( $_POST['instagram_usernames'] ) ? sanitize_text_field( wp_unslash( $_POST['instagram_usernames'] ) ) : '';
+        $connected_account_id = isset( $_POST['connected_account_id'] ) ? absint( $_POST['connected_account_id'] ) : 0;
+
+        // Validate connected account for connected feeds.
+        if ( 'connected' === $feed_type ) {
+            if ( empty( $connected_account_id ) ) {
+                wp_send_json_error( array(
+                    'message' => __( 'Please select a connected Instagram account.', 'bwg-instagram-feed' ),
+                    'field' => 'connected_account_id',
+                ) );
+            }
+
+            // Verify the connected account exists and is active
+            $account = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT id, username FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d AND status = 'active'",
+                    $connected_account_id
+                )
+            );
+
+            if ( ! $account ) {
+                wp_send_json_error( array(
+                    'message' => __( 'The selected connected account is not valid or has been disconnected.', 'bwg-instagram-feed' ),
+                    'field' => 'connected_account_id',
+                ) );
+            }
+        }
 
         // Validate Instagram usernames for public feeds.
         if ( 'public' === $feed_type ) {
@@ -236,6 +265,10 @@ class BWG_IGF_Admin_Ajax {
         $ordering = isset( $_POST['ordering'] ) ? sanitize_text_field( wp_unslash( $_POST['ordering'] ) ) : 'newest';
         $cache_duration = isset( $_POST['cache_duration'] ) ? absint( $_POST['cache_duration'] ) : 3600;
 
+        // Get filter settings (for connected feeds).
+        $hashtag_include = isset( $_POST['hashtag_include'] ) ? sanitize_text_field( wp_unslash( $_POST['hashtag_include'] ) ) : '';
+        $hashtag_exclude = isset( $_POST['hashtag_exclude'] ) ? sanitize_text_field( wp_unslash( $_POST['hashtag_exclude'] ) ) : '';
+
         // Build JSON settings objects.
         $layout_settings = wp_json_encode( array(
             'columns'          => $columns,
@@ -267,24 +300,31 @@ class BWG_IGF_Admin_Ajax {
             'enabled' => $popup_enabled,
         ) );
 
+        $filter_settings = wp_json_encode( array(
+            'hashtag_include' => $hashtag_include,
+            'hashtag_exclude' => $hashtag_exclude,
+        ) );
+
         // Generate slug.
         $slug = $this->generate_slug( $name, $feed_id );
 
         // Prepare data array.
         $data = array(
-            'name'                => $name,
-            'slug'                => $slug,
-            'feed_type'           => $feed_type,
-            'instagram_usernames' => $instagram_usernames,
-            'layout_type'         => $layout_type,
-            'layout_settings'     => $layout_settings,
-            'display_settings'    => $display_settings,
-            'styling_settings'    => $styling_settings,
-            'popup_settings'      => $popup_settings,
-            'post_count'          => $post_count,
-            'ordering'            => $ordering,
-            'cache_duration'      => $cache_duration,
-            'status'              => 'active',
+            'name'                 => $name,
+            'slug'                 => $slug,
+            'feed_type'            => $feed_type,
+            'instagram_usernames'  => $instagram_usernames,
+            'connected_account_id' => $connected_account_id,
+            'layout_type'          => $layout_type,
+            'layout_settings'      => $layout_settings,
+            'display_settings'     => $display_settings,
+            'styling_settings'     => $styling_settings,
+            'filter_settings'      => $filter_settings,
+            'popup_settings'       => $popup_settings,
+            'post_count'           => $post_count,
+            'ordering'             => $ordering,
+            'cache_duration'       => $cache_duration,
+            'status'               => 'active',
         );
 
         $format = array(
@@ -292,10 +332,12 @@ class BWG_IGF_Admin_Ajax {
             '%s', // slug.
             '%s', // feed_type.
             '%s', // instagram_usernames.
+            '%d', // connected_account_id.
             '%s', // layout_type.
             '%s', // layout_settings.
             '%s', // display_settings.
             '%s', // styling_settings.
+            '%s', // filter_settings.
             '%s', // popup_settings.
             '%d', // post_count.
             '%s', // ordering.
@@ -618,6 +660,11 @@ class BWG_IGF_Admin_Ajax {
         $instagram_api = new BWG_IGF_Instagram_API();
         $post_count = absint( $feed->post_count ) ?: 9;
 
+        // For connected feeds with filters, fetch more posts to ensure we have enough after filtering.
+        $filter_settings = ! empty( $feed->filter_settings ) ? json_decode( $feed->filter_settings, true ) : array();
+        $has_filters = ! empty( $filter_settings['hashtag_include'] ) || ! empty( $filter_settings['hashtag_exclude'] );
+        $fetch_count = $has_filters ? $post_count * 3 : $post_count; // Fetch 3x when filtering
+
         if ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
             // Fetch using connected account with automatic token refresh.
             // maybe_refresh_token checks expiration and refreshes if within 7 days.
@@ -627,7 +674,19 @@ class BWG_IGF_Admin_Ajax {
                 return $access_token;
             }
 
-            return $instagram_api->fetch_connected_posts( $access_token, $post_count );
+            $posts = $instagram_api->fetch_connected_posts( $access_token, $fetch_count );
+
+            // Apply hashtag filters for connected feeds.
+            if ( ! is_wp_error( $posts ) && $has_filters ) {
+                $posts = $this->apply_hashtag_filters( $posts, $filter_settings );
+            }
+
+            // Trim to requested count.
+            if ( ! is_wp_error( $posts ) ) {
+                $posts = array_slice( $posts, 0, $post_count );
+            }
+
+            return $posts;
         } else {
             // Fetch from public profile(s)
             $usernames = $feed->instagram_usernames;
@@ -649,6 +708,86 @@ class BWG_IGF_Admin_Ajax {
                 return $instagram_api->fetch_combined_posts( $parsed_usernames, $post_count );
             }
         }
+    }
+
+    /**
+     * Apply hashtag filters to posts.
+     *
+     * @param array $posts Array of posts.
+     * @param array $filter_settings Filter settings with hashtag_include and hashtag_exclude.
+     * @return array Filtered posts.
+     */
+    private function apply_hashtag_filters( $posts, $filter_settings ) {
+        $include_hashtags = array();
+        $exclude_hashtags = array();
+
+        // Parse include hashtags.
+        if ( ! empty( $filter_settings['hashtag_include'] ) ) {
+            $include_hashtags = array_map( 'trim', explode( ',', strtolower( $filter_settings['hashtag_include'] ) ) );
+            $include_hashtags = array_filter( $include_hashtags );
+            // Remove # prefix if present.
+            $include_hashtags = array_map( function( $tag ) {
+                return ltrim( $tag, '#' );
+            }, $include_hashtags );
+        }
+
+        // Parse exclude hashtags.
+        if ( ! empty( $filter_settings['hashtag_exclude'] ) ) {
+            $exclude_hashtags = array_map( 'trim', explode( ',', strtolower( $filter_settings['hashtag_exclude'] ) ) );
+            $exclude_hashtags = array_filter( $exclude_hashtags );
+            // Remove # prefix if present.
+            $exclude_hashtags = array_map( function( $tag ) {
+                return ltrim( $tag, '#' );
+            }, $exclude_hashtags );
+        }
+
+        // If no filters, return posts as-is.
+        if ( empty( $include_hashtags ) && empty( $exclude_hashtags ) ) {
+            return $posts;
+        }
+
+        $filtered_posts = array();
+
+        foreach ( $posts as $post ) {
+            $caption = isset( $post['caption'] ) ? strtolower( $post['caption'] ) : '';
+
+            // Extract hashtags from caption.
+            preg_match_all( '/#([a-zA-Z0-9_]+)/', $caption, $matches );
+            $post_hashtags = ! empty( $matches[1] ) ? array_map( 'strtolower', $matches[1] ) : array();
+
+            // Check exclude filter first - if any excluded hashtag is present, skip this post.
+            if ( ! empty( $exclude_hashtags ) ) {
+                $has_excluded = false;
+                foreach ( $exclude_hashtags as $exclude_tag ) {
+                    if ( in_array( $exclude_tag, $post_hashtags, true ) ) {
+                        $has_excluded = true;
+                        break;
+                    }
+                }
+                if ( $has_excluded ) {
+                    continue; // Skip this post.
+                }
+            }
+
+            // Check include filter - if include tags specified, at least one must be present.
+            if ( ! empty( $include_hashtags ) ) {
+                $has_included = false;
+                foreach ( $include_hashtags as $include_tag ) {
+                    if ( in_array( $include_tag, $post_hashtags, true ) ) {
+                        $has_included = true;
+                        break;
+                    }
+                }
+                if ( ! $has_included ) {
+                    continue; // Skip this post.
+                }
+            }
+
+            // Post passed all filters.
+            $filtered_posts[] = $post;
+        }
+
+        return $filtered_posts;
     }
 
     /**
@@ -856,6 +995,54 @@ class BWG_IGF_Admin_Ajax {
             'is_encrypted'      => $verification['is_encrypted'],
             'encryption_method' => $verification['encryption_method'],
             'is_plaintext'      => $verification['is_plaintext'],
+        ) );
+    }
+
+    /**
+     * Check for GitHub updates.
+     *
+     * Manually triggers a check for plugin updates from GitHub.
+     */
+    public function check_github_updates() {
+        $this->verify_request();
+
+        // Check if the GitHub updater class exists.
+        if ( ! class_exists( 'BWG_IGF_GitHub_Updater' ) ) {
+            wp_send_json_error( array( 'message' => __( 'GitHub updater is not available.', 'bwg-instagram-feed' ) ) );
+        }
+
+        $updater = BWG_IGF_GitHub_Updater::get_instance();
+
+        // Check if configured.
+        if ( ! $updater->is_configured() ) {
+            wp_send_json_error( array( 'message' => __( 'GitHub repository URL is not configured.', 'bwg-instagram-feed' ) ) );
+        }
+
+        // Force check for updates.
+        $release = $updater->check_now();
+
+        if ( false === $release ) {
+            wp_send_json_error( array( 'message' => __( 'Could not fetch release information from GitHub. Please check the repository URL.', 'bwg-instagram-feed' ) ) );
+        }
+
+        $status = $updater->get_status();
+        $update_available = version_compare( $release->version, $status['version'], '>' );
+
+        // Force WordPress to recheck for updates.
+        delete_site_transient( 'update_plugins' );
+
+        wp_send_json_success( array(
+            'current_version'  => $status['version'],
+            'latest_version'   => $release->version,
+            'update_available' => $update_available,
+            'release_url'      => $release->html_url,
+            'message'          => $update_available
+                ? sprintf(
+                    /* translators: %s: new version number */
+                    __( 'Update available! Version %s is ready to install.', 'bwg-instagram-feed' ),
+                    $release->version
+                )
+                : __( 'You are running the latest version.', 'bwg-instagram-feed' ),
         ) );
     }
 }

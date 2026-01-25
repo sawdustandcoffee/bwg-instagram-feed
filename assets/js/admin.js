@@ -30,6 +30,7 @@
             this.initColumnCountValidation();
             this.initBeforeUnloadWarning(); // Feature #112: Warn before page refresh during save
             this.initFeedSearch(); // Feature #117: Search feeds by name
+            this.initFeedTypeToggle(); // Feature #130: Toggle between public and connected account
         },
 
         bindEvents: function() {
@@ -62,6 +63,9 @@
 
             // Clear validation errors on input (Feature #88)
             $(document).on('input', '.bwg-igf-field-error', this.handleClearValidationOnInput);
+
+            // Check for GitHub updates (Feature #133)
+            $(document).on('click', '#bwg-igf-check-updates', this.handleCheckGitHubUpdates);
         },
 
         initTabs: function() {
@@ -118,6 +122,42 @@
 
             // Check on change
             $select.on('change', updateWarning);
+        },
+
+        /**
+         * Feature #130: Toggle between public username field and connected account selector
+         * Feature #131: Also toggle hashtag filters visibility in Advanced tab
+         */
+        initFeedTypeToggle: function() {
+            var $feedType = $('#bwg-igf-feed-type');
+            var $usernameField = $('#bwg-igf-username-field');
+            var $connectedAccountField = $('#bwg-igf-connected-account-field');
+            var $connectedFilters = $('#bwg-igf-connected-filters');
+
+            if (!$feedType.length) {
+                return;
+            }
+
+            function toggleFeedTypeFields() {
+                var value = $feedType.val();
+                if (value === 'connected') {
+                    $usernameField.slideUp(200);
+                    $connectedAccountField.slideDown(200);
+                    // Show hashtag filters for connected feeds
+                    $connectedFilters.slideDown(200);
+                } else {
+                    $usernameField.slideDown(200);
+                    $connectedAccountField.slideUp(200);
+                    // Hide hashtag filters for public feeds
+                    $connectedFilters.slideUp(200);
+                }
+            }
+
+            // Check on page load
+            toggleFeedTypeFields();
+
+            // Check on change
+            $feedType.on('change', toggleFeedTypeFields);
         },
 
         initLayoutTypeToggle: function() {
@@ -908,6 +948,47 @@
                     }
                 },
                 error: function() {
+                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+                }
+            });
+        },
+
+        handleCheckGitHubUpdates: function(e) {
+            e.preventDefault();
+
+            var $button = $(this);
+            var originalText = $button.text();
+
+            // Disable button and show loading state
+            $button.prop('disabled', true).text('Checking...');
+
+            $.ajax({
+                url: bwgIgfAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'bwg_igf_check_github_updates',
+                    nonce: bwgIgfAdmin.nonce
+                },
+                success: function(response) {
+                    $button.prop('disabled', false).text(originalText);
+
+                    if (response.success) {
+                        var data = response.data;
+                        var noticeType = data.update_available ? 'info' : 'success';
+                        BWGIGFAdmin.showNotice(noticeType, data.message);
+
+                        // If update available, refresh the page to show WordPress update notice
+                        if (data.update_available) {
+                            setTimeout(function() {
+                                location.reload();
+                            }, 2000);
+                        }
+                    } else {
+                        BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
+                    }
+                },
+                error: function() {
+                    $button.prop('disabled', false).text(originalText);
                     BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
                 }
             });
