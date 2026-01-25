@@ -1114,12 +1114,17 @@ class BWG_IGF_Admin_Ajax {
         // Force WordPress to recheck for updates.
         delete_site_transient( 'update_plugins' );
 
+        // Get updated status with new timestamp (Feature #191).
+        $updated_status = $updater->get_status();
+
         wp_send_json_success( array(
-            'current_version'  => $status['version'],
-            'latest_version'   => $release->version,
-            'update_available' => $update_available,
-            'release_url'      => $release->html_url,
-            'message'          => $update_available
+            'current_version'        => $status['version'],
+            'latest_version'         => $release->version,
+            'update_available'       => $update_available,
+            'release_url'            => $release->html_url,
+            'last_checked'           => $updated_status['last_checked'],
+            'last_checked_formatted' => $updated_status['last_checked_formatted'],
+            'message'                => $update_available
                 ? sprintf(
                     /* translators: %s: new version number */
                     __( 'Update available! Version %s is ready to install.', 'bwg-instagram-feed' ),

@@ -1238,10 +1238,13 @@
             e.preventDefault();
 
             var $button = $(this);
+            var $statusSpan = $('#bwg-igf-check-updates-status');
+            var $lastCheckedSpan = $('#bwg-igf-last-checked');
             var originalText = $button.text();
 
             // Disable button and show loading state
             $button.prop('disabled', true).text('Checking...');
+            $statusSpan.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
 
             $.ajax({
                 url: bwgIgfAdmin.ajaxUrl,
@@ -1252,11 +1255,17 @@
                 },
                 success: function(response) {
                     $button.prop('disabled', false).text(originalText);
+                    $statusSpan.html('');
 
                     if (response.success) {
                         var data = response.data;
                         var noticeType = data.update_available ? 'info' : 'success';
                         BWGIGFAdmin.showNotice(noticeType, data.message);
+
+                        // Feature #191: Update the last checked timestamp display
+                        if (data.last_checked_formatted && $lastCheckedSpan.length) {
+                            $lastCheckedSpan.text(data.last_checked_formatted);
+                        }
 
                         // If update available, refresh the page to show WordPress update notice
                         if (data.update_available) {
@@ -1270,6 +1279,7 @@
                 },
                 error: function() {
                     $button.prop('disabled', false).text(originalText);
+                    $statusSpan.html('');
                     BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
                 }
             });

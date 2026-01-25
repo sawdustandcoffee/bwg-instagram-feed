@@ -45,6 +45,13 @@ class BWG_IGF_GitHub_Updater {
     const GITHUB_TOKEN_OPTION = 'bwg_igf_github_token';
 
     /**
+     * WordPress option key for last update check timestamp.
+     *
+     * @var string
+     */
+    const LAST_CHECKED_OPTION = 'bwg_igf_last_update_check';
+
+    /**
      * Class instance.
      *
      * @var BWG_IGF_GitHub_Updater
@@ -183,6 +190,41 @@ class BWG_IGF_GitHub_Updater {
     }
 
     /**
+     * Get the last update check timestamp.
+     *
+     * @return int|false Unix timestamp of last check, or false if never checked.
+     */
+    public function get_last_checked() {
+        return get_option( self::LAST_CHECKED_OPTION, false );
+    }
+
+    /**
+     * Set the last update check timestamp.
+     *
+     * @param int|null $timestamp Unix timestamp, or null to use current time.
+     * @return bool True on success, false on failure.
+     */
+    public function set_last_checked( $timestamp = null ) {
+        if ( null === $timestamp ) {
+            $timestamp = time();
+        }
+        return update_option( self::LAST_CHECKED_OPTION, absint( $timestamp ) );
+    }
+
+    /**
+     * Get the formatted last checked timestamp for display.
+     *
+     * @return string Formatted timestamp or "Never" if never checked.
+     */
+    public function get_last_checked_formatted() {
+        $timestamp = $this->get_last_checked();
+        if ( ! $timestamp ) {
+            return __( 'Never', 'bwg-instagram-feed' );
+        }
+        return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $timestamp );
+    }
+
+    /**
      * Check if GitHub updater is properly configured.
      *
      * @return bool True if configured, false otherwise.
@@ -244,13 +286,15 @@ class BWG_IGF_GitHub_Updater {
      */
     public function get_status() {
         return array(
-            'configured'            => $this->is_configured(),
-            'github_url'            => self::GITHUB_REPO_URL,
-            'version'               => BWG_IGF_VERSION,
-            'library'               => 'Plugin Update Checker v5.5',
-            'release_assets'        => true,
+            'configured'             => $this->is_configured(),
+            'github_url'             => self::GITHUB_REPO_URL,
+            'version'                => BWG_IGF_VERSION,
+            'library'                => 'Plugin Update Checker v5.5',
+            'release_assets'         => true,
             'authentication_enabled' => $this->is_authentication_enabled(),
-            'private_repo_support'  => true, // Feature #184: Always indicate support is available.
+            'private_repo_support'   => true, // Feature #184: Always indicate support is available.
+            'last_checked'           => $this->get_last_checked(),
+            'last_checked_formatted' => $this->get_last_checked_formatted(),
         );
     }
 
@@ -261,7 +305,12 @@ class BWG_IGF_GitHub_Updater {
      */
     public function check_now() {
         $this->clear_cache();
-        return $this->get_github_release( true );
+        $release = $this->get_github_release( true );
+
+        // Record the timestamp of this check (Feature #191).
+        $this->set_last_checked();
+
+        return $release;
     }
 
     /**
