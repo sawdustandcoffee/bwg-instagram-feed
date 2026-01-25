@@ -139,12 +139,39 @@ final class BWG_Instagram_Feed {
         // Load frontend AJAX handlers - needed for async feed loading.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/frontend/class-bwg-igf-frontend-ajax.php';
 
-        // Load GitHub updater for plugin updates.
+        // Load GitHub updater for plugin updates (custom implementation).
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-github-updater.php';
         BWG_IGF_GitHub_Updater::get_instance();
 
+        // Load Plugin Update Checker library (YahnisElsts) for enhanced update support.
+        $this->init_plugin_update_checker();
+
         // Load Image Proxy REST API for bypassing CORS on Instagram images.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
+    }
+
+    /**
+     * Initialize Plugin Update Checker library for GitHub updates.
+     *
+     * Uses the YahnisElsts Plugin Update Checker library (v5.5) to enable
+     * automatic updates from GitHub releases.
+     */
+    private function init_plugin_update_checker() {
+        // Load the Plugin Update Checker library.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/lib/plugin-update-checker/plugin-update-checker.php';
+
+        // Use the PucFactory to create an update checker for GitHub.
+        $update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+            'https://github.com/sawdustandcoffee/bwg-instagram-feed/',
+            BWG_IGF_PLUGIN_FILE,
+            'bwg-instagram-feed'
+        );
+
+        // Set the branch that contains the stable release.
+        $update_checker->setBranch( 'main' );
+
+        // Enable release assets to download the packaged zip from GitHub releases.
+        $update_checker->getVcsApi()->enableReleaseAssets();
     }
 
     /**
