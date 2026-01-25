@@ -31,6 +31,11 @@
     cursor: pointer;
 }
 
+/* Grid items maintain square 1:1 aspect ratio for consistent layout */
+.bwg-igf-grid .bwg-igf-item {
+    aspect-ratio: 1 / 1;
+}
+
 /* Keyboard focus styles for feed items */
 .bwg-igf-item:focus {
     outline: 3px solid #e1306c;

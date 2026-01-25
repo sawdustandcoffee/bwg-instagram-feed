@@ -183,7 +183,8 @@ if ( $is_rate_limited ) {
 $ordering = isset( $feed->ordering ) ? $feed->ordering : 'newest';
 
 // Apply hashtag filters (Feature #131, #132) - only for connected feeds
-$filter_settings = json_decode( $feed->filter_settings, true ) ?: array();
+$filter_settings = ! empty( $feed->filter_settings ) ? json_decode( $feed->filter_settings, true ) : array();
+$filter_settings = is_array( $filter_settings ) ? $filter_settings : array();
 $hashtag_include = isset( $filter_settings['hashtag_include'] ) ? trim( $filter_settings['hashtag_include'] ) : '';
 $hashtag_exclude = isset( $filter_settings['hashtag_exclude'] ) ? trim( $filter_settings['hashtag_exclude'] ) : '';
 
