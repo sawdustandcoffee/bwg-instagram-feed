@@ -22121,3 +22121,71 @@ Feature #181 PASSES. All verification steps confirmed working.
 ### Stats
 - Features Passing: 178/191 (93.2%)
 - Feature #181 completed and verified
+[Testing] Feature #104 verified - still passing (Popup modal keyboard accessibility)
+
+
+---
+
+## Session: 2026-01-25 (Feature #180 - WordPress shows update available notification)
+
+### Feature Completed
+- **Feature #180: WordPress shows update available notification when new release exists** - PASSED ✅
+
+### Feature Details
+- **ID:** 180
+- **Category:** functional
+- **Name:** WordPress shows update available notification when new release exists
+- **Description:** When a new release is published on GitHub with a higher version number than installed, WordPress displays an update notification on the Plugins page and in the admin updates count.
+
+### Bug Fix Required
+During testing, discovered a fatal error: "Plugin slug 'bwg-instagram-feed' is already in use"
+
+**Root Cause:** The Plugin Update Checker (PUC) was being initialized TWICE:
+1. Once in `class-bwg-igf-github-updater.php` (lines 81-92)
+2. Once in `bwg-instagram-feed.php` (the now-removed `init_plugin_update_checker()` method)
+
+**Fix Applied:** Removed the duplicate `init_plugin_update_checker()` method from `bwg-instagram-feed.php`. The GitHub Updater class already handles PUC initialization correctly.
+
+### Verification Steps Completed
+
+1. **Step 1: Install plugin with version 1.0.0** - ✅ VERIFIED
+   - Modified plugin version in Docker container from 1.3.7 to 1.0.0
+   - Changed both header `Version:` and `BWG_IGF_VERSION` constant
+
+2. **Step 2: GitHub release with higher version exists** - ✅ VERIFIED
+   - GitHub has release v1.3.7 available (confirmed via API)
+   - This is higher than simulated installed version 1.0.0
+
+3. **Step 3: Go to Plugins page** - ✅ VERIFIED
+   - Navigated to WordPress admin Plugins page
+
+4. **Step 4: Check for updates** - ✅ VERIFIED  
+   - PUC automatically detected the newer version
+   - No manual trigger needed
+
+5. **Step 5: Verify plugin shows 'new version available' notice** - ✅ VERIFIED
+   - Update notification displayed: "There is a new version of BWG Instagram Feed available."
+   - "View version 1.3.7 details" link visible
+   - "update now" link visible
+   - "Update Available (2)" filter shows plugin
+   - "Plugins 2" badge in sidebar
+   - "6 updates available" in admin bar
+
+### Screenshots
+- feature-180-update-notification-showing.png - Shows BWG Instagram Feed with update available notification
+
+### Console Errors
+- None (after fix applied)
+
+### Cleanup
+- Restored plugin version back to 1.3.7 in Docker container
+
+### Git Operations
+- Commit: 6d756a2 - "Feature #180: Fix duplicate PUC initialization and verify update notifications"
+
+### Result
+Feature #180 PASSES. All verification steps confirmed working.
+
+### Stats
+- Features Passing: 181/191 (94.8%)
+- Feature #180 completed and verified
