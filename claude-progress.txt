@@ -1,5 +1,66 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #110 - Double-click save creates one feed)
+
+### Feature Completed
+- **Feature #110: Double-click save creates one feed** - PASSED ✅
+
+### Feature Details
+- **Category:** idempotency
+- **Name:** Double-click save creates one feed
+- **Description:** Rapid save clicks only create one record
+
+### Verification Steps Completed
+
+1. **Step 1: Fill out new feed form** - ✅ VERIFIED
+   - Created new feed named "TEST_DOUBLECLICK_110"
+   - Set username to "natgeo"
+   - All form fields populated correctly
+
+2. **Step 2: Rapidly click Save button multiple times** - ✅ VERIFIED
+   - Used Playwright's dblclick() to simulate double-click
+   - Button clicked twice in rapid succession
+
+3. **Step 3: Wait for completion** - ✅ VERIFIED
+   - Save operation completed successfully
+   - "Feed created successfully!" message displayed
+   - Button changed to "Saved!" state (disabled)
+
+4. **Step 4: Check feeds list** - ✅ VERIFIED
+   - Redirected to feeds list after save
+   - Feeds list displays all feeds
+
+5. **Step 5: Verify only one feed created** - ✅ VERIFIED
+   - "TEST_DOUBLECLICK_110" appears exactly ONCE in the feeds list
+   - Feed ID 30 created (only one ID, not multiple)
+   - No duplicate feeds with same name
+
+### Implementation Details
+- Added `isSaving` flag to BWGIGFAdmin object
+- Flag checked at start of handleSaveFeed() - returns early if already saving
+- Flag set to true BEFORE AJAX call starts
+- Flag reset to false on:
+  - Successful save (after button re-enabled)
+  - Failed save (server error response)
+  - AJAX error (network failure)
+
+### Screenshots
+- feature-110-before-test.png - Feeds list before test (14 feeds)
+- feature-110-form-filled.png - New feed form filled out
+- feature-110-after-doubleclick.png - Feeds list after double-click (15 feeds, only ONE new)
+
+### Console Errors
+- None
+
+### Current Status
+- Feature #110 marked as passing
+- Double-click protection working correctly
+- No duplicate feeds created on rapid clicks
+
+[Feature #110 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #107 - Direct URL access to feed editor with ID)
 
 ### Feature Completed
