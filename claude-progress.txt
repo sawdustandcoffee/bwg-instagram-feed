@@ -10398,3 +10398,293 @@ generates 12 posts with various long caption test cases:
 - Feature #99 marked as passing
 
 [Feature #99 completed and verified]
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #75 Regression Test)
+
+### Feature Tested
+- **Feature #75: Complete feed creation workflow** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** workflow
+- **Name:** Complete feed creation workflow
+- **Description:** End-to-end feed creation from start to display
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Add New Feed** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=new
+   - Create New Feed page loaded successfully
+
+2. **Step 2: Enter feed name** - ✅ VERIFIED
+   - Entered "Feature 75 Test Feed"
+
+3. **Step 3: Select public feed type** - ✅ VERIFIED
+   - Public (Username) type selected (default)
+
+4. **Step 4: Enter Instagram username** - ✅ VERIFIED
+   - Entered "testuser"
+
+5. **Step 5: Configure layout as grid, 3 columns** - ✅ VERIFIED
+   - Grid layout with 3 columns (default settings)
+
+6. **Step 6: Enable like counts and captions** - ✅ VERIFIED
+   - Show like count: enabled
+   - Show caption: enabled
+
+7. **Step 7: Save feed** - ✅ VERIFIED
+   - Feed created with ID 28
+   - Shortcode: [bwg_igf id="28"]
+
+8. **Step 8: Copy shortcode** - ✅ VERIFIED
+   - Shortcode available in feeds list
+
+9. **Step 9: Create test page with shortcode** - ✅ VERIFIED
+   - Created "Feature 75 Test Page" (ID 41)
+   - Added shortcode [bwg_igf id="28"]
+
+10. **Step 10: View page and verify feed displays** - ✅ VERIFIED
+    - Page URL: http://localhost:8088/?page_id=41
+    - Feed displays with 12 posts from @testuser
+    - Grid layout working correctly
+    - "Follow on Instagram" button present
+
+### Console Errors
+- None
+
+### Screenshots
+- feature-75-complete-workflow-verified.png - Feed displaying on frontend
+
+### Notes
+- Session management required multiple re-logins (WordPress session expiry)
+- Feature functionality is working correctly
+- No code changes required
+
+### Result
+Feature #75 PASSES regression test. The complete feed creation workflow works correctly:
+- Feed creation succeeds
+- Shortcode generation works
+- Frontend display works
+- All 10 verification steps pass
+
+[Testing] Feature #75 verified - still passing
+[Testing] Session complete - Feature #75 regression test passed
+
+
+## Feature #77 Completed - Complete Feed Deletion Workflow
+**Date:** 2026-01-24
+**Status:** ✅ PASSED
+
+### Testing Summary:
+Successfully verified the complete end-to-end feed deletion workflow:
+
+1. ✅ **Identify feed to delete** - Created test feed "FEATURE77_DELETE_TEST" (ID 27)
+2. ✅ **Click delete action** - Clicked Delete link in feeds table
+3. ✅ **Confirm deletion in dialog** - Accepted the confirmation dialog "Are you sure you want to delete this feed?"
+4. ✅ **Verify success message** - Confirmed "Feed deleted successfully!" message displayed
+5. ✅ **Verify feed gone from list** - Feed ID 27 no longer appears in the feeds table
+6. ✅ **Verify shortcode no longer works** - Shortcode `[bwg_igf id="27"]` shows "Feed not found or inactive."
+
+### Notes:
+- Had to handle WordPress session expiry (auth-check popup) and page refresh to get fresh nonce
+- The deletion workflow correctly uses AJAX with nonce verification
+- Success/error messages are displayed properly
+- Shortcode gracefully handles deleted feeds with appropriate message
+
+### Progress:
+- Features passing: 79/149 (53.0%)
+- Features in progress: 4
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #8 Regression Test)
+
+### Feature Tested
+- **Feature #8: Admin pages use WordPress native styling** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** style
+- **Name:** Admin pages use WordPress native styling
+- **Description:** Plugin admin interface follows WordPress admin design patterns
+
+### Verification Steps Completed
+
+1. **Step 1: Open plugin dashboard page** - ✅ VERIFIED
+   - Navigated to admin.php?page=bwg-igf
+   - Dashboard displays correctly with WordPress styling
+   - Screenshot: feature-8-step1-dashboard.png
+
+2. **Step 2: Verify buttons use WordPress button classes** - ✅ VERIFIED
+   - Buttons use `button` and `button-primary` classes
+   - 'Add New Feed' uses `page-title-action` class (WordPress pattern)
+   - 'Clear All Cache' uses `button` class
+   - 'Save Changes' uses `button button-primary` classes
+
+3. **Step 3: Verify tables use WP list table styling** - ✅ VERIFIED
+   - Feeds table uses classes: `wp-list-table widefat fixed striped`
+   - Standard WordPress list table structure with thead/tbody
+   - Screenshot: feature-8-step3-feeds-list-table.png
+
+4. **Step 4: Verify forms use WordPress form field styles** - ✅ VERIFIED
+   - Settings page uses `form-table` class (WordPress form layout)
+   - Select dropdowns, textboxes, and checkboxes follow WP patterns
+   - Screenshot: feature-8-step4-settings-forms.png
+
+5. **Step 5: Verify notices use WordPress notice classes** - ✅ VERIFIED
+   - Success notifications use WordPress notice patterns (as verified in Feature #90)
+   - Notices properly styled with admin notice classes
+
+6. **Step 6: Verify spacing matches WP admin standards** - ✅ VERIFIED
+   - All pages use `.wrap` class (WordPress admin container)
+   - Proper heading hierarchy (H1 for page titles, H2 for sections)
+   - Consistent spacing and layout matching WP admin standards
+
+### CSS Classes Verified (via browser evaluation)
+- Dashboard: `.wrap` container present
+- Feeds table: `wp-list-table widefat fixed striped`
+- Settings forms: `form-table`
+- Buttons: `button`, `button-primary`, `page-title-action`
+
+### Console Errors
+- None
+
+### Result
+Feature #8 PASSES regression test. The plugin admin interface correctly follows WordPress admin design patterns with proper CSS classes and layout structure.
+
+[Testing] Feature #8 verified - still passing
+[Testing] Session complete - Feature #8 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Feature #100 - Tab navigation through admin)
+
+### Feature Completed
+- **Feature #100: Tab navigation through admin** - PASSED ✅
+
+### Feature Details
+- **Category:** accessibility
+- **Name:** Tab navigation through admin
+- **Description:** All admin controls accessible via keyboard
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to plugin admin page** - ✅ VERIFIED
+   - Navigated to BWG Instagram Feed Dashboard (admin.php?page=bwg-igf)
+   - Page loaded successfully with Quick Stats, Getting Started, Quick Links sections
+
+2. **Step 2: Use Tab key to move through controls** - ✅ VERIFIED
+   - Tab key successfully moves focus through all interactive elements
+   - Focus progresses logically through the page
+   - Tested on Dashboard, Feeds list, and Feed Editor pages
+
+3. **Step 3: Verify all buttons/links focusable** - ✅ VERIFIED
+   - Dashboard page: 6 focusable elements (Create New Feed, View All Feeds, Settings, Visit Support Center)
+   - Feeds list page: 78 focusable elements (Add New Feed, feed names, copy shortcode buttons, Edit/Duplicate/Delete links)
+   - Feed Editor page: 46 focusable elements including:
+     - Tab buttons (Source, Layout, Display, Styling, Popup, Advanced)
+     - Text inputs (Feed Name, Username)
+     - Select dropdowns (Feed Type, Layout Type, Hover Effect, etc.)
+     - Number inputs (Columns, Gap, Slides, etc.)
+     - Checkboxes (Autoplay, Show Arrows, Show Likes, etc.)
+     - Textarea (Custom CSS)
+     - Action buttons (Cancel, Save Changes, Refresh Cache)
+   - All elements have tabIndex=0 (keyboard accessible)
+
+4. **Step 4: Verify focus order is logical** - ✅ VERIFIED
+   - Dashboard: Create New Feed → View All Feeds → Settings → Visit Support Center
+   - Feeds list: Add New Feed → Feed Name → Copy Shortcode → Edit → Duplicate → Delete (per row)
+   - Feed Editor: Source tab → Layout tab → Display tab → Styling tab → Popup tab → Advanced tab → Feed Name input → Feed Type dropdown → Username input → (continue through form fields) → Cancel → Save Changes
+
+5. **Step 5: Verify can complete actions with Enter key** - ✅ VERIFIED
+   - Focused on Display tab button using JavaScript
+   - Pressed Enter key
+   - Tab successfully activated - Display tab content now visible
+   - Confirms Enter key triggers button actions
+
+### Screenshots
+- feature-100-dashboard-initial.png - Plugin dashboard showing Quick Stats and Quick Links
+- feature-100-feeds-list.png - Feeds list table with action buttons
+- feature-100-feed-editor.png - Feed editor with tabs and form controls
+- feature-100-final-verification.png - Display tab active after Enter key press
+
+### Console Errors
+- None related to accessibility or keyboard navigation
+
+### Implementation Notes
+The plugin follows WordPress admin UI standards which provides good baseline accessibility:
+- All buttons and links are naturally focusable (no tabindex=-1)
+- Skip links present ("Skip to main content", "Skip to toolbar")
+- Logical DOM order matches visual order
+- Interactive elements respond to Enter key
+- Form controls are properly labeled
+
+### Current Status
+- Feature #100 marked as passing
+- All accessibility keyboard navigation requirements verified
+
+[Feature #100 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #38 Regression Test)
+
+### Feature Tested
+- **Feature #38: Feed ordering - newest first** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** functional
+- **Name:** Feed ordering - newest first
+- **Description:** Posts can be ordered by newest first
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Advanced tab** - ✅ VERIFIED
+   - Navigated to feed editor for 'Test Feed' (id=1)
+   - Clicked on Advanced tab
+   - Tab displayed correctly with Post Ordering option
+
+2. **Step 2: Set ordering to 'Newest first'** - ✅ VERIFIED
+   - Post Ordering dropdown shows 'Newest First' selected
+   - All 5 ordering options available: Newest First, Oldest First, Random, Most Liked, Most Commented
+
+3. **Step 3: Save feed** - ✅ VERIFIED
+   - Clicked 'Save Changes' button
+   - Success message displayed: 'Feed updated successfully!'
+
+4. **Step 4: View feed on frontend** - ✅ VERIFIED
+   - Navigated to Instagram Feed Test page (page_id=14)
+   - Feed displayed correctly with 12 posts in slider layout
+
+5. **Step 5: Verify most recent posts appear first** - ✅ VERIFIED
+   - Posts display in order: Post 1, Post 2, Post 3... (correct for newest-first)
+   - Confirmed via code analysis:
+     - Mock data generates Post 1 with highest timestamp (newest)
+     - apply_ordering() function correctly sorts by timestamp descending
+     - Frontend displays posts in proper newest-to-oldest order
+
+### Code Verification
+- **generate_mock_posts()**: Creates timestamps where Post 1 = base_timestamp, Post 2 = base_timestamp - 3600, etc.
+- **apply_ordering()**: For 'newest' case, uses usort with $time_b - $time_a (descending order)
+- This correctly displays newest posts first
+
+### Screenshots
+- feature-38-step1-advanced-tab.png - Advanced tab showing Post Ordering dropdown
+- feature-38-step4-frontend-feed.png - Frontend feed display
+- feature-38-regression-verified.png - Final verification screenshot
+
+### Console Errors
+- None
+
+### Result
+Feature #38 PASSES regression test. The feed ordering 'Newest First' functionality works correctly:
+- Advanced tab displays Post Ordering dropdown with correct options
+- Feed saves with ordering setting preserved
+- Frontend displays posts in newest-to-oldest order
+
+[Testing] Feature #38 verified - still passing
+[Testing] Session complete - Feature #38 regression test passed
+
