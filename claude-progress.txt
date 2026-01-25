@@ -1,5 +1,77 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #44 - Shortcode with slug attribute)
+
+### Feature Completed
+- **Feature #44: Shortcode with slug attribute** - PASSED ✅
+
+### Feature Details
+- **Category:** functional
+- **Name:** Shortcode with slug attribute
+- **Description:** Shortcode works with feed slug instead of ID
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed with known slug** - ✅ VERIFIED
+   - Created feed "Feature 44 Slug Test" with slug "my-test-slug-f44"
+   - Feed ID: 19
+   - Feed Type: public
+   - Layout: 3-column grid
+
+2. **Step 2: Add shortcode [bwg_igf feed='my-slug']** - ✅ VERIFIED
+   - Created test page "Feature 44 Slug Shortcode Test" (ID: 62)
+   - Added shortcode: `[bwg_igf feed="my-test-slug-f44"]`
+   - Page URL: http://localhost:8088/?page_id=62
+
+3. **Step 3: View page on frontend** - ✅ VERIFIED
+   - Navigated to the test page
+   - Page title displayed: "Feature 44 Slug Shortcode Test"
+
+4. **Step 4: Verify feed displays correctly** - ✅ VERIFIED
+   - 9 images displayed in a 3-column grid layout
+   - Images from cached test data rendered correctly
+   - Hover effects working (zoom effect)
+   - No JavaScript errors in console
+
+### Technical Implementation
+- Shortcode handler in `bwg-instagram-feed.php` (line 401-414)
+- Accepts both `id` and `feed` (slug) attributes
+- Feed template `templates/frontend/feed.php` (lines 14-33):
+  - Queries by ID if `id` attribute provided
+  - Queries by slug if `feed` attribute provided
+  - SQL: `SELECT * FROM bwg_igf_feeds WHERE slug = %s AND status IN ('active', 'error')`
+
+### Database Verification
+```
+SUCCESS: Feed found by slug!
+Slug searched: my-test-slug-f44
+Feed ID: 19
+Feed Name: Feature 44 Slug Test
+Feed Type: public
+Feed Status: active
+Layout Type: grid
+Cache entries: 1
+```
+
+### Screenshots Captured
+- feature-44-slug-shortcode.png - Page header and title
+- feature-44-feed-grid.png - Bottom of grid showing images
+- feature-44-full-grid.png - Full page screenshot with 9 images
+
+### Console Errors
+- None
+
+### Result
+Feature #44 PASSES. Shortcode with slug attribute works correctly.
+
+[Feature #44 completed and verified]
+
+### Progress Update
+- Features passing: 128/149 (85.9%)
+- Commit: 969b51c - Verify Feature #44: Shortcode with slug attribute - VERIFIED
+
+---
+
 ## Session: 2026-01-25 (Feature #147 - Hover Overlay Displays Correctly)
 
 ### Feature Completed
