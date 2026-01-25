@@ -860,14 +860,23 @@
                         // Show saved state (no spinner)
                         $button.html(bwgIgfAdmin.i18n.saved).removeClass('bwg-igf-saving');
 
-                        // Show success notice
-                        BWGIGFAdmin.showNotice('success', response.data.message);
+                        // Feature #150: Check if there are validation warnings
+                        var noticeType = 'success';
+                        if (response.data.validation_warnings && response.data.validation_warnings.length > 0) {
+                            // Show as warning (yellow) instead of success (green)
+                            noticeType = 'warning';
+                        }
+
+                        // Show success/warning notice
+                        BWGIGFAdmin.showNotice(noticeType, response.data.message);
 
                         // Redirect to feeds list if creating new feed
                         if (response.data.redirect) {
+                            // Give more time to read warning if present
+                            var delay = response.data.validation_warnings && response.data.validation_warnings.length > 0 ? 3000 : 1500;
                             setTimeout(function() {
                                 window.location.href = response.data.redirect;
-                            }, 1500);
+                            }, delay);
                         } else {
                             setTimeout(function() {
                                 $button.html(originalHtml).prop('disabled', false);
@@ -1002,7 +1011,14 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        $indicator.html('<span class="dashicons dashicons-yes" style="color: green;"></span>');
+                        // Feature #150: Check if this is a warning (uncertain validation) or full success
+                        if (response.data.warning) {
+                            // Show warning icon (yellow) - validation uncertain but save is allowed
+                            $indicator.html('<span class="dashicons dashicons-warning" style="color: #dba617;"></span> ' + response.data.message);
+                        } else {
+                            // Show success icon (green) - fully validated
+                            $indicator.html('<span class="dashicons dashicons-yes" style="color: green;"></span>');
+                        }
                     } else {
                         $indicator.html('<span class="dashicons dashicons-no" style="color: red;"></span> ' + response.data.message);
                     }

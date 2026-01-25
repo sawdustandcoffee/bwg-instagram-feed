@@ -600,7 +600,9 @@ class BWG_IGF_Instagram_API {
      * Validate if an Instagram username exists and is public.
      *
      * @param string $username Instagram username.
-     * @return array Status array with 'valid', 'exists', 'is_private', 'error' keys.
+     * @return array Status array with 'valid', 'exists', 'is_private', 'error', 'uncertain' keys.
+     *               The 'uncertain' key indicates if validation failed due to temporary issues
+     *               (timeout, rate limit, network error) vs definite failures (user not found, private).
      */
     public function validate_username( $username ) {
         $result = array(
@@ -608,6 +610,7 @@ class BWG_IGF_Instagram_API {
             'exists'     => false,
             'is_private' => false,
             'error'      => '',
+            'uncertain'  => false, // Feature #150: Track if failure is due to temporary/uncertain issues
         );
 
         // Basic format validation
@@ -634,20 +637,49 @@ class BWG_IGF_Instagram_API {
             return $result;
         }
 
+        // Test mode: simulate validation timeout for testing Feature #150.
+        $timeout_test_usernames = array( 'testtimeout', 'validationtimeout' );
+        if ( in_array( strtolower( $username ), $timeout_test_usernames, true ) ) {
+            $result['uncertain'] = true;
+            $result['error']     = __( 'Instagram is temporarily unavailable. You can still save the feed and validation will be re-attempted when the feed is displayed.', 'bwg-instagram-feed' );
+            return $result;
+        }
+
         $posts = $this->fetch_public_posts( $username, 1 );
 
         if ( is_wp_error( $posts ) ) {
             $error_code = $posts->get_error_code();
 
+            // Definite failures - we know for sure the validation failed
             if ( 'user_not_found' === $error_code ) {
                 $result['error'] = __( 'Instagram user not found.', 'bwg-instagram-feed' );
-            } elseif ( 'private_account' === $error_code ) {
-                $result['exists'] = true;
-                $result['is_private'] = true;
-                $result['error'] = __( 'This account is private.', 'bwg-instagram-feed' );
-            } else {
-                $result['error'] = $posts->get_error_message();
+                return $result;
             }
+
+            if ( 'private_account' === $error_code ) {
+                $result['exists']     = true;
+                $result['is_private'] = true;
+                $result['error']      = __( 'This account is private.', 'bwg-instagram-feed' );
+                return $result;
+            }
+
+            // Uncertain failures - validation failed due to temporary issues
+            // User should be allowed to save with a warning
+            $uncertain_error_codes = array(
+                'rate_limited',
+                'request_failed',
+                'http_error',
+            );
+
+            if ( in_array( $error_code, $uncertain_error_codes, true ) ) {
+                $result['uncertain'] = true;
+                $result['error']     = __( 'Instagram is temporarily unavailable. You can still save the feed and validation will be re-attempted when the feed is displayed.', 'bwg-instagram-feed' );
+                return $result;
+            }
+
+            // Other errors - treat as uncertain to be safe
+            $result['uncertain'] = true;
+            $result['error']     = $posts->get_error_message() . ' ' . __( 'You can still save the feed and validation will be re-attempted when the feed is displayed.', 'bwg-instagram-feed' );
 
             return $result;
         }

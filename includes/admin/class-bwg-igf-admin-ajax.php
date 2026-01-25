@@ -155,6 +155,9 @@ class BWG_IGF_Admin_Ajax {
             }
         }
 
+        // Track validation warnings for Feature #150.
+        $validation_warnings = array();
+
         // Validate Instagram usernames for public feeds.
         if ( 'public' === $feed_type ) {
             if ( empty( $instagram_usernames ) ) {
@@ -194,7 +197,17 @@ class BWG_IGF_Admin_Ajax {
                 $result = $instagram_api->validate_username( $username );
 
                 if ( ! $result['valid'] ) {
-                    if ( ! $result['exists'] ) {
+                    // Feature #150: Distinguish between definite errors and uncertain errors.
+                    // Uncertain errors (timeout, rate limit) allow saving with a warning.
+                    if ( ! empty( $result['uncertain'] ) ) {
+                        // This is an uncertain failure - add as warning, don't block save.
+                        $validation_warnings[] = sprintf(
+                            /* translators: 1: Instagram username, 2: warning message */
+                            __( 'Warning for "@%1$s": %2$s', 'bwg-instagram-feed' ),
+                            esc_html( $username ),
+                            esc_html( $result['error'] )
+                        );
+                    } elseif ( ! $result['exists'] ) {
                         $validation_errors[] = sprintf(
                             /* translators: %s: Instagram username */
                             __( 'Instagram user "@%s" was not found. Please check the spelling and try again.', 'bwg-instagram-feed' ),
@@ -217,7 +230,7 @@ class BWG_IGF_Admin_Ajax {
                 }
             }
 
-            // If there are validation errors, return them.
+            // If there are definite validation errors (not just warnings), return them.
             if ( ! empty( $validation_errors ) ) {
                 wp_send_json_error( array(
                     'message' => implode( ' ', $validation_errors ),
@@ -225,6 +238,7 @@ class BWG_IGF_Admin_Ajax {
                     'errors' => $validation_errors,
                 ) );
             }
+            // Note: Validation warnings are handled below - save proceeds with warning message.
         }
 
         // Get layout settings.
@@ -376,9 +390,16 @@ class BWG_IGF_Admin_Ajax {
                 wp_send_json_error( array( 'message' => __( 'Failed to update feed.', 'bwg-instagram-feed' ) ) );
             }
 
+            // Feature #150: Include validation warnings in success response.
+            $success_message = __( 'Feed updated successfully!', 'bwg-instagram-feed' );
+            if ( ! empty( $validation_warnings ) ) {
+                $success_message .= ' ' . implode( ' ', $validation_warnings );
+            }
+
             wp_send_json_success( array(
-                'message' => __( 'Feed updated successfully!', 'bwg-instagram-feed' ),
-                'feed_id' => $feed_id,
+                'message'             => $success_message,
+                'feed_id'             => $feed_id,
+                'validation_warnings' => $validation_warnings,
             ) );
         } else {
             // Create new feed.
@@ -399,10 +420,17 @@ class BWG_IGF_Admin_Ajax {
 
             $new_feed_id = $wpdb->insert_id;
 
+            // Feature #150: Include validation warnings in success response.
+            $success_message = __( 'Feed created successfully!', 'bwg-instagram-feed' );
+            if ( ! empty( $validation_warnings ) ) {
+                $success_message .= ' ' . implode( ' ', $validation_warnings );
+            }
+
             wp_send_json_success( array(
-                'message'   => __( 'Feed created successfully!', 'bwg-instagram-feed' ),
-                'feed_id'   => $new_feed_id,
-                'shortcode' => '[bwg_igf id="' . $new_feed_id . '"]',
+                'message'             => $success_message,
+                'feed_id'             => $new_feed_id,
+                'shortcode'           => '[bwg_igf id="' . $new_feed_id . '"]',
+                'validation_warnings' => $validation_warnings,
                 'redirect'  => admin_url( 'admin.php?page=bwg-igf-feeds' ),
             ) );
         }
@@ -532,6 +560,21 @@ class BWG_IGF_Admin_Ajax {
         if ( ! $result['valid'] ) {
             $error_message = $result['error'];
             $error_type = 'validation_failed';
+
+            // Feature #150: Handle uncertain validation differently - show warning, not error.
+            if ( ! empty( $result['uncertain'] ) ) {
+                // Validation failed due to temporary issues (timeout, rate limit, etc.)
+                // Return a warning that allows the user to still save the feed.
+                wp_send_json_success( array(
+                    'message'    => sprintf(
+                        /* translators: %s: Instagram username */
+                        __( 'Username "@%s" could not be verified due to Instagram being temporarily unavailable. You can still save the feed.', 'bwg-instagram-feed' ),
+                        esc_html( $username )
+                    ),
+                    'warning'    => true,
+                    'error_type' => 'uncertain',
+                ) );
+            }
 
             // Provide clear, helpful error messages based on the error type.
             if ( ! $result['exists'] ) {
