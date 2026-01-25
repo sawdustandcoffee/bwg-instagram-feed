@@ -43,9 +43,32 @@ if ( ! defined( 'ABSPATH' ) ) {
                     'active'
                 )
             );
+
+            // Get the most recent cache entry (last sync time).
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Dashboard display, caching not needed
+            $last_sync = $wpdb->get_var(
+                $wpdb->prepare(
+                    'SELECT MAX(created_at) FROM %i',
+                    $wpdb->prefix . 'bwg_igf_cache'
+                )
+            );
             ?>
             <p><strong><?php esc_html_e( 'Total Feeds:', 'bwg-instagram-feed' ); ?></strong> <?php echo esc_html( $feeds_count ); ?></p>
             <p><strong><?php esc_html_e( 'Connected Accounts:', 'bwg-instagram-feed' ); ?></strong> <?php echo esc_html( $accounts_count ); ?></p>
+            <p>
+                <strong><?php esc_html_e( 'Last Sync:', 'bwg-instagram-feed' ); ?></strong>
+                <?php
+                if ( $last_sync ) {
+                    $last_sync_time = strtotime( $last_sync );
+                    $formatted_time = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $last_sync_time );
+                    $human_diff     = human_time_diff( $last_sync_time, current_time( 'timestamp' ) );
+                    /* translators: %s: human-readable time difference */
+                    printf( esc_html__( '%1$s (%2$s ago)', 'bwg-instagram-feed' ), esc_html( $formatted_time ), esc_html( $human_diff ) );
+                } else {
+                    esc_html_e( 'Never', 'bwg-instagram-feed' );
+                }
+                ?>
+            </p>
         </div>
 
         <!-- Getting Started -->
