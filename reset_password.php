@@ -1,9 +1,12 @@
 <?php
 /**
- * Reset admin password
+ * Password reset script for testing
  */
-require_once('/var/www/html/wp-load.php');
 
-$user_id = 1;
-wp_set_password('admin123', $user_id);
-echo "Password reset successfully for user ID: " . $user_id;
+// Bootstrap WordPress
+require_once dirname(__FILE__) . '/../../../wp-load.php';
+
+// Set new password for admin user
+wp_set_password('test123', 1);
+
+echo "Password has been reset to: test123\n";

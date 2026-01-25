@@ -784,10 +784,23 @@
         },
 
         handleConnectAccount: function(e) {
+            // Check if this button has a real OAuth URL (from data attribute)
+            var $button = $(this);
+            var oauthUrl = $button.data('oauth-url');
+
+            // If we have a real OAuth URL, let the browser navigate to it naturally
+            // (don't prevent default - the href will handle the navigation)
+            if (oauthUrl && oauthUrl.indexOf('api.instagram.com') !== -1) {
+                // Real OAuth flow - allow the link to work normally
+                // The button's href already points to the OAuth URL
+                return true;
+            }
+
+            // Fallback: Test mode for when OAuth is not properly configured
+            // This allows testing the flow without real Instagram credentials
             e.preventDefault();
 
             // For testing purposes, we'll prompt for test data
-            // In production, this would initiate the OAuth flow with Instagram
             var username = prompt('Enter Instagram username (for testing):');
             if (!username) {
                 return;

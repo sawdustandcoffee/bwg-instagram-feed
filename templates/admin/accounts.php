@@ -31,10 +31,23 @@ if ( ! defined( 'ABSPATH' ) ) {
                     </a>
                 </p>
             </div>
-        <?php else : ?>
-            <a href="#" class="button button-primary bwg-igf-connect-account">
+        <?php else :
+            // Build OAuth URL
+            $redirect_uri = admin_url( 'admin.php?page=bwg-igf-accounts&oauth_callback=1' );
+            $scope = 'user_profile,user_media';
+            $oauth_url = sprintf(
+                'https://api.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&response_type=code',
+                rawurlencode( $app_id ),
+                rawurlencode( $redirect_uri ),
+                rawurlencode( $scope )
+            );
+        ?>
+            <a href="<?php echo esc_url( $oauth_url ); ?>" class="button button-primary bwg-igf-connect-account" id="bwg-igf-oauth-connect-btn" data-oauth-url="<?php echo esc_url( $oauth_url ); ?>">
                 <?php esc_html_e( 'Connect Instagram Account', 'bwg-instagram-feed' ); ?>
             </a>
+            <p class="description" style="margin-top: 10px;">
+                <?php esc_html_e( 'You will be redirected to Instagram to authorize the connection.', 'bwg-instagram-feed' ); ?>
+            </p>
         <?php endif; ?>
     </div>
 
