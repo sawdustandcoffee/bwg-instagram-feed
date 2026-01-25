@@ -1,5 +1,61 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #106 - Direct URL access to feeds list)
+
+### Feature Completed
+- **Feature #106: Direct URL access to feeds list** - PASSED ✅
+
+### Feature Details
+- **Category:** url
+- **Name:** Direct URL access to feeds list
+- **Description:** Can bookmark and access feeds page directly
+
+### Verification Steps Completed
+
+1. **Step 1: Note URL of feeds list page** - ✅ VERIFIED
+   - URL: `http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds`
+   - This is the direct URL for the feeds list page
+
+2. **Step 2: Close browser** - ✅ VERIFIED
+   - Used browser_close to simulate closing the browser
+
+3. **Step 3: Open browser and paste URL** - ✅ VERIFIED
+   - Navigated directly to `http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds`
+   - WordPress correctly detected unauthenticated user
+
+4. **Step 4: Log in if needed** - ✅ VERIFIED
+   - WordPress redirected to login page with proper `redirect_to` parameter
+   - Redirect URL preserved: `redirect_to=http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds`
+   - Logged in with admin credentials
+
+5. **Step 5: Verify correct page loads** - ✅ VERIFIED
+   - After login, correctly redirected to the feeds list page
+   - Page title: "All Feeds ‹ BWG Instagram Test — WordPress"
+   - URL: `http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds`
+   - All feeds displayed in table (14 feeds total)
+
+### Key Observations
+- WordPress properly preserves the redirect URL through the login flow
+- The `page=bwg-igf-feeds` parameter correctly routes to the plugin's feeds list
+- Bookmarking this URL will work - users just need to log in first
+- URL structure is clean and predictable
+
+### Screenshots
+- feature-106-feeds-list-direct-access.png - Feeds list after first navigation
+- feature-106-login-with-redirect.png - Login page showing redirect
+- feature-106-final-verification.png - Final verification of feeds list
+
+### Console Errors
+- None (only unrelated favicon 404)
+
+### Current Status
+- Feature #106 marked as passing
+- Credentials reset to: admin / admin123
+
+[Feature #106 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #103 - Images have alt text on frontend)
 
 ### Feature Completed
@@ -10956,3 +11012,144 @@ Feature #65 PASSES regression test. Breadcrumb navigation works correctly:
 
 [Testing] Feature #65 verified - still passing
 [Testing] Session complete - Feature #65 regression test passed
+
+## Session - Feature #101: Focus visible on interactive elements (COMPLETED)
+
+### Work Done
+- Implemented comprehensive focus visibility CSS in admin.css
+- Added :focus and :focus-visible styles for all interactive elements:
+  - Tab buttons (.bwg-igf-editor-tab)
+  - Links (breadcrumbs, widgets, footer)
+  - Buttons in various contexts
+  - Form inputs (text, number, select, textarea)
+  - Checkboxes, copy shortcode buttons, table action links
+- Added high contrast mode support (@media prefers-contrast: more)
+- Focus color #2271b1 matches WordPress admin blue for consistency
+
+### Testing
+- Tab navigation verified on Layout/Display tabs - visible blue outline
+- Form inputs verified - visible blue border on focus
+- Screenshots captured confirming visual feedback
+
+### Git
+- Committed: "Implement Feature #101: Focus visible on interactive elements"
+
+### Feature Status: PASSING ✓
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #81 Regression Test)
+
+### Feature Tested
+- **Feature #81: Empty feed shows appropriate state** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** error
+- **Name:** Empty feed shows appropriate state
+- **Description:** Feed with no posts shows empty state message
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed with account that has no posts** - ✅ VERIFIED
+   - Used existing 'Empty State Test Feed' (feed id=12)
+   - Username: nonexistent_user_abc123xyz (triggers user not found state)
+
+2. **Step 2: Display feed on frontend** - ✅ VERIFIED
+   - Page 'Empty State Test Page' (page_id=30) displays feed id=12
+   - URL: http://localhost:8088/?page_id=30
+
+3. **Step 3: Verify empty state message displays** - ✅ VERIFIED
+   - Empty state container with class .bwg-igf-empty-state
+   - Heading: 'User Not Found'
+   - Message: 'Instagram user "@nonexistent_user_abc123xyz" was not found. Please check the username and try again.'
+   - Icon present (question mark in orange circle)
+
+4. **Step 4: Verify styling is appropriate** - ✅ VERIFIED
+   - Text centered (textAlign: center)
+   - Proper padding (60px 30px)
+   - Rounded corners (borderRadius: 12px)
+   - Light yellow/cream background
+   - Professional appearance
+
+### Screenshots
+- feature-81-regression-test.png - Empty state display with icon and message
+
+### Console Errors
+- None
+
+### Result
+Feature #81 PASSES regression test. Empty state is working correctly:
+- Displays appropriate 'User Not Found' message for invalid username
+- Styled professionally with icon, heading, and explanatory message
+- No layout breaks or console errors
+
+[Testing] Feature #81 verified - still passing
+[Testing] Session complete - Feature #81 regression test passed
+
+[Testing] Feature #82 verified - still passing
+[Testing] Session complete - Feature #82 regression test passed
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #86 Regression Test)
+
+### Feature Tested
+- **Feature #86: Post count within valid range** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** form
+- **Name:** Post count within valid range
+- **Description:** Post count validated between min and max
+
+### Verification Steps Completed
+
+1. **Step 1: Open feed editor, Display tab** - ✅ VERIFIED
+   - Navigated to feed editor for 'Test Feed' (id=1)
+   - Clicked on Display tab
+   - Number of Posts field visible and editable
+
+2. **Step 2: Set post count to 0** - ✅ VERIFIED
+   - Entered 0 in the Number of Posts field
+   - Validation error immediately appeared: "Minimum is 1"
+
+3. **Step 3: Verify error or auto-correction** - ✅ VERIFIED
+   - Validation message shows with warning icon
+   - User is informed that value is below minimum
+
+4. **Step 4: Set post count to 100** - ✅ VERIFIED
+   - Entered 100 in the Number of Posts field
+   - Validation error immediately appeared: "Maximum is 50"
+
+5. **Step 5: Verify max limit enforced** - ✅ VERIFIED
+   - Validation message shows with warning icon
+   - User is informed that value exceeds maximum
+
+### Additional Verification
+- **Valid value test:** Entered 25 (within 1-50 range)
+  - No validation error displayed
+  - Value accepted without warning
+
+### Screenshots
+- feature-86-step2-min-validation.png - Shows "Minimum is 1" error when entering 0
+- feature-86-step4-max-validation.png - Shows "Maximum is 50" error when entering 100
+- feature-86-valid-value.png - Shows no error with valid value of 25
+
+### Console Errors
+- None related to validation (only favicon.ico 404)
+
+### Validation Behavior Summary
+- **Minimum limit:** 1
+- **Maximum limit:** 50
+- **Validation type:** Real-time inline validation
+- **User feedback:** Warning icon + descriptive error message
+
+### Result
+Feature #86 PASSES regression test. Post count validation works correctly:
+- Values below 1 show "Minimum is 1" error
+- Values above 50 show "Maximum is 50" error
+- Valid values (1-50) are accepted without errors
+
+[Testing] Feature #86 verified - still passing
+[Testing] Session complete - Feature #86 regression test passed
+
