@@ -1,5 +1,59 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #117 - Search feeds by name)
+
+### Feature Completed
+- **Feature #117: Search feeds by name** - PASSED
+
+### Feature Details
+- **Category:** search
+- **Name:** Search feeds by name
+- **Description:** Can search/filter feeds in admin list
+
+### Verification Steps Completed
+
+1. **Step 1: Create multiple feeds with different names** - VERIFIED
+   - 15 feeds existed in the system with different names
+
+2. **Step 2: Use search box in feeds list** - VERIFIED
+   - Search box added above the feeds table with placeholder "Search feeds by name..."
+   - Search count display added showing "X of Y feeds"
+
+3. **Step 3: Enter partial name** - VERIFIED
+   - Searched for "Test Feed" - showed 7 of 15 feeds
+   - Searched for "Security" - showed 2 of 15 feeds
+
+4. **Step 4: Verify matching feeds shown** - VERIFIED
+   - All feeds containing the search term were displayed
+   - Search is case-insensitive
+
+5. **Step 5: Verify non-matching feeds hidden** - VERIFIED
+   - Feeds not matching search term were hidden
+   - Escape key clears search and shows all feeds
+
+### Implementation Details
+- Added search input field to `templates/admin/feeds.php`
+- Added `initFeedSearch()` method to `assets/js/admin.js`
+- Search filters table rows by matching feed name
+- Count display shows matching/total feeds
+- Escape key clears search
+
+### Screenshots
+- feature-117-feeds-list-with-search.png - Feeds list with search box
+- feature-117-search-test-feed.png - Filtered results for "Test Feed"
+- feature-117-search-security.png - Filtered results for "Security"
+
+### Console Errors
+- None (only favicon 404)
+
+### Current Status
+- Feature #117 marked as passing
+- Committed: 8a18f9f
+
+[Feature #117 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #113 - Deleting feed clears its cache)
 
 ### Feature Completed
@@ -12461,3 +12515,179 @@ The shortcode error handling is implemented in templates/frontend/feed.php (line
 - Credentials: admin / admin123 (password reset during session)
 
 [Feature #114 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #66 Regression Test)
+
+### Feature Tested
+- **Feature #66: Quick links on dashboard work** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Quick links on dashboard work
+- **Description:** Dashboard quick links navigate correctly
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to dashboard** - ✅ VERIFIED
+   - Navigated to admin.php?page=bwg-igf
+   - Dashboard page loaded with Quick Stats, Getting Started, Quick Links, and Need Help sections
+
+2. **Step 2: Click 'Create Feed' quick link** - ✅ VERIFIED
+   - Found 'Create New Feed' link in Quick Links section
+   - Link URL: admin.php?page=bwg-igf-feeds&action=new
+
+3. **Step 3: Verify navigates to feed editor** - ✅ VERIFIED
+   - Successfully navigated to feed editor page
+   - Page shows 'Create New Feed' heading with Source/Layout/Display/Styling/Popup/Advanced tabs
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=new
+
+4. **Step 4: Return to dashboard** - ✅ VERIFIED
+   - Navigated back to admin.php?page=bwg-igf
+   - Dashboard page displayed correctly
+
+5. **Step 5: Click 'Settings' quick link** - ✅ VERIFIED
+   - Found 'Settings' link in Quick Links section
+   - Link URL: admin.php?page=bwg-igf-settings
+
+6. **Step 6: Verify navigates to settings** - ✅ VERIFIED
+   - Successfully navigated to Settings page
+   - Page shows 'Settings' heading with:
+     - General Settings (Cache Duration, Delete Data on Uninstall)
+     - Instagram API Settings (App ID, App Secret)
+     - Cache Management (Clear All Cache button)
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings
+
+### Screenshots
+- feature-66-settings-page.png - Settings page after clicking quick link
+
+### Console Errors
+- None
+
+### Notes
+- WordPress session timeout caused re-authentication during testing (common WordPress behavior)
+- All quick links function correctly and navigate to the expected pages
+
+### Result
+Feature #66 PASSES regression test. All dashboard quick links work correctly:
+- 'Create New Feed' navigates to feed editor
+- 'Settings' navigates to settings page
+
+[Testing] Feature #66 verified - still passing
+[Testing] Session complete - Feature #66 regression test passed
+
+[Testing] Feature #109 (Malformed URL parameters handled) - REGRESSION TEST PASSED
+[Testing] Session complete - Feature #109 regression test passed
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #50 Regression Test)
+
+### Feature Tested
+- **Feature #50: Admin pages require manage_options capability** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** security
+- **Name:** Admin pages require manage_options capability
+- **Description:** Only administrators can access plugin settings
+
+### Verification Steps Completed
+
+1. **Step 1: Log out of WordPress** - ✅ VERIFIED
+   - Successfully logged out of any existing session
+
+2. **Step 2: Log in as Editor user** - ✅ VERIFIED
+   - Logged in as 'editor' user (role: editor)
+   - WordPress dashboard loaded successfully
+
+3. **Step 3: Try to access /wp-admin/admin.php?page=bwg-igf** - ✅ VERIFIED
+   - Navigated directly to plugin admin URL
+   - Received 'Sorry, you are not allowed to access this page.' error
+   - Also tested bwg-igf-feeds and bwg-igf-settings - both denied
+
+4. **Step 4: Verify access denied or menu not visible** - ✅ VERIFIED
+   - Instagram Feed menu NOT visible in Editor's admin sidebar
+   - Editor only sees: Dashboard, Posts, Media, Pages, Comments, Profile, Tools
+
+5. **Step 5: Log in as Administrator** - ✅ VERIFIED
+   - Logged in as 'admin' user
+   - WordPress dashboard loaded successfully
+
+6. **Step 6: Verify full access to plugin pages** - ✅ VERIFIED
+   - Instagram Feed menu visible in admin sidebar
+   - Submenus visible: Dashboard, Feeds, Accounts, Settings
+   - Successfully accessed plugin dashboard page
+   - Plugin content displayed: Quick Stats, Getting Started, Quick Links
+
+### Screenshots
+- feature-50-editor-no-menu.png - Editor dashboard showing NO Instagram Feed menu
+- feature-50-editor-access-denied.png - Access denied error for Editor
+- feature-50-admin-has-menu.png - Admin dashboard showing Instagram Feed menu
+- feature-50-admin-full-access.png - Admin viewing plugin dashboard
+
+### Console Errors
+- None (403 on logout URL is expected)
+
+### Result
+Feature #50 PASSES regression test. The security feature works correctly:
+- Editors cannot see the plugin menu
+- Editors get access denied when trying to access plugin URLs directly
+- Administrators have full access to all plugin pages
+
+[Testing] Feature #50 verified - still passing
+[Testing] Session complete - Feature #50 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #50 Regression Test)
+
+### Feature Tested
+- **Feature #50: Admin pages require manage_options capability** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** security
+- **Name:** Admin pages require manage_options capability
+- **Description:** Only administrators can access plugin settings
+
+### Verification Steps Completed
+
+1. **Step 1: Log out of WordPress** - ✅ VERIFIED
+   - Started with fresh session
+
+2. **Step 2: Log in as Editor user** - ✅ VERIFIED
+   - Logged in as 'editor' user (Editor role)
+   - Verified Editor role does NOT have manage_options capability
+
+3. **Step 3: Try to access /wp-admin/admin.php?page=bwg-igf** - ✅ VERIFIED
+   - Direct access returned 'Sorry, you are not allowed to access this page.'
+   - Also verified /wp-admin/admin.php?page=bwg-igf-feeds blocked
+   - Also verified /wp-admin/admin.php?page=bwg-igf-settings blocked
+
+4. **Step 4: Verify access denied or menu not visible** - ✅ VERIFIED
+   - Instagram Feed menu NOT visible in admin sidebar for Editor
+   - Direct URL access properly denied
+   - Screenshot: feature-50-editor-blocked.png
+
+5. **Step 5: Log in as Administrator** - ✅ VERIFIED
+   - Logged in as 'admin' user (Administrator role)
+   - Administrator has manage_options capability
+
+6. **Step 6: Verify full access to plugin pages** - ✅ VERIFIED
+   - Instagram Feed menu IS visible with submenus (Dashboard, Feeds, Accounts, Settings)
+   - Plugin dashboard loads correctly with Quick Stats, Getting Started guide
+   - Screenshot: feature-50-admin-access.png
+
+### Console Errors
+- None on plugin pages
+
+### Result
+Feature #50 PASSES regression test. Security implementation correct:
+- Editor users cannot see menu or access plugin pages
+- Administrator users have full access
+- manage_options capability properly enforced
+
+[Testing] Feature #50 verified - still passing
+[Testing] Session complete - Feature #50 regression test passed
+
