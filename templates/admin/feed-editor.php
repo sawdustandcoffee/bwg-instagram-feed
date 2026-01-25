@@ -306,6 +306,53 @@ $is_new = empty( $feed );
 
                     <!-- Styling Tab -->
                     <div id="bwg-igf-tab-styling" class="bwg-igf-tab-content">
+                        <?php
+                        // Get existing styling settings for Feed Size options
+                        $styling_data = $feed && ! empty( $feed->styling_settings ) ? json_decode( $feed->styling_settings, true ) : array();
+                        $feed_width = isset( $styling_data['feed_width'] ) ? $styling_data['feed_width'] : '100%';
+                        $feed_max_width = isset( $styling_data['feed_max_width'] ) ? $styling_data['feed_max_width'] : '';
+                        $feed_padding = isset( $styling_data['feed_padding'] ) ? absint( $styling_data['feed_padding'] ) : 0;
+                        $image_height_mode = isset( $styling_data['image_height_mode'] ) ? $styling_data['image_height_mode'] : 'square';
+                        $image_fixed_height = isset( $styling_data['image_fixed_height'] ) ? absint( $styling_data['image_fixed_height'] ) : 200;
+                        ?>
+                        <h4 style="margin-top: 0; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #ddd;"><?php esc_html_e( 'Feed Size', 'bwg-instagram-feed' ); ?></h4>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-feed-width"><?php esc_html_e( 'Feed Width', 'bwg-instagram-feed' ); ?></label>
+                            <input type="text" id="bwg-igf-feed-width" name="feed_width" value="<?php echo esc_attr( $feed_width ); ?>" placeholder="100%">
+                            <p class="description"><?php esc_html_e( 'Width of the feed container (e.g., 100%, 800px, auto). Default: 100%', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-feed-max-width"><?php esc_html_e( 'Feed Max Width', 'bwg-instagram-feed' ); ?></label>
+                            <input type="text" id="bwg-igf-feed-max-width" name="feed_max_width" value="<?php echo esc_attr( $feed_max_width ); ?>" placeholder="<?php esc_attr_e( 'e.g., 1200px or none', 'bwg-instagram-feed' ); ?>">
+                            <p class="description"><?php esc_html_e( 'Maximum width of the feed (e.g., 1200px, 100%, none). Leave empty for no limit.', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-feed-padding"><?php esc_html_e( 'Feed Padding (px)', 'bwg-instagram-feed' ); ?></label>
+                            <input type="number" id="bwg-igf-feed-padding" name="feed_padding" value="<?php echo esc_attr( $feed_padding ); ?>" min="0" max="100">
+                            <p class="description"><?php esc_html_e( 'Padding around the feed container. Default: 0', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <div class="bwg-igf-field">
+                            <label for="bwg-igf-image-height-mode"><?php esc_html_e( 'Image Height Mode', 'bwg-instagram-feed' ); ?></label>
+                            <select id="bwg-igf-image-height-mode" name="image_height_mode">
+                                <option value="square" <?php selected( $image_height_mode, 'square' ); ?>><?php esc_html_e( 'Square (1:1 aspect ratio)', 'bwg-instagram-feed' ); ?></option>
+                                <option value="original" <?php selected( $image_height_mode, 'original' ); ?>><?php esc_html_e( 'Original (preserve aspect ratio)', 'bwg-instagram-feed' ); ?></option>
+                                <option value="fixed" <?php selected( $image_height_mode, 'fixed' ); ?>><?php esc_html_e( 'Fixed Height', 'bwg-instagram-feed' ); ?></option>
+                            </select>
+                            <p class="description"><?php esc_html_e( 'How images should be displayed in the grid.', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <div class="bwg-igf-field bwg-igf-fixed-height-field" id="bwg-igf-fixed-height-field" style="<?php echo 'fixed' !== $image_height_mode ? 'display: none;' : ''; ?>">
+                            <label for="bwg-igf-image-fixed-height"><?php esc_html_e( 'Fixed Image Height (px)', 'bwg-instagram-feed' ); ?></label>
+                            <input type="number" id="bwg-igf-image-fixed-height" name="image_fixed_height" value="<?php echo esc_attr( $image_fixed_height ); ?>" min="50" max="800">
+                            <p class="description"><?php esc_html_e( 'Set a fixed height for all images in the grid.', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <h4 style="margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #ddd;"><?php esc_html_e( 'Appearance', 'bwg-instagram-feed' ); ?></h4>
+
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-background-color"><?php esc_html_e( 'Background Color', 'bwg-instagram-feed' ); ?></label>
                             <input type="text" id="bwg-igf-background-color" name="background_color" class="bwg-igf-color-picker" value="<?php echo $feed && isset( json_decode( $feed->styling_settings, true )['background_color'] ) ? esc_attr( json_decode( $feed->styling_settings, true )['background_color'] ) : ''; ?>" data-default-color="">

@@ -33,6 +33,7 @@
             this.initFeedTypeToggle(); // Feature #130: Toggle between public and connected account
             this.initFollowButtonToggle(); // Feature #27: Toggle follow button options
             this.initPopupToggle(); // Feature #29: Toggle popup options visibility
+            this.initImageHeightModeToggle(); // Feature #165: Toggle fixed height field visibility
         },
 
         bindEvents: function() {
@@ -271,6 +272,35 @@
 
             // Check on change
             $popupEnabled.on('change', togglePopupOptions);
+        },
+
+        /**
+         * Feature #165: Toggle fixed height field visibility based on image height mode selection
+         */
+        initImageHeightModeToggle: function() {
+            var $imageHeightMode = $('#bwg-igf-image-height-mode');
+            var $fixedHeightField = $('#bwg-igf-fixed-height-field');
+
+            if (!$imageHeightMode.length) {
+                return;
+            }
+
+            function toggleFixedHeightField() {
+                var value = $imageHeightMode.val();
+                if (value === 'fixed') {
+                    $fixedHeightField.slideDown(200);
+                } else {
+                    $fixedHeightField.slideUp(200);
+                }
+                // Update preview
+                BWGIGFAdmin.updatePreview();
+            }
+
+            // Check on page load
+            toggleFixedHeightField();
+
+            // Check on change
+            $imageHeightMode.on('change', toggleFixedHeightField);
         },
 
         initPostCountValidation: function() {

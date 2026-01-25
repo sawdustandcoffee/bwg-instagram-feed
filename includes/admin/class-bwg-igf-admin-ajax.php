@@ -275,6 +275,13 @@ class BWG_IGF_Admin_Ajax {
         $hover_effect = isset( $_POST['hover_effect'] ) ? sanitize_text_field( wp_unslash( $_POST['hover_effect'] ) ) : 'none';
         $custom_css = isset( $_POST['custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) : '';
 
+        // Get feed size settings (Feature #165).
+        $feed_width = isset( $_POST['feed_width'] ) ? sanitize_text_field( wp_unslash( $_POST['feed_width'] ) ) : '100%';
+        $feed_max_width = isset( $_POST['feed_max_width'] ) ? sanitize_text_field( wp_unslash( $_POST['feed_max_width'] ) ) : '';
+        $feed_padding = isset( $_POST['feed_padding'] ) ? absint( $_POST['feed_padding'] ) : 0;
+        $image_height_mode = isset( $_POST['image_height_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['image_height_mode'] ) ) : 'square';
+        $image_fixed_height = isset( $_POST['image_fixed_height'] ) ? absint( $_POST['image_fixed_height'] ) : 200;
+
         // Get popup settings.
         $popup_enabled = isset( $_POST['popup_enabled'] ) ? 1 : 0;
         $popup_show_caption = isset( $_POST['popup_show_caption'] ) ? 1 : 0;
@@ -314,10 +321,16 @@ class BWG_IGF_Admin_Ajax {
         ) );
 
         $styling_settings = wp_json_encode( array(
-            'background_color' => $background_color,
-            'border_radius'    => $border_radius,
-            'hover_effect'     => $hover_effect,
-            'custom_css'       => $custom_css,
+            'background_color'   => $background_color,
+            'border_radius'      => $border_radius,
+            'hover_effect'       => $hover_effect,
+            'custom_css'         => $custom_css,
+            // Feed Size settings (Feature #165).
+            'feed_width'         => $feed_width,
+            'feed_max_width'     => $feed_max_width,
+            'feed_padding'       => $feed_padding,
+            'image_height_mode'  => $image_height_mode,
+            'image_fixed_height' => $image_fixed_height,
         ) );
 
         $popup_settings = wp_json_encode( array(
@@ -599,13 +612,26 @@ class BWG_IGF_Admin_Ajax {
             ) );
         }
 
-        wp_send_json_success( array(
+        // Feature #160: Include cache status in response.
+        $response = array(
             'message' => sprintf(
                 /* translators: %s: Instagram username */
                 __( 'Instagram user "@%s" is valid and public.', 'bwg-instagram-feed' ),
                 esc_html( $username )
             ),
-        ) );
+        );
+
+        // Add from_cache flag if validation came from cache.
+        if ( ! empty( $result['from_cache'] ) ) {
+            $response['from_cache'] = true;
+            $response['message'] = sprintf(
+                /* translators: %s: Instagram username */
+                __( 'Instagram user "@%s" is valid and public (cached).', 'bwg-instagram-feed' ),
+                esc_html( $username )
+            );
+        }
+
+        wp_send_json_success( $response );
     }
 
     /**

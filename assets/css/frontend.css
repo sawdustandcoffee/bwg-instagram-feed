@@ -82,6 +82,29 @@
     aspect-ratio: 1 / 1;
 }
 
+/* Image Height Modes (Feature #165) */
+/* Original aspect ratio - let images display naturally */
+.bwg-igf-image-original .bwg-igf-item {
+    aspect-ratio: auto;
+}
+
+.bwg-igf-image-original .bwg-igf-item img {
+    height: auto;
+    object-fit: contain;
+}
+
+/* Fixed height mode - use CSS variable for height */
+.bwg-igf-image-fixed .bwg-igf-item {
+    aspect-ratio: auto;
+    height: var(--bwg-igf-image-height, 200px);
+}
+
+.bwg-igf-image-fixed .bwg-igf-item img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
 /* Keyboard focus styles for feed items */
 .bwg-igf-item:focus {
     outline: 3px solid #e1306c;

@@ -57,6 +57,13 @@ $background_color = isset( $styling_settings['background_color'] ) ? $styling_se
 $popup_enabled = isset( $popup_settings['enabled'] ) ? $popup_settings['enabled'] : true;
 $custom_css = isset( $styling_settings['custom_css'] ) ? $styling_settings['custom_css'] : '';
 
+// Feed Size settings (Feature #165)
+$feed_width = isset( $styling_settings['feed_width'] ) ? $styling_settings['feed_width'] : '100%';
+$feed_max_width = isset( $styling_settings['feed_max_width'] ) ? $styling_settings['feed_max_width'] : '';
+$feed_padding = isset( $styling_settings['feed_padding'] ) ? absint( $styling_settings['feed_padding'] ) : 0;
+$image_height_mode = isset( $styling_settings['image_height_mode'] ) ? $styling_settings['image_height_mode'] : 'square';
+$image_fixed_height = isset( $styling_settings['image_fixed_height'] ) ? absint( $styling_settings['image_fixed_height'] ) : 200;
+
 // Slider defaults
 $slides_to_show = isset( $layout_settings['slides_to_show'] ) ? absint( $layout_settings['slides_to_show'] ) : 3;
 $autoplay = ! empty( $layout_settings['autoplay'] );
@@ -308,9 +315,34 @@ $custom_styles = array(
     '--bwg-igf-border-radius: ' . $border_radius . 'px',
 );
 
+// Feed Size settings (Feature #165)
+if ( ! empty( $feed_width ) ) {
+    $custom_styles[] = 'width: ' . esc_attr( $feed_width );
+}
+
+if ( ! empty( $feed_max_width ) ) {
+    $custom_styles[] = 'max-width: ' . esc_attr( $feed_max_width );
+    $custom_styles[] = 'margin-left: auto';
+    $custom_styles[] = 'margin-right: auto';
+}
+
+if ( $feed_padding > 0 ) {
+    $custom_styles[] = 'padding: ' . absint( $feed_padding ) . 'px';
+}
+
+// Image height mode CSS variable
+if ( 'fixed' === $image_height_mode && $image_fixed_height > 0 ) {
+    $custom_styles[] = '--bwg-igf-image-height: ' . absint( $image_fixed_height ) . 'px';
+} elseif ( 'original' === $image_height_mode ) {
+    $custom_styles[] = '--bwg-igf-image-height: auto';
+}
+
 if ( ! empty( $background_color ) ) {
     $custom_styles[] = 'background-color: ' . esc_attr( $background_color );
-    $custom_styles[] = 'padding: 15px';
+    // Only add padding if not already set by feed_padding
+    if ( $feed_padding <= 0 ) {
+        $custom_styles[] = 'padding: 15px';
+    }
     $custom_styles[] = 'border-radius: 8px';
 }
 
@@ -329,6 +361,13 @@ if ( 'grid' === $feed->layout_type ) {
 
 if ( 'none' !== $hover_effect ) {
     $feed_classes[] = 'bwg-igf-hover-' . $hover_effect;
+}
+
+// Add image height mode class (Feature #165)
+if ( 'original' === $image_height_mode ) {
+    $feed_classes[] = 'bwg-igf-image-original';
+} elseif ( 'fixed' === $image_height_mode ) {
+    $feed_classes[] = 'bwg-igf-image-fixed';
 }
 
 // Output custom CSS if provided
