@@ -1,5 +1,135 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-25 (Feature #191 - Settings displays last update check timestamp)
+
+### Feature Completed
+- **Feature #191: Settings displays last update check timestamp** - PASSED ✅
+
+### Feature Details
+- **ID:** 191
+- **Category:** functional
+- **Name:** Settings displays last update check timestamp
+- **Description:** The plugin settings page shows when the last update check occurred, helping administrators know if the update information is current.
+
+### Implementation Summary
+
+#### Changes Made
+**File Modified:** includes/class-bwg-igf-github-updater.php
+- Added LAST_CHECKED_OPTION constant for storing timestamp in wp_options
+- Added get_last_checked() method to retrieve stored timestamp
+- Added set_last_checked() method to store current timestamp
+- Added get_last_checked_formatted() method to format timestamp for display
+- Updated get_status() to include last_checked and last_checked_formatted fields
+- Updated check_now() to record timestamp when checking for updates
+
+**File Modified:** includes/admin/class-bwg-igf-admin-ajax.php
+- Updated check_github_updates handler to return last_checked and last_checked_formatted in AJAX response
+
+**File Modified:** templates/admin/settings.php
+- Added "Last Checked:" row to GitHub Updates section with span id="bwg-igf-last-checked"
+- Added status span for showing spinner during check
+
+**File Modified:** assets/js/admin.js
+- Updated handleCheckGitHubUpdates to update the timestamp display after successful check
+- Added spinner during AJAX request
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to plugin settings page** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings
+
+2. **Step 2: Find last checked timestamp display** - ✅ VERIFIED
+   - Found "Last Checked:" field in GitHub Updates section
+
+3. **Step 3: Note the displayed time** - ✅ VERIFIED
+   - Initially showed "Never" (first time check)
+
+4. **Step 4: Click manual check for updates button** - ✅ VERIFIED
+   - Clicked "Check for Updates Now" button
+   - Success message displayed: "You are running the latest version."
+
+5. **Step 5: Verify timestamp updates to current time** - ✅ VERIFIED
+   - Timestamp updated from "Never" to "January 25, 2026 9:41 pm"
+   - Timestamp persists after page refresh (stored in database)
+
+### Console Errors
+- None
+
+### Screenshots
+- feature-191-before-check.png - Settings page before update check
+- feature-191-last-checked-never.png - Shows "Last Checked: Never"
+- feature-191-timestamp-updated.png - Shows timestamp after clicking check
+- feature-191-timestamp-persists.png - Timestamp persists after page refresh
+
+### Git Operations
+- Commit: c68d8ed - Feature #191: Settings displays last update check timestamp
+
+### Stats
+- Features Passing: 190/191 (99.5%)
+- Features In Progress: 1
+- Feature #191 completed and verified
+
+---
+
+## Session: 2026-01-25 (Feature #189 - Settings page shows link to GitHub releases)
+
+### Feature Completed
+- **Feature #189: Settings page shows link to GitHub releases** - PASSED ✅
+
+### Feature Details
+- **ID:** 189
+- **Category:** functional
+- **Name:** Settings page shows link to GitHub releases
+- **Description:** The plugin settings or about page includes a link to the GitHub releases page, allowing users to view release history, changelog, and download previous versions if needed.
+
+### Implementation Summary
+
+#### Changes Made
+**File Modified:** templates/admin/settings.php
+- Added new "Releases:" row to the GitHub Updates section
+- Link points to: https://github.com/sawdustandcoffee/bwg-instagram-feed/releases
+- Link opens in new tab with `target="_blank"` and `rel="noopener noreferrer"`
+- Includes helpful description text: "(Release history, changelog, and previous versions)"
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to plugin settings page** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/wp-admin/admin.php?page=bwg-igf-settings
+
+2. **Step 2: Look for GitHub or releases link** - ✅ VERIFIED
+   - Found "Releases:" label with "View All Releases" link in GitHub Updates section
+
+3. **Step 3: Click link and verify it opens correct GitHub releases page** - ✅ VERIFIED
+   - Link opens https://github.com/sawdustandcoffee/bwg-instagram-feed/releases in new tab
+
+4. **Step 4: Verify link works (not 404)** - ✅ VERIFIED
+   - Page loads correctly with 200 OK status
+
+5. **Step 5: Check releases page shows actual plugin releases** - ✅ VERIFIED
+   - Shows v1.3.7 (Latest), v1.3.6, v1.3.5, v1.3.4, v1.2.0, v1.0.2
+   - Each release has downloadable zip assets
+
+### Console Errors
+- None
+
+### Screenshots
+- feature-189-settings-page-releases-link.png - Shows settings page header
+- feature-189-github-releases-link.png - Shows GitHub Updates section with releases link
+- feature-189-github-releases-page.png - Shows actual GitHub releases page
+
+### Git Operations
+- Commit: d02933f - Feature #189: Add GitHub releases link to settings page
+
+### Result
+Feature #189 PASSES. All verification steps confirmed working.
+
+### Stats
+- Features Passing: 189/191 (99.0%)
+- Features In Progress: 2 (other agents working)
+- Feature #189 completed and verified
+
+---
+
 ## Session: 2026-01-25 (Feature #187 - Version constant is available for code use)
 
 ### Feature Verified
@@ -22596,3 +22726,8 @@ Feature Progress: 185/191 passing (96.9%)
 ### Stats
 - Features Passing: 187/191 (97.9%)
 
+[Testing] 2026-01-25 16:37 Feature #162 verified - still passing (Feed saves with validation warning instead of blocking)
+[Feature #188] Settings page shows current installed version - PASSED. Commit: 1c70793
+[Testing] 2026-01-25 16:41 Feature #3 verified - still passing (Admin menu appears after activation)
+[Testing] 2026-01-25 16:41 Feature #3 verified - still passing (Admin menu appears after activation)
+[Testing] Sun Jan 25 16:42:23 EST 2026 - Feature #70 verified - Feed persists after logout/login - PASSES
