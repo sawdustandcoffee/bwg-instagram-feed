@@ -51,6 +51,13 @@ class BWG_IGF_Image_Proxy {
     const CACHE_DURATION = 604800;
 
     /**
+     * WP Cron hook name for cache cleanup.
+     *
+     * @var string
+     */
+    const CRON_HOOK = 'bwg_igf_proxy_cache_cleanup';
+
+    /**
      * Allowed Instagram CDN domains.
      *
      * @var array
@@ -78,6 +85,50 @@ class BWG_IGF_Image_Proxy {
      */
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+
+        // Register the cron hook for cache cleanup.
+        add_action( self::CRON_HOOK, array( __CLASS__, 'cleanup_expired' ) );
+    }
+
+    /**
+     * Schedule the cache cleanup cron job.
+     *
+     * Called on plugin activation to set up periodic cleanup of expired cache files.
+     */
+    public static function schedule_cleanup() {
+        if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
+            wp_schedule_event( time(), 'daily', self::CRON_HOOK );
+        }
+    }
+
+    /**
+     * Unschedule the cache cleanup cron job.
+     *
+     * Called on plugin deactivation to remove the scheduled event.
+     */
+    public static function unschedule_cleanup() {
+        $timestamp = wp_next_scheduled( self::CRON_HOOK );
+        if ( $timestamp ) {
+            wp_unschedule_event( $timestamp, self::CRON_HOOK );
+        }
+    }
+
+    /**
+     * Check if the cron job is scheduled.
+     *
+     * @return bool True if cron job is scheduled.
+     */
+    public static function is_cleanup_scheduled() {
+        return (bool) wp_next_scheduled( self::CRON_HOOK );
+    }
+
+    /**
+     * Get the next scheduled cleanup time.
+     *
+     * @return int|false Unix timestamp of next scheduled run, or false if not scheduled.
+     */
+    public static function get_next_cleanup_time() {
+        return wp_next_scheduled( self::CRON_HOOK );
     }
 
     /**
