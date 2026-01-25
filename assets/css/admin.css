@@ -84,6 +84,17 @@
     margin-top: 2px;
 }
 
+.bwg-igf-version {
+    display: inline-block;
+    font-size: 11px;
+    color: #fff;
+    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
 /* Dashboard widgets */
 .bwg-igf-dashboard-widgets {
     display: grid;

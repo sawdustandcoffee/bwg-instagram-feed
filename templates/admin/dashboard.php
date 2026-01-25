@@ -18,6 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="bwg-igf-branding">
             <h1><?php esc_html_e( 'BWG Instagram Feed', 'bwg-instagram-feed' ); ?></h1>
             <span class="bwg-igf-brand-tagline"><?php esc_html_e( 'by Boston Web Group', 'bwg-instagram-feed' ); ?></span>
+            <span class="bwg-igf-version"><?php /* translators: %s: plugin version number */ printf( esc_html__( 'Version %s', 'bwg-instagram-feed' ), esc_html( BWG_IGF_VERSION ) ); ?></span>
         </div>
     </div>
 
