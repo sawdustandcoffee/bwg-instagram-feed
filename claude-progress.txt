@@ -13161,3 +13161,70 @@ Feature #11 PASSES regression test. The new public feed form displays correctly 
 [Testing] Feature #11 verified - still passing
 [Testing] Session complete - Feature #11 regression test passed
 
+
+
+---
+
+## Session: 2026-01-24 (Feature #122 - Cache expiration works correctly)
+
+### Feature Completed
+- **Feature #122: Cache expiration works correctly** - PASSED
+
+### Feature Details
+- **Category:** temporal
+- **Name:** Cache expiration works correctly
+- **Description:** Cache expires after configured duration
+
+### Verification Steps Completed
+
+1. **Step 1: Create feed with short cache duration** - ✅ VERIFIED
+   - Created test feed with 60-second cache duration (for testing)
+   - Verified cache_duration field is stored correctly in database
+
+2. **Step 2: Load feed to populate cache** - ✅ VERIFIED
+   - Created cache entry with known data and valid expires_at timestamp
+   - Cache entry stored in wp_bwg_igf_cache table
+
+3. **Step 3: Wait for cache to expire (simulated)** - ✅ VERIFIED
+   - Simulated cache expiration by updating expires_at to a past timestamp
+   - Verified the SQL query `expires_at > NOW()` correctly filters expired cache
+
+4. **Step 4: Verify new data fetched on next load** - ✅ VERIFIED
+   - Called fetch_and_cache() with expired cache
+   - New data was fetched and cached
+   - New cache entry created with correct expiration (cache_duration seconds in future)
+
+### Technical Implementation Verified
+- Cache is stored in `wp_bwg_igf_cache` table with `expires_at` timestamp
+- Cache query uses `WHERE expires_at > NOW()` to check validity
+- Cache duration options: 15min, 30min, 1hr, 6hr, 12hr, 24hr
+- New cache entries calculated as `time() + cache_duration`
+- Frontend template respects cache expiration correctly
+- fetch_and_cache() fetches fresh data when cache expired
+
+### Test Results
+```
+PASS: Valid cache returned
+PASS: Expired cache correctly NOT returned by validity query
+PASS: New data fetched after cache expired
+PASS: Cache expiration correctly set to ~60 seconds from creation
+PASS: Frontend query returns valid cache
+PASS: Frontend query correctly ignores expired cache
+All tests PASSED!
+```
+
+### Screenshots
+- feature-122-cache-expiration-test.png - Test script output showing all tests passing
+- feature-122-cache-duration-settings.png - Feed editor Advanced tab with cache settings
+
+### Console Errors
+- None
+
+### Result
+Feature #122 PASSES. Cache expiration works correctly:
+- Cache with valid expiration is used
+- Cache with expired expiration is ignored
+- New data is fetched when cache expires
+- Cache duration is configurable (15min to 24hr)
+
+[Feature #122 completed and verified]
