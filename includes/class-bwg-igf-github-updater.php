@@ -102,6 +102,13 @@ class BWG_IGF_GitHub_Updater {
     }
 
     /**
+     * Hardcoded GitHub repository URL.
+     *
+     * @var string
+     */
+    const GITHUB_REPO_URL = 'https://github.com/sawdustandcoffee/bwg-instagram-feed';
+
+    /**
      * Constructor.
      */
     private function __construct() {
@@ -109,9 +116,8 @@ class BWG_IGF_GitHub_Updater {
         $this->plugin_slug    = dirname( $this->plugin_file );
         $this->current_version = BWG_IGF_VERSION;
 
-        // Get GitHub settings.
-        $github_url = get_option( 'bwg_igf_github_repo_url', '' );
-        $this->parse_github_url( $github_url );
+        // Use hardcoded GitHub repository URL.
+        $this->parse_github_url( self::GITHUB_REPO_URL );
 
         // Only hook if we have valid GitHub settings.
         if ( $this->is_configured() ) {

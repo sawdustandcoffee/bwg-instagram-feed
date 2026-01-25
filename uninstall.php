@@ -46,7 +46,6 @@ if ( $delete_data ) {
         'bwg_igf_delete_data_on_uninstall',
         'bwg_igf_instagram_app_id',
         'bwg_igf_instagram_app_secret',
-        'bwg_igf_github_repo_url',
     );
 
     foreach ( $options as $option ) {
