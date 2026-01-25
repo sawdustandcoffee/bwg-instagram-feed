@@ -3,7 +3,7 @@
  * Plugin Name: BWG Instagram Feed
  * Plugin URI: https://bostonwebgroup.com/plugins/instagram-feed
  * Description: Display Instagram feeds on your WordPress website with customizable layouts, styling, and both public and connected account support.
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: Boston Web Group
  * Author URI: https://bostonwebgroup.com
  * License: GPL v2 or later
@@ -133,6 +133,9 @@ final class BWG_Instagram_Feed {
         // Load GitHub updater for plugin updates.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-github-updater.php';
         BWG_IGF_GitHub_Updater::get_instance();
+
+        // Load Image Proxy REST API for bypassing CORS on Instagram images.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
     }
 
     /**
@@ -358,8 +361,9 @@ final class BWG_Instagram_Feed {
             'bwg-igf-frontend',
             'bwgIgfFrontend',
             array(
-                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-                'nonce'   => wp_create_nonce( 'bwg_igf_frontend_nonce' ),
+                'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+                'nonce'        => wp_create_nonce( 'bwg_igf_frontend_nonce' ),
+                'proxyBaseUrl' => rest_url( BWG_IGF_Image_Proxy::API_NAMESPACE . BWG_IGF_Image_Proxy::API_ROUTE ),
             )
         );
     }
