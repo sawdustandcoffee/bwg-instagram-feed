@@ -38,25 +38,109 @@ jobs:
           # Store as workflow output variable
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
+      - name: Check if version already exists
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          TAG="v${VERSION}"
+
+          echo "Checking if tag ${TAG} already exists..."
+
+          # Check if the tag already exists in the repository
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "::error::================================================================="
+            echo "::error::Release ${TAG} already exists!"
+            echo "::error::================================================================="
+            echo "::error::"
+            echo "::error::A release with version ${VERSION} has already been published."
+            echo "::error::To create a new release, you must bump the version number."
+            echo "::error::"
+            echo "::error::To fix this:"
+            echo "::error::  1. Edit bwg-instagram-feed.php"
+            echo "::error::  2. Update the 'Version:' in the plugin header"
+            echo "::error::  3. Update the BWG_IGF_VERSION constant"
+            echo "::error::  4. Commit and push the changes"
+            echo "::error::"
+            echo "::error::================================================================="
+            exit 1
+          fi
+
+          echo "✓ Tag ${TAG} does not exist. Proceeding with release."
+
       - name: Create plugin zip
         run: |
-          # Create a clean directory for the plugin
+          set -e  # Exit immediately on any error
+
+          echo "Creating distribution directory..."
           mkdir -p dist/bwg-instagram-feed
+
+          # Verify required files exist before copying
+          echo "Verifying required files exist..."
+          MISSING_FILES=""
+
+          if [ ! -f "bwg-instagram-feed.php" ]; then
+            MISSING_FILES="$MISSING_FILES bwg-instagram-feed.php"
+          fi
+          if [ ! -f "uninstall.php" ]; then
+            MISSING_FILES="$MISSING_FILES uninstall.php"
+          fi
+          if [ ! -d "assets" ]; then
+            MISSING_FILES="$MISSING_FILES assets/"
+          fi
+          if [ ! -d "includes" ]; then
+            MISSING_FILES="$MISSING_FILES includes/"
+          fi
+          if [ ! -d "templates" ]; then
+            MISSING_FILES="$MISSING_FILES templates/"
+          fi
+
+          if [ -n "$MISSING_FILES" ]; then
+            echo "::error::Required files/directories are missing:$MISSING_FILES"
+            echo "Please ensure all required plugin files are committed to the repository."
+            exit 1
+          fi
+
+          echo "✓ All required files found. Copying to distribution directory..."
 
           # Copy only the files needed for the plugin
           cp bwg-instagram-feed.php dist/bwg-instagram-feed/
           cp uninstall.php dist/bwg-instagram-feed/
-          cp README.md dist/bwg-instagram-feed/
+
+          # README.md is optional
+          if [ -f "README.md" ]; then
+            cp README.md dist/bwg-instagram-feed/
+          fi
 
           # Copy directories
           cp -r assets dist/bwg-instagram-feed/
           cp -r includes dist/bwg-instagram-feed/
           cp -r templates dist/bwg-instagram-feed/
-          cp -r languages dist/bwg-instagram-feed/
+
+          # languages directory is optional
+          if [ -d "languages" ]; then
+            cp -r languages dist/bwg-instagram-feed/
+          fi
 
           # Create the zip file
+          echo "Creating zip file..."
           cd dist
-          zip -r bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip bwg-instagram-feed
+          if ! zip -r bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip bwg-instagram-feed; then
+            echo "::error::Failed to create plugin zip file"
+            echo "Check that the zip command is available and there's enough disk space."
+            exit 1
+          fi
+
+          # Verify zip was created successfully
+          if [ ! -f "bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip" ]; then
+            echo "::error::Zip file was not created successfully"
+            exit 1
+          fi
+
+          ZIP_SIZE=$(stat -c%s "bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip" 2>/dev/null || stat -f%z "bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip")
+          echo "=========================================="
+          echo "✓ Plugin zip created successfully!"
+          echo "File: bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip"
+          echo "Size: $ZIP_SIZE bytes"
+          echo "=========================================="
 
           # Also create a generic latest zip for easy download
           cp bwg-instagram-feed-${{ steps.get_version.outputs.VERSION }}.zip bwg-instagram-feed.zip
