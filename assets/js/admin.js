@@ -37,6 +37,9 @@
             // Delete feed confirmation
             $(document).on('click', '.bwg-igf-delete-feed', this.handleDeleteFeed);
 
+            // Duplicate feed
+            $(document).on('click', '.bwg-igf-duplicate-feed', this.handleDuplicateFeed);
+
             // Save feed
             $(document).on('submit', '#bwg-igf-feed-form', this.handleSaveFeed);
 
@@ -524,6 +527,65 @@
                 backgroundColor: bgColor || '',
                 customCSS: $('#bwg-igf-custom-css').val() || ''
             };
+        },
+
+        /**
+         * Feature #16: Duplicate feed handler
+         * Creates a copy of an existing feed with '(Copy)' suffix
+         */
+        handleDuplicateFeed: function(e) {
+            e.preventDefault();
+
+            var $button = $(this);
+            var feedId = $button.data('feed-id');
+
+            // Prevent double-click
+            if ($button.data('duplicating')) {
+                return;
+            }
+
+            // Mark as duplicating
+            $button.data('duplicating', true);
+            $button.css('pointer-events', 'none').css('opacity', '0.5');
+
+            $.ajax({
+                url: bwgIgfAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'bwg_igf_duplicate_feed',
+                    nonce: bwgIgfAdmin.nonce,
+                    feed_id: feedId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success notification
+                        BWGIGFAdmin.showNotice('success', response.data.message || 'Feed duplicated successfully!');
+
+                        // Redirect to feeds list to show the new copy
+                        if (response.data.redirect) {
+                            setTimeout(function() {
+                                window.location.href = response.data.redirect;
+                            }, 1000);
+                        } else {
+                            // Reload to show new feed
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1000);
+                        }
+                    } else {
+                        // Reset button state on failure
+                        $button.data('duplicating', false);
+                        $button.css('pointer-events', '').css('opacity', '');
+                        BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
+                    }
+                },
+                error: function() {
+                    // Reset button state on error
+                    $button.data('duplicating', false);
+                    $button.css('pointer-events', '').css('opacity', '');
+                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+                }
+            });
         },
 
         handleDeleteFeed: function(e) {
