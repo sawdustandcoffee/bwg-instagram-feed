@@ -10262,3 +10262,139 @@ The feature was already implemented in the codebase:
 - Percentage: 51.7%
 
 [Feature #90 completed and verified]
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #65 Regression Test)
+
+### Feature Tested
+- **Feature #65: Breadcrumbs show correct path** - REGRESSION TEST PASSED
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Breadcrumbs show correct path
+- **Description:** Breadcrumb navigation reflects current location
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to feed editor** - VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=edit&feed_id=1
+   - Feed editor loaded successfully
+
+2. **Step 2: Verify breadcrumbs show: Dashboard > Feeds > Edit** - VERIFIED
+   - Breadcrumb navigation present with role='Breadcrumb'
+   - Shows: Dashboard > Feeds > Edit
+   - Dashboard links to plugin dashboard
+   - Feeds links to feeds list
+   - Edit is current page (not a link)
+
+3. **Step 3: Click Feeds in breadcrumb** - VERIFIED
+   - Clicked 'Feeds' link in breadcrumb
+   - Link correctly points to admin.php?page=bwg-igf-feeds
+
+4. **Step 4: Verify navigates to feeds list** - VERIFIED
+   - Successfully navigated to Feeds list page
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Page shows 'Instagram Feeds' with table of all feeds
+
+### Screenshots
+- feature-65-breadcrumb-verified.png - Breadcrumb on feed editor page
+- feature-65-feeds-list-page.png - Feeds list page after clicking breadcrumb
+
+### Console Errors
+- None
+
+### Result
+Feature #65 PASSES regression test. Breadcrumb navigation works correctly:
+- Displays proper path: Dashboard > Feeds > Edit
+- Links are functional and navigate to correct pages
+- Current page indicator (Edit) is not a link
+
+[Testing] Feature #65 verified - still passing
+[Testing] Session complete - Feature #65 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Feature #99 - Long text truncates properly)
+
+### Feature Completed
+- **Feature #99: Long text truncates properly** - PASSED ✅
+
+### Feature Details
+- **Category:** responsive
+- **Name:** Long text truncates properly
+- **Description:** Long captions and text dont break layout
+
+### Verification Steps Completed
+
+1. **Step 1: Display feed with long captions** - ✅ VERIFIED
+   - Created test feed with 'longcaptiontest' username
+   - Feed ID: 26, Test page ID: 40
+   - URL: http://localhost:8088/?page_id=40
+   - Test includes: very long paragraphs, many hashtags, special characters, 
+     unbreakable long words, multi-line text, mentions, emojis, and long URLs
+
+2. **Step 2: View on various screen sizes** - ✅ VERIFIED
+   - Desktop (1280px): No horizontal overflow
+   - Tablet (768px): No horizontal overflow
+   - Mobile (375px): No horizontal overflow
+
+3. **Step 3: Verify text truncates or wraps appropriately** - ✅ VERIFIED
+   - Long paragraphs wrap naturally
+   - Unbreakable long words break with word-break: break-word
+   - Long URLs break at container boundary
+   - Popup captions display full text with proper wrapping
+
+4. **Step 4: Verify no overflow or layout break** - ✅ VERIFIED
+   - JavaScript evaluation confirms scrollWidth === clientWidth on all viewport sizes
+   - Grid layout adapts correctly (3 columns → 1 column on mobile)
+   - Popup content stays within viewport on mobile
+
+### Implementation Details
+
+**Existing CSS already handles long text properly:**
+- `.bwg-igf-popup-caption` (frontend.css lines 201-210):
+  - word-wrap: break-word
+  - overflow-wrap: break-word
+  - word-break: break-word
+  - hyphens: auto
+  - white-space: pre-wrap
+
+- `.bwg-igf-overlay-content` (frontend.css lines 69-76):
+  - max-width: 100%
+  - overflow: hidden
+
+### Test Data (longcaptiontest username)
+The generate_long_caption_posts() method in class-bwg-igf-instagram-api.php 
+generates 12 posts with various long caption test cases:
+1. Very long paragraph with many hashtags
+2. Caption with 25+ hashtags
+3. Special characters (quotes, ampersand, unicode)
+4. Unbreakable 200+ character word
+5. Multi-line caption with line breaks
+6. Long location name and mentions
+7. Short caption (control)
+8. Normal caption (control)
+9. Formatted announcement with emojis
+10. Technical description
+11. Many emojis
+12. Very long URL
+
+### Screenshots
+- feature-99-long-caption-desktop.png - Grid layout at 1280px
+- feature-99-long-caption-tablet.png - Grid layout at 768px
+- feature-99-long-caption-mobile.png - Grid layout at 375px
+- feature-99-popup-long-caption.png - Popup with long caption
+- feature-99-popup-unbreakable-word.png - Popup with unbreakable word
+- feature-99-popup-long-url.png - Popup with long URL
+- feature-99-popup-mobile-unbreakable.png - Mobile popup with unbreakable word
+- feature-99-mobile-full-page.png - Full page mobile view
+
+### Console Errors
+- None
+
+### Current Status
+- Feature #99 marked as passing
+
+[Feature #99 completed and verified]
