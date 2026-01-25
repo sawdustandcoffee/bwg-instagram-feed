@@ -11153,3 +11153,75 @@ Feature #86 PASSES regression test. Post count validation works correctly:
 [Testing] Feature #86 verified - still passing
 [Testing] Session complete - Feature #86 regression test passed
 
+[Testing] Feature #65 verified - still passing
+[Testing] Session complete - Feature #65 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Feature #104 - Popup modal keyboard accessible)
+
+### Feature Completed
+- **Feature #104: Popup modal is keyboard accessible** - PASSED ✅
+
+### Feature Details
+- **Category:** accessibility
+- **Name:** Popup modal is keyboard accessible
+- **Description:** Lightbox can be used entirely via keyboard
+
+### Verification Steps Completed
+
+1. **Step 1: Tab to feed post on frontend** - ✅ VERIFIED
+   - Feed items have tabindex="0" for keyboard focus
+   - Visible focus indicator (pink outline) appears on focused item
+
+2. **Step 2: Press Enter to open popup** - ✅ VERIFIED
+   - Pressing Enter on focused feed item opens the lightbox popup
+
+3. **Step 3: Verify focus moves to popup** - ✅ VERIFIED
+   - Focus automatically moves to the Close button
+   - Popup now has proper ARIA attributes:
+     - role="dialog"
+     - aria-modal="true"
+     - aria-label="Instagram post lightbox"
+
+4. **Step 4: Tab through popup controls** - ✅ VERIFIED
+   - Tab cycles through: Close → Previous → Next → View on Instagram → Close
+   - Focus trapping prevents focus from escaping popup
+   - Shift+Tab works in reverse order
+
+5. **Step 5: Press Escape to close** - ✅ VERIFIED
+   - Escape key closes the popup
+
+6. **Step 6: Verify focus returns to trigger element** - ✅ VERIFIED
+   - Focus returns to the feed item that triggered the popup
+
+### Implementation Details
+
+**JavaScript Changes (assets/js/frontend.js):**
+- Added ARIA attributes to popup: role="dialog", aria-modal="true", aria-label
+- Improved aria-labels for buttons: "Close lightbox", "Previous post", "Next post"
+- Added focus trapping with handleTabKey() method
+- Fixed focus management with setTimeout to ensure popup is visible before focusing
+- Focus stored and restored on close
+
+**CSS Changes (assets/css/frontend.css):**
+- Added visible focus styles for .bwg-igf-item (pink outline)
+- Added focus styles for popup close button (white outline with background)
+- Added focus styles for popup nav buttons
+- Added focus styles for popup link
+
+**Version bump (bwg-instagram-feed.php):**
+- Bumped BWG_IGF_VERSION to 1.0.1 for cache refresh
+
+### Screenshots
+- feature-104-keyboard-accessible-focus.png - Feed with focus visible on item
+- feature-104-popup-keyboard-focus.png - Popup with focus on close button
+
+### Console Errors
+- None
+
+### Current Status
+- Feature #104 marked as passing
+
+[Feature #104 completed and verified]
