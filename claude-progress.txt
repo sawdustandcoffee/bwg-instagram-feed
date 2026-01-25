@@ -1,5 +1,79 @@
 # BWG Instagram Feed - Development Progress
 
+## Session: 2026-01-24 (Feature #103 - Images have alt text on frontend)
+
+### Feature Completed
+- **Feature #103: Images have alt text on frontend** - PASSED ✅
+
+### Feature Details
+- **Category:** accessibility
+- **Name:** Images have alt text on frontend
+- **Description:** Feed images include descriptive alt text
+
+### Verification Steps Completed
+
+1. **Step 1: Display feed on frontend** - ✅ VERIFIED
+   - Navigated to http://localhost:8088/?page_id=14 (Instagram Feed Test page)
+   - Feed displays correctly with 12 posts from @testuser
+
+2. **Step 2: Inspect image elements** - ✅ VERIFIED
+   - Used JavaScript evaluation to inspect all feed images
+   - Found 12 images in the feed grid/slider
+
+3. **Step 3: Verify alt attributes present** - ✅ VERIFIED
+   - All 12 images have `hasAlt: true`
+   - No images are missing alt attributes
+
+4. **Step 4: Verify alt text is descriptive** - ✅ VERIFIED
+   - All images have descriptive alt text (using post captions)
+   - Example: "Test post 1 from @testuser - This is a sample caption for testing purposes. #test #instagram #feed"
+   - Alt text length: 98-99 characters (substantial, not just "Instagram post")
+   - All 12 images marked as `isDescriptive: true`
+
+### Additional Verification: Popup Image Alt Text
+- Opened popup/lightbox by clicking first post
+- Verified popup image also has alt text
+- Popup image alt: "Test post 1 from @testuser - This is a sample caption for testing purposes. #test #instagram #feed"
+- Alt text correctly copies from original feed image
+
+### Implementation Details
+
+**PHP Template (templates/frontend/feed.php line 382):**
+```php
+alt="<?php echo esc_attr( $post['caption'] ?? __( 'Instagram post', 'bwg-instagram-feed' ) ); ?>"
+```
+- Uses post caption as alt text
+- Fallback to "Instagram post" if caption is empty
+
+**JavaScript Dynamic Rendering (assets/js/frontend.js line 137):**
+```javascript
+html += ' alt="' + self.escapeAttr(post.caption || 'Instagram post') + '"';
+```
+- Same logic for dynamically loaded feeds
+
+**JavaScript Popup (assets/js/frontend.js line 778):**
+```javascript
+this.popup.querySelector('.bwg-igf-popup-image').alt = img.alt || '';
+```
+- Popup image inherits alt from original feed image
+
+### Screenshots
+- feature-103-frontend-feed.png - Feed with images showing alt text
+- feature-103-popup-with-alt.png - Popup showing image with alt text
+
+### Console Errors
+- None
+
+### Current Status
+- Feature #103 marked as passing
+- Total features: 149
+- Previous passing: 79 → Now: 80
+- Percentage: ~53.7%
+
+[Feature #103 completed and verified]
+
+---
+
 ## Session: 2026-01-24 (Feature #97 - Slider layout responsive on frontend)
 
 ### Feature Completed
@@ -10763,3 +10837,122 @@ Feature #38 PASSES regression test. The feed ordering 'Newest First' functionali
 - All form inputs have proper label associations for accessibility
 
 [Feature #102 verified and marked as passing]
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #10 Regression Test)
+
+### Feature Tested
+- **Feature #10: Plugin deactivates without errors** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** functional
+- **Name:** Plugin deactivates without errors
+- **Description:** Plugin can be deactivated cleanly
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to Plugins page** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/plugins.php
+   - Plugins page loaded successfully
+
+2. **Step 2: Click 'Deactivate' on BWG Instagram Feed** - ✅ VERIFIED
+   - Clicked Deactivate link on BWG Instagram Feed plugin
+
+3. **Step 3: Verify no PHP errors during deactivation** - ✅ VERIFIED
+   - 'Plugin deactivated.' message displayed
+   - No PHP errors or warnings shown
+   - Page loaded cleanly
+
+4. **Step 4: Verify plugin shows as deactivated** - ✅ VERIFIED
+   - Plugin now shows 'Activate' link (instead of 'Deactivate')
+   - Filter shows: Active (0), Inactive (3)
+
+5. **Step 5: Verify admin menu is removed** - ✅ VERIFIED
+   - 'Instagram Feed' menu item disappeared from admin sidebar
+   - Dashboard, Feeds, Accounts, Settings submenus all removed
+
+6. **Step 6: Verify database tables are NOT deleted on deactivation** - ✅ VERIFIED
+   - Checked database via MySQL: SHOW TABLES LIKE '%bwg_igf%'
+   - All 3 tables still exist:
+     - wp_bwg_igf_accounts
+     - wp_bwg_igf_cache
+     - wp_bwg_igf_feeds
+
+### Post-Test Cleanup
+- Plugin reactivated to restore system state
+- Verified plugin is active again with admin menu restored
+
+### Console Errors
+- Only unrelated favicon 404 error (http://localhost:8088/favicon.ico)
+
+### Screenshots
+- feature-10-before-deactivate.png - Plugin active before deactivation
+- feature-10-after-deactivate.png - Plugin deactivated with success message
+- feature-10-reactivated.png - Plugin reactivated after test
+
+### Result
+Feature #10 PASSES regression test. Plugin deactivation works correctly:
+- Deactivates without any PHP errors
+- Shows proper success message
+- Removes admin menu items
+- Preserves database tables (data not lost)
+
+[Testing] Feature #10 verified - still passing
+[Testing] Session complete - Feature #10 regression test passed
+
+
+---
+
+## Session: 2026-01-24 (Testing Agent - Feature #65 Regression Test)
+
+### Feature Tested
+- **Feature #65: Breadcrumbs show correct path** - REGRESSION TEST PASSED ✅
+
+### Feature Details
+- **Category:** navigation
+- **Name:** Breadcrumbs show correct path
+- **Description:** Breadcrumb navigation reflects current location
+
+### Verification Steps Completed
+
+1. **Step 1: Navigate to feed editor** - ✅ VERIFIED
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=edit&feed_id=1
+   - Feed editor loaded successfully
+
+2. **Step 2: Verify breadcrumbs show: Dashboard > Feeds > Edit** - ✅ VERIFIED
+   - Breadcrumb navigation present with role='Breadcrumb'
+   - Shows: Dashboard › Feeds › Edit
+   - Dashboard links to plugin dashboard
+   - Feeds links to feeds list
+   - Edit is current page (not a link)
+
+3. **Step 3: Click Feeds in breadcrumb** - ✅ VERIFIED
+   - Clicked 'Feeds' link in breadcrumb
+   - Link correctly points to admin.php?page=bwg-igf-feeds
+
+4. **Step 4: Verify navigates to feeds list** - ✅ VERIFIED
+   - Successfully navigated to Feeds list page
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds
+   - Page shows 'Instagram Feeds' with table of all feeds
+
+### Notes
+- Plugin was deactivated from previous session - reactivated successfully
+- WordPress session management required multiple re-logins
+
+### Screenshots
+- feature-65-breadcrumb-regression-test.png - Breadcrumb on feed editor page
+- feature-65-feeds-list-after-breadcrumb.png - Feeds list page after clicking breadcrumb
+
+### Console Errors
+- None
+
+### Result
+Feature #65 PASSES regression test. Breadcrumb navigation works correctly:
+- Displays proper path: Dashboard › Feeds › Edit
+- Links are functional and navigate to correct pages
+- Current page indicator (Edit) is not a link
+
+[Testing] Feature #65 verified - still passing
+[Testing] Session complete - Feature #65 regression test passed
