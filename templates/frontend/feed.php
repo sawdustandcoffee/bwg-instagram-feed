@@ -10,6 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Load the Image Proxy class if not already loaded (for generating CORS-safe image URLs).
+if ( ! class_exists( 'BWG_IGF_Image_Proxy' ) ) {
+    require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
+}
+
 // Get feed by ID or slug
 $feed_id = ! empty( $atts['id'] ) ? absint( $atts['id'] ) : 0;
 $feed_slug = ! empty( $atts['feed'] ) ? sanitize_title( $atts['feed'] ) : '';
@@ -486,17 +491,21 @@ if ( ! empty( $custom_css ) ) :
             <div class="bwg-igf-slider-track">
         <?php endif; ?>
 
-        <?php foreach ( $posts as $post ) : ?>
+        <?php foreach ( $posts as $post ) :
+            // Generate proxy URLs for images to prevent CORS blocking
+            $thumbnail_url = ! empty( $post['thumbnail'] ) ? BWG_IGF_Image_Proxy::get_proxy_url( $post['thumbnail'] ) : '';
+            $full_image_url = ! empty( $post['full_image'] ) ? BWG_IGF_Image_Proxy::get_proxy_url( $post['full_image'] ) : '';
+        ?>
             <div
                 class="bwg-igf-item<?php echo 'slider' === $feed->layout_type ? ' bwg-igf-slider-slide' : ''; ?>"
-                data-full-image="<?php echo esc_url( $post['full_image'] ?? '' ); ?>"
+                data-full-image="<?php echo esc_url( $full_image_url ); ?>"
                 data-caption="<?php echo esc_attr( $post['caption'] ?? '' ); ?>"
                 data-likes="<?php echo esc_attr( $post['likes'] ?? 0 ); ?>"
                 data-comments="<?php echo esc_attr( $post['comments'] ?? 0 ); ?>"
                 data-link="<?php echo esc_url( $post['link'] ?? '' ); ?>"
             >
                 <img
-                    src="<?php echo esc_url( $post['thumbnail'] ?? '' ); ?>"
+                    src="<?php echo esc_url( $thumbnail_url ); ?>"
                     alt="<?php echo esc_attr( $post['caption'] ?? __( 'Instagram post', 'bwg-instagram-feed' ) ); ?>"
                     loading="lazy"
                 >
