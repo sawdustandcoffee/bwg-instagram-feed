@@ -22189,3 +22189,69 @@ Feature #180 PASSES. All verification steps confirmed working.
 ### Stats
 - Features Passing: 181/191 (94.8%)
 - Feature #180 completed and verified
+
+---
+
+## Session: 2026-01-25 (Feature #179 - Plugin Update Checker is initialized pointing to GitHub repository)
+
+### Feature Implemented
+- **Feature #179: Plugin Update Checker is initialized pointing to GitHub repository** - PASSED
+
+### Feature Details
+- **ID:** 179
+- **Category:** functional
+- **Name:** Plugin Update Checker is initialized pointing to GitHub repository
+- **Description:** The updater is initialized in the main plugin file or a dedicated updates class, configured with the correct GitHub repository URL, branch, and release asset settings.
+
+### Implementation Summary
+
+#### Changes Made
+**File Modified:** includes/class-bwg-igf-github-updater.php
+- Completely refactored to use Plugin Update Checker (PUC) library v5.5
+- Replaced ~350 lines of custom GitHub API code with ~74 lines using PUC
+- Added require_once to load PUC library from includes/lib/plugin-update-checker/
+- Uses PucFactory::buildUpdateChecker() with GitHub URL
+- Configured setBranch('main') for stable releases
+- Enabled enableReleaseAssets() to download zip from releases
+
+**File Modified:** templates/admin/settings.php
+- Updated GitHub Updates section to show PUC library info
+- Fixed PHP warnings for undefined array keys
+- Now displays "Update Library: Plugin Update Checker v5.5"
+
+### Verification Steps Completed
+
+1. **Step 1: Find PUC initialization code in plugin** - VERIFIED
+   - Code located in includes/class-bwg-igf-github-updater.php lines 76-100
+
+2. **Step 2: Verify it uses Puc_v4_Factory::buildUpdateChecker() or equivalent** - VERIFIED
+   - Uses PucFactory::buildUpdateChecker() (v5 equivalent) on line 88
+
+3. **Step 3: Check first parameter is GitHub repo URL** - VERIFIED
+   - Line 89 passes GITHUB_REPO_URL = https://github.com/sawdustandcoffee/bwg-instagram-feed
+
+4. **Step 4: Verify setBranch('main') or equivalent is called** - VERIFIED
+   - Line 95: $this->update_checker->setBranch('main');
+
+5. **Step 5: Check getVcsApi()->enableReleaseAssets() is called** - VERIFIED
+   - Line 99: $this->update_checker->getVcsApi()->enableReleaseAssets();
+
+### Console Errors
+- None
+
+### Screenshots
+- feature-179-plugin-update-checker-settings.png
+- feature-179-github-updates-section.png
+
+### Technical Details
+- Plugin Update Checker library version: 5.5
+- Library location: includes/lib/plugin-update-checker/
+- Settings page shows update available: 1.0.0 to 1.3.7
+- WP-CLI confirms: bwg-instagram-feed active available 1.0.0 1.3.7
+
+### Result
+Feature #179 PASSES. All verification steps confirmed working.
+
+### Stats
+- Features Passing: 180/191 (94.2%)
+- Feature #179 committed and verified
