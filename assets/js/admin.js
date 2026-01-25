@@ -13,6 +13,11 @@
     });
 
     var BWGIGFAdmin = {
+        // Flag to prevent double-click on save (Feature #110)
+        isSaving: false,
+        // Flag to prevent double-click on delete (Feature #111)
+        isDeleting: {},
+
         init: function() {
             this.bindEvents();
             this.initTabs();
@@ -23,6 +28,7 @@
             this.initAutoplaySpeedToggle();
             this.initPostCountValidation();
             this.initColumnCountValidation();
+            this.initBeforeUnloadWarning(); // Feature #112: Warn before page refresh during save
         },
 
         bindEvents: function() {
@@ -226,6 +232,23 @@
             $field.find('input').after($warning);
         },
 
+        /**
+         * Feature #112: Warn user before page refresh during save operation.
+         * This prevents data corruption by warning users that a save is in progress.
+         */
+        initBeforeUnloadWarning: function() {
+            window.addEventListener('beforeunload', function(e) {
+                // Only show warning if a save is in progress
+                if (BWGIGFAdmin.isSaving) {
+                    // Standard way to show a confirmation dialog
+                    e.preventDefault();
+                    // For older browsers, you need to set returnValue
+                    e.returnValue = 'A save operation is in progress. Are you sure you want to leave?';
+                    return e.returnValue;
+                }
+            });
+        },
+
         initColumnCountValidation: function() {
             var $columns = $('#bwg-igf-columns');
             var minValue = 1;
@@ -391,12 +414,24 @@
         handleDeleteFeed: function(e) {
             e.preventDefault();
 
+            var $button = $(this);
+            var feedId = $button.data('feed-id');
+
+            // Feature #111: Prevent double-click on delete
+            // Check if this specific feed is already being deleted
+            if (BWGIGFAdmin.isDeleting[feedId]) {
+                return;
+            }
+
             if (!confirm(bwgIgfAdmin.i18n.confirmDelete)) {
                 return;
             }
 
-            var $button = $(this);
-            var feedId = $button.data('feed-id');
+            // Feature #111: Mark this feed as being deleted BEFORE the AJAX call
+            BWGIGFAdmin.isDeleting[feedId] = true;
+
+            // Disable the delete button to provide visual feedback
+            $button.css('pointer-events', 'none').css('opacity', '0.5');
 
             $.ajax({
                 url: bwgIgfAdmin.ajaxUrl,
@@ -413,12 +448,20 @@
 
                         $button.closest('tr').fadeOut(function() {
                             $(this).remove();
+                            // Clean up the deletion flag
+                            delete BWGIGFAdmin.isDeleting[feedId];
                         });
                     } else {
+                        // Feature #111: Reset state on failure so user can try again
+                        delete BWGIGFAdmin.isDeleting[feedId];
+                        $button.css('pointer-events', '').css('opacity', '');
                         BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
                     }
                 },
                 error: function() {
+                    // Feature #111: Reset state on error so user can try again
+                    delete BWGIGFAdmin.isDeleting[feedId];
+                    $button.css('pointer-events', '').css('opacity', '');
                     BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
                 }
             });
@@ -426,6 +469,11 @@
 
         handleSaveFeed: function(e) {
             e.preventDefault();
+
+            // Feature #110: Prevent double-click / rapid clicks from creating multiple feeds
+            if (BWGIGFAdmin.isSaving) {
+                return;
+            }
 
             var $form = $(this);
             var $button = $form.find('button[type="submit"]');
@@ -445,6 +493,9 @@
                 $nameField.focus();
                 return;
             }
+
+            // Feature #110: Set the saving flag BEFORE any async operations
+            BWGIGFAdmin.isSaving = true;
 
             // Show loading state with spinner (Feature #92)
             $button.prop('disabled', true).addClass('bwg-igf-saving');
@@ -470,15 +521,21 @@
                         } else {
                             setTimeout(function() {
                                 $button.html(originalHtml).prop('disabled', false);
+                                // Feature #110: Reset saving flag after button re-enabled
+                                BWGIGFAdmin.isSaving = false;
                             }, 2000);
                         }
                     } else {
                         $button.html(originalHtml).prop('disabled', false).removeClass('bwg-igf-saving');
+                        // Feature #110: Reset saving flag on failure
+                        BWGIGFAdmin.isSaving = false;
                         BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
                     }
                 },
                 error: function(xhr) {
                     $button.html(originalHtml).prop('disabled', false).removeClass('bwg-igf-saving');
+                    // Feature #110: Reset saving flag on error
+                    BWGIGFAdmin.isSaving = false;
 
                     // Try to parse the error response from wp_send_json_error
                     var errorMessage = bwgIgfAdmin.i18n.error;
