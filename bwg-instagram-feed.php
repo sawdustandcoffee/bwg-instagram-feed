@@ -98,6 +98,11 @@ final class BWG_Instagram_Feed {
         BWG_IGF_API_Tracker::create_table();
         BWG_IGF_API_Tracker::init();
 
+        // Schedule smart background cache refresh cron job (Feature #25).
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-cache-refresher.php';
+        BWG_IGF_Cache_Refresher::init();
+        BWG_IGF_Cache_Refresher::schedule();
+
         flush_rewrite_rules();
     }
 
@@ -112,6 +117,10 @@ final class BWG_Instagram_Feed {
         // Unschedule API tracker cleanup cron job.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-api-tracker.php';
         BWG_IGF_API_Tracker::unschedule_cleanup();
+
+        // Unschedule cache refresh cron job (Feature #25).
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-cache-refresher.php';
+        BWG_IGF_Cache_Refresher::unschedule();
 
         flush_rewrite_rules();
     }
@@ -148,6 +157,10 @@ final class BWG_Instagram_Feed {
         // Load API tracker for rate limit monitoring.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-api-tracker.php';
         BWG_IGF_API_Tracker::init();
+
+        // Load smart background cache refresher (Feature #25).
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-cache-refresher.php';
+        BWG_IGF_Cache_Refresher::init();
 
         // Load Instagram API service.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
