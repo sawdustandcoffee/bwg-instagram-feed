@@ -112,6 +112,7 @@ $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
             if ( class_exists( 'BWG_IGF_GitHub_Updater' ) ) {
                 $updater = BWG_IGF_GitHub_Updater::get_instance();
                 $status = $updater->get_status();
+                $update_checker = $updater->get_update_checker();
 
                 if ( $status['configured'] ) {
                     $release = $updater->get_github_release();
@@ -170,8 +171,86 @@ $app_secret = get_option( 'bwg_igf_instagram_app_secret', '' );
                             <span id="bwg-igf-check-updates-status" style="margin-left: 10px;"></span>
                         </p>
                     </div>
+
+                    <!-- Debug Information -->
+                    <div class="bwg-igf-debug-info" style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+                        <h3 style="margin-top: 0; color: #856404;"><?php esc_html_e( 'Update Debug Information', 'bwg-instagram-feed' ); ?></h3>
+                        <?php
+                        // Force a fresh check
+                        if ( $update_checker ) {
+                            $update_checker->checkForUpdates();
+                            $state = $update_checker->getUpdateState();
+                            $update = $state ? $state->getUpdate() : null;
+
+                            echo '<table style="width: 100%; border-collapse: collapse;">';
+                            echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Multisite:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . ( is_multisite() ? 'Yes' : 'No' ) . '</td></tr>';
+                            echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Network Active:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . ( is_plugin_active_for_network( BWG_IGF_PLUGIN_BASENAME ) ? 'Yes' : 'No' ) . '</td></tr>';
+                            echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Is Network Admin:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . ( is_network_admin() ? 'Yes' : 'No' ) . '</td></tr>';
+                            echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Plugin File:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . esc_html( BWG_IGF_PLUGIN_FILE ) . '</td></tr>';
+                            echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Plugin Basename:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . esc_html( BWG_IGF_PLUGIN_BASENAME ) . '</td></tr>';
+                            echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Installed Version:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . esc_html( BWG_IGF_VERSION ) . '</td></tr>';
+
+                            if ( $update ) {
+                                echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Available Version:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd; color: green;">' . esc_html( $update->version ) . '</td></tr>';
+                                echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Download URL:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd; word-break: break-all;">' . esc_html( $update->download_url ?? 'N/A' ) . '</td></tr>';
+                            } else {
+                                echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Available Version:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd; color: red;">No update found or same version</td></tr>';
+                            }
+
+                            // Check GitHub API directly
+                            $api_url = 'https://api.github.com/repos/sawdustandcoffee/bwg-instagram-feed/releases/latest';
+                            $response = wp_remote_get( $api_url, array(
+                                'timeout' => 10,
+                                'headers' => array( 'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) ),
+                            ) );
+
+                            if ( is_wp_error( $response ) ) {
+                                echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>GitHub API:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd; color: red;">Error: ' . esc_html( $response->get_error_message() ) . '</td></tr>';
+                            } else {
+                                $code = wp_remote_retrieve_response_code( $response );
+                                $body = wp_remote_retrieve_body( $response );
+                                $data = json_decode( $body );
+
+                                echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>GitHub API Status:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . esc_html( $code ) . '</td></tr>';
+
+                                if ( $code === 200 && $data ) {
+                                    echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>GitHub Latest Tag:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">' . esc_html( $data->tag_name ?? 'N/A' ) . '</td></tr>';
+
+                                    $assets = $data->assets ?? array();
+                                    if ( ! empty( $assets ) ) {
+                                        echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Release Assets:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd;">';
+                                        foreach ( $assets as $asset ) {
+                                            echo esc_html( $asset->name ) . ' (' . esc_html( size_format( $asset->size ) ) . ')<br>';
+                                        }
+                                        echo '</td></tr>';
+                                    } else {
+                                        echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>Release Assets:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd; color: red;">NO ASSETS FOUND - This is likely the problem!</td></tr>';
+                                    }
+                                } elseif ( $code === 404 ) {
+                                    echo '<tr><td style="padding: 5px; border-bottom: 1px solid #ddd;"><strong>GitHub Error:</strong></td><td style="padding: 5px; border-bottom: 1px solid #ddd; color: red;">No releases found on GitHub</td></tr>';
+                                }
+                            }
+
+                            echo '</table>';
+                        }
+                        ?>
+                    </div>
+                    <?php
+                } else {
+                    ?>
+                    <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 4px;">
+                        <strong><?php esc_html_e( 'Update Checker Not Configured!', 'bwg-instagram-feed' ); ?></strong>
+                        <p><?php esc_html_e( 'The GitHub update checker failed to initialize. This may be due to a conflict with another plugin.', 'bwg-instagram-feed' ); ?></p>
+                    </div>
                     <?php
                 }
+            } else {
+                ?>
+                <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 4px;">
+                    <strong><?php esc_html_e( 'Updater Class Not Found!', 'bwg-instagram-feed' ); ?></strong>
+                    <p><?php esc_html_e( 'The BWG_IGF_GitHub_Updater class is not loaded. The updater file may be missing.', 'bwg-instagram-feed' ); ?></p>
+                </div>
+                <?php
             }
             ?>
         </div>

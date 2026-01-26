@@ -1,16 +1,34 @@
-# SQLite database lock files
+# ===========================================
+# BWG Instagram Feed - Git Ignore
+# ===========================================
+
+# -------------------------------------------
+# Database files (local development only)
+# -------------------------------------------
+*.db
 *.db-shm
 *.db-wal
-*.db
+*.sqlite
+*.sqlite3
 
-# Agent/development files
+# -------------------------------------------
+# Claude/Agent development files
+# -------------------------------------------
 .agent.lock
+.claude/
+.claude_settings*.json
+!.claude_settings.json
+CLAUDE.md
 prompts/
 app_spec.txt
 init.sh
-CLAUDE.md
+claude-progress.txt
+progress_notes.md
 
-# Test/debug PHP files in root (keep only main plugin files)
+# -------------------------------------------
+# Test/debug scripts (keep locally, not on GitHub)
+# -------------------------------------------
+# PHP test/debug files
 check_*.php
 test_*.php
 setup_*.php
@@ -33,38 +51,95 @@ recreate_*.php
 get_*.php
 force_*.php
 auth_*.php
+debug_*.php
+query_*.php
+final_*.php
+enable_*.php
+set_*.php
+auto_*.php
 
-# Playwright/testing screenshots
+# JavaScript test/debug files
+check_*.js
+get_feature*.js
+mark_feature*.js
+
+# Python test/debug files
+get_*.py
+insert_*.py
+add_*.py
+
+# Progress/tracking files
+feature*_progress.txt
+feature_*.json
+
+# Shell scripts (local dev)
+*.sh
+
+# -------------------------------------------
+# Playwright/testing artifacts
+# -------------------------------------------
 .playwright-mcp/
+test-results/
+playwright-report/
 
-# IDE files
+# -------------------------------------------
+# IDE and editor files
+# -------------------------------------------
 .idea/
 .vscode/
 *.swp
 *.swo
+*~
+.project
+.settings/
 
-# OS files
+# -------------------------------------------
+# OS generated files
+# -------------------------------------------
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Node modules (if any frontend build tools added later)
+# -------------------------------------------
+# Dependencies (install locally)
+# -------------------------------------------
 node_modules/
-
-# Composer vendor (if added later)
 vendor/
+package-lock.json
 
-# WordPress uploads (if testing locally)
-uploads/
-
-# Environment files
-.env
-.env.local
-
+# -------------------------------------------
 # Build artifacts
+# -------------------------------------------
 dist/
 build/
 
-# Docker/local dev
+# -------------------------------------------
+# Environment and secrets
+# -------------------------------------------
+.env
+.env.*
+!.env.example
+
+# -------------------------------------------
+# Docker/local development
+# -------------------------------------------
 docker-compose.yml
+docker-compose.*.yml
 wordpress_data/
 db_data/
+
+# -------------------------------------------
+# WordPress uploads (testing)
+# -------------------------------------------
+uploads/
+
+# -------------------------------------------
+# Temporary files
+# -------------------------------------------
+*.tmp
+*.temp
+*.log
+*.bak
