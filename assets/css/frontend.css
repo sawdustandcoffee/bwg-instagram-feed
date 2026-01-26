@@ -913,6 +913,85 @@
     }
 }
 
+/* Feature #34: Account Disconnected Warning State */
+.bwg-igf-account-disconnected-warning {
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+    border: 2px solid #ec407a;
+}
+
+.bwg-igf-account-disconnected-warning .bwg-igf-empty-state-icon {
+    background: linear-gradient(45deg, #ec407a 0%, #d81b60 50%, #880e4f 100%);
+    opacity: 0.9;
+}
+
+.bwg-igf-account-disconnected-warning .bwg-igf-empty-state-icon svg {
+    fill: #fff;
+}
+
+.bwg-igf-account-disconnected-warning h3 {
+    color: #880e4f;
+}
+
+.bwg-igf-account-disconnected-warning p {
+    color: #6a1b4d;
+    max-width: 400px;
+}
+
+.bwg-igf-account-disconnected-warning p a {
+    color: #d81b60;
+    font-weight: 600;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.bwg-igf-account-disconnected-warning p a:hover {
+    color: #880e4f;
+}
+
+/* Feature #35: Suggestion to use public feed */
+.bwg-igf-suggestion-box {
+    margin-top: 20px;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 100%;
+}
+
+.bwg-igf-suggestion-box p {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    color: #555;
+    max-width: 100%;
+}
+
+.bwg-igf-suggestion-box strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+.bwg-igf-suggestion-link {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    color: #fff !important;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 13px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bwg-igf-suggestion-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 39, 67, 0.3);
+    color: #fff !important;
+    text-decoration: none;
+}
+
 /* Feature #23: Stale Data Indicator */
 .bwg-igf-stale-data-indicator {
     display: inline-flex;

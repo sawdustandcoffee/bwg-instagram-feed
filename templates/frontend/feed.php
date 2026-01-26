@@ -114,6 +114,42 @@ if ( ! $has_cache ) {
 $has_source = ! empty( $feed->instagram_usernames ) || ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) );
 $needs_async_load = empty( $posts ) && $has_source;
 
+// Feature #34: Check if connected account exists and is active for connected feeds.
+// If the account is disconnected/expired, show a helpful error instead of loading state.
+$connected_account_error = false;
+$connected_account_info = null;
+if ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
+    $connected_account_info = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, username, status, expires_at FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d",
+        $feed->connected_account_id
+    ) );
+
+    if ( ! $connected_account_info ) {
+        // Account record doesn't exist (deleted)
+        $connected_account_error = 'deleted';
+        $no_cache_message = __( 'The Instagram account connected to this feed has been removed.', 'bwg-instagram-feed' );
+        $needs_async_load = false;
+    } elseif ( 'active' !== $connected_account_info->status ) {
+        // Account exists but is inactive/disconnected
+        $connected_account_error = 'inactive';
+        $no_cache_message = sprintf(
+            /* translators: %s: Instagram username */
+            __( 'The Instagram account @%s is no longer connected.', 'bwg-instagram-feed' ),
+            esc_html( $connected_account_info->username )
+        );
+        $needs_async_load = false;
+    } elseif ( ! empty( $connected_account_info->expires_at ) && strtotime( $connected_account_info->expires_at ) < time() ) {
+        // Token has expired
+        $connected_account_error = 'expired';
+        $no_cache_message = sprintf(
+            /* translators: %s: Instagram username */
+            __( 'The access token for @%s has expired.', 'bwg-instagram-feed' ),
+            esc_html( $connected_account_info->username )
+        );
+        $needs_async_load = false;
+    }
+}
+
 // Feature #24: For connected feeds, check for cache warming data before showing loading state.
 // When an account is connected, posts are pre-fetched and stored in a transient.
 if ( $needs_async_load && 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
@@ -587,6 +623,8 @@ if ( ! empty( $custom_css ) ) :
         $is_user_not_found = strpos( $no_cache_message, 'not found' ) !== false || strpos( $no_cache_message, 'was not found' ) !== false;
         // Feature #17: Detect rate limit error when no cache is available
         $is_rate_limit_error = strpos( $no_cache_message, 'temporarily limiting' ) !== false || strpos( $no_cache_message, 'rate limit' ) !== false || $is_rate_limited;
+        // Feature #34: Detect connected account error
+        $is_connected_account_error = ! empty( $connected_account_error );
         $has_error = ! empty( $no_cache_message );
 
         // Determine the appropriate warning style
@@ -597,6 +635,8 @@ if ( ! empty( $custom_css ) ) :
             $warning_class = 'bwg-igf-user-not-found-warning';
         } elseif ( $is_rate_limit_error ) {
             $warning_class = 'bwg-igf-rate-limit-error';
+        } elseif ( $is_connected_account_error ) {
+            $warning_class = 'bwg-igf-account-disconnected-warning';
         }
         ?>
         <div class="bwg-igf-empty-state <?php echo esc_attr( $warning_class ); ?>">
@@ -616,6 +656,12 @@ if ( ! empty( $custom_css ) ) :
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
                     </svg>
+                <?php elseif ( $is_connected_account_error ) : ?>
+                    <!-- Unlink/broken chain icon for disconnected accounts -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                        <path d="M17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1 0 1.43-.98 2.63-2.31 2.98l1.46 1.46C20.88 15.61 22 13.95 22 12c0-2.76-2.24-5-5-5zm-1 4h-2.19l2 2H16zM2 4.27l3.11 3.11C3.29 8.12 2 9.91 2 12c0 2.76 2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1 0-1.59 1.21-2.9 2.76-3.07L8.73 11H8v2h2.73L13 15.27V17h1.73l4.01 4L20 19.74 3.27 3 2 4.27z"/>
+                        <path d="M0 0h24v24H0z" fill="none"/>
+                    </svg>
                 <?php else : ?>
                     <!-- Instagram icon for other errors -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -631,6 +677,8 @@ if ( ! empty( $custom_css ) ) :
                     esc_html_e( 'User Not Found', 'bwg-instagram-feed' );
                 } elseif ( $is_rate_limit_error ) {
                     esc_html_e( 'Temporarily Unavailable', 'bwg-instagram-feed' );
+                } elseif ( $is_connected_account_error ) {
+                    esc_html_e( 'Account Disconnected', 'bwg-instagram-feed' );
                 } else {
                     esc_html_e( 'No Posts Found', 'bwg-instagram-feed' );
                 }
@@ -638,7 +686,23 @@ if ( ! empty( $custom_css ) ) :
             </h3>
             <p>
                 <?php
-                if ( ! empty( $no_cache_message ) ) {
+                if ( $is_connected_account_error ) {
+                    // Feature #34: Show different messages for admin vs end users
+                    if ( current_user_can( 'manage_options' ) ) {
+                        // Admin sees detailed message with link to reconnect
+                        echo esc_html( $no_cache_message );
+                        echo ' ';
+                        printf(
+                            /* translators: %1$s: opening link tag, %2$s: closing link tag */
+                            esc_html__( 'Please %1$sreconnect the account%2$s to restore this feed.', 'bwg-instagram-feed' ),
+                            '<a href="' . esc_url( admin_url( 'admin.php?page=bwg-instagram-feed-accounts' ) ) . '">',
+                            '</a>'
+                        );
+                    } else {
+                        // End users see a friendly fallback message
+                        esc_html_e( 'This Instagram feed is temporarily unavailable. Please check back later.', 'bwg-instagram-feed' );
+                    }
+                } elseif ( ! empty( $no_cache_message ) ) {
                     echo esc_html( $no_cache_message );
                 } elseif ( $is_rate_limit_error ) {
                     esc_html_e( 'Instagram is temporarily limiting requests. Please wait a few minutes and try again later. We apologize for the inconvenience.', 'bwg-instagram-feed' );
@@ -647,6 +711,33 @@ if ( ! empty( $custom_css ) ) :
                 }
                 ?>
             </p>
+            <?php
+            // Feature #35: Suggest using public feed if connected account has issues.
+            // Show this suggestion only to admins when there's a connected account error.
+            if ( $is_connected_account_error && current_user_can( 'manage_options' ) ) :
+                // Get the username from the connected account info if available.
+                $suggested_username = ! empty( $connected_account_info->username ) ? $connected_account_info->username : '';
+            ?>
+                <div class="bwg-igf-suggestion-box">
+                    <strong><?php esc_html_e( 'Alternative: Use Public Feed', 'bwg-instagram-feed' ); ?></strong>
+                    <p>
+                        <?php
+                        if ( ! empty( $suggested_username ) ) {
+                            printf(
+                                /* translators: %s: Instagram username */
+                                esc_html__( 'While the connected account is unavailable, you can try switching this feed to a public feed using @%s.', 'bwg-instagram-feed' ),
+                                esc_html( $suggested_username )
+                            );
+                        } else {
+                            esc_html_e( 'While the connected account is unavailable, you can try switching this feed to a public feed by entering an Instagram username.', 'bwg-instagram-feed' );
+                        }
+                        ?>
+                    </p>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-feeds&action=edit&feed_id=' . $feed->id ) ); ?>" class="bwg-igf-suggestion-link">
+                        <?php esc_html_e( 'Edit Feed Settings', 'bwg-instagram-feed' ); ?>
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
     <?php else : ?>
         <?php if ( 'slider' === $feed->layout_type ) : ?>
