@@ -123,6 +123,77 @@
     transition: transform 0.3s ease;
 }
 
+/* Feature #47: Video Play Icon Overlay */
+.bwg-igf-video-item {
+    position: relative;
+}
+
+.bwg-igf-video-play-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    pointer-events: none;
+    transition: background 0.3s ease, transform 0.3s ease;
+    z-index: 5;
+}
+
+.bwg-igf-video-play-icon svg {
+    width: 32px;
+    height: 32px;
+    margin-left: 4px; /* Slight offset to center the play triangle visually */
+}
+
+/* Hover effect for video items */
+.bwg-igf-video-item:hover .bwg-igf-video-play-icon {
+    background: rgba(225, 48, 108, 0.85); /* Instagram pink */
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Video item indicator in top-right corner (alternative compact indicator) */
+.bwg-igf-video-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.bwg-igf-video-badge svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Responsive adjustments for video play icon */
+@media (max-width: 480px) {
+    .bwg-igf-video-play-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .bwg-igf-video-play-icon svg {
+        width: 24px;
+        height: 24px;
+        margin-left: 3px;
+    }
+}
+
 /* Caption below image */
 .bwg-igf-caption {
     padding: 10px 12px;

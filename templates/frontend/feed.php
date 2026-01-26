@@ -748,20 +748,47 @@ if ( ! empty( $custom_css ) ) :
             // Generate proxy URLs for images to prevent CORS blocking
             $thumbnail_url = ! empty( $post['thumbnail'] ) ? BWG_IGF_Image_Proxy::get_proxy_url( $post['thumbnail'] ) : '';
             $full_image_url = ! empty( $post['full_image'] ) ? BWG_IGF_Image_Proxy::get_proxy_url( $post['full_image'] ) : '';
+
+            // Feature #47: Check media type for video posts
+            $media_type = isset( $post['media_type'] ) ? strtoupper( $post['media_type'] ) : 'IMAGE';
+            $is_video = ( 'VIDEO' === $media_type ) || ( isset( $post['is_video'] ) && $post['is_video'] );
+            $video_url = isset( $post['video_url'] ) ? $post['video_url'] : '';
+
+            // Add video class if this is a video post
+            $item_classes = array( 'bwg-igf-item' );
+            if ( 'slider' === $feed->layout_type ) {
+                $item_classes[] = 'bwg-igf-slider-slide';
+            }
+            if ( $is_video ) {
+                $item_classes[] = 'bwg-igf-video-item';
+            }
         ?>
             <div
-                class="bwg-igf-item<?php echo 'slider' === $feed->layout_type ? ' bwg-igf-slider-slide' : ''; ?>"
+                class="<?php echo esc_attr( implode( ' ', $item_classes ) ); ?>"
                 data-full-image="<?php echo esc_url( $full_image_url ); ?>"
                 data-caption="<?php echo esc_attr( $post['caption'] ?? '' ); ?>"
                 data-likes="<?php echo esc_attr( $post['likes'] ?? 0 ); ?>"
                 data-comments="<?php echo esc_attr( $post['comments'] ?? 0 ); ?>"
                 data-link="<?php echo esc_url( $post['link'] ?? '' ); ?>"
+                <?php if ( $is_video && ! empty( $video_url ) ) : ?>
+                data-video-url="<?php echo esc_url( $video_url ); ?>"
+                data-media-type="video"
+                <?php endif; ?>
             >
                 <img
                     src="<?php echo esc_url( $thumbnail_url ); ?>"
                     alt="<?php echo esc_attr( $post['caption'] ?? __( 'Instagram post', 'bwg-instagram-feed' ) ); ?>"
                     loading="lazy"
                 >
+
+                <?php // Feature #47: Add play icon overlay for video posts ?>
+                <?php if ( $is_video ) : ?>
+                    <div class="bwg-igf-video-play-icon" aria-label="<?php esc_attr_e( 'Video', 'bwg-instagram-feed' ); ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                <?php endif; ?>
 
                 <?php if ( 'overlay' === $hover_effect ) : ?>
                     <div class="bwg-igf-overlay">
