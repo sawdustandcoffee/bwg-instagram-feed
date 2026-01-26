@@ -30,9 +30,9 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
     if ( isset( $_GET['code'] ) ) {
         // Exchange authorization code for access token.
         $code = sanitize_text_field( wp_unslash( $_GET['code'] ) );
-        $app_id = get_option( 'bwg_igf_instagram_app_id' );
-        $app_secret = get_option( 'bwg_igf_instagram_app_secret' );
-        $redirect_uri = admin_url( 'admin.php?page=bwg-igf-accounts&oauth_callback=1' );
+        $app_id = BWG_IGF_Instagram_Credentials::get_app_id();
+        $app_secret = BWG_IGF_Instagram_Credentials::get_app_secret();
+        $redirect_uri = BWG_IGF_Instagram_Credentials::get_redirect_uri();
 
         // Step 1: Exchange code for short-lived access token.
         $token_url = 'https://api.instagram.com/oauth/access_token';
@@ -204,27 +204,8 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
         <p><?php esc_html_e( 'Connect your Instagram account to access more features like hashtag filtering and reliable data access.', 'bwg-instagram-feed' ); ?></p>
 
         <?php
-        $app_id = get_option( 'bwg_igf_instagram_app_id' );
-        if ( empty( $app_id ) ) :
-        ?>
-            <div class="notice notice-warning inline">
-                <p>
-                    <?php esc_html_e( 'Please configure your Instagram App credentials in Settings before connecting an account.', 'bwg-instagram-feed' ); ?>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-settings' ) ); ?>">
-                        <?php esc_html_e( 'Go to Settings', 'bwg-instagram-feed' ); ?>
-                    </a>
-                </p>
-            </div>
-        <?php else :
-            // Build OAuth URL
-            $redirect_uri = admin_url( 'admin.php?page=bwg-igf-accounts&oauth_callback=1' );
-            $scope = 'user_profile,user_media';
-            $oauth_url = sprintf(
-                'https://api.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&response_type=code',
-                rawurlencode( $app_id ),
-                rawurlencode( $redirect_uri ),
-                rawurlencode( $scope )
-            );
+        // Use built-in Instagram App credentials
+        $oauth_url = BWG_IGF_Instagram_Credentials::get_oauth_url();
         ?>
             <a href="<?php echo esc_url( $oauth_url ); ?>" class="button button-primary bwg-igf-connect-account" id="bwg-igf-oauth-connect-btn" data-oauth-url="<?php echo esc_url( $oauth_url ); ?>">
                 <?php esc_html_e( 'Connect Instagram Account', 'bwg-instagram-feed' ); ?>
@@ -232,7 +213,6 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
             <p class="description" style="margin-top: 10px;">
                 <?php esc_html_e( 'You will be redirected to Instagram to authorize the connection.', 'bwg-instagram-feed' ); ?>
             </p>
-        <?php endif; ?>
     </div>
 
     <div class="bwg-igf-widget" style="margin-top: 20px;">

@@ -130,6 +130,9 @@ final class BWG_Instagram_Feed {
         // Load encryption helper.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-encryption.php';
 
+        // Load Instagram credentials (built-in OAuth credentials).
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-credentials.php';
+
         // Load Instagram API service.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
 
@@ -238,10 +241,8 @@ final class BWG_Instagram_Feed {
      */
     private function set_default_options() {
         $defaults = array(
-            'default_cache_duration' => 3600,
-            'delete_data_on_uninstall' => false,
-            'instagram_app_id' => '',
-            'instagram_app_secret' => '',
+            'default_cache_duration'    => 3600,
+            'delete_data_on_uninstall'  => false,
         );
 
         foreach ( $defaults as $key => $value ) {
@@ -249,6 +250,11 @@ final class BWG_Instagram_Feed {
                 add_option( 'bwg_igf_' . $key, $value );
             }
         }
+
+        // Clean up legacy options if they exist (from previous versions).
+        // Instagram App credentials are now built into the plugin code.
+        delete_option( 'bwg_igf_instagram_app_id' );
+        delete_option( 'bwg_igf_instagram_app_secret' );
     }
 
     /**

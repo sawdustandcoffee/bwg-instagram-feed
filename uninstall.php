@@ -40,12 +40,12 @@ if ( $delete_data ) {
     );
 
     // Delete options.
+    // Note: instagram_app_id and instagram_app_secret are no longer stored in wp_options
+    // as they are now built into the plugin code.
     $options = array(
         'bwg_igf_db_version',
         'bwg_igf_default_cache_duration',
         'bwg_igf_delete_data_on_uninstall',
-        'bwg_igf_instagram_app_id',
-        'bwg_igf_instagram_app_secret',
     );
 
     foreach ( $options as $option ) {
