@@ -797,6 +797,24 @@ class BWG_IGF_Instagram_API {
      * @return array|WP_Error Array of posts or WP_Error.
      */
     public function fetch_connected_posts( $access_token, $count = 12, $account_id = 0 ) {
+        // Use provided account_id or fall back to current_account_id.
+        $track_account_id = $account_id > 0 ? $account_id : $this->current_account_id;
+
+        // Feature #13: Check if we should wait due to exponential backoff.
+        if ( $track_account_id > 0 && class_exists( 'BWG_IGF_API_Tracker' ) ) {
+            if ( BWG_IGF_API_Tracker::should_backoff( $track_account_id ) ) {
+                $backoff_info = BWG_IGF_API_Tracker::get_backoff_info( $track_account_id );
+                return new WP_Error(
+                    'backoff_active',
+                    sprintf(
+                        /* translators: %s: time remaining */
+                        __( 'Rate limit backoff active. Please wait %s before retrying. Cached posts will display.', 'bwg-instagram-feed' ),
+                        $backoff_info['message'] ? $backoff_info['message'] : __( 'a moment', 'bwg-instagram-feed' )
+                    )
+                );
+            }
+        }
+
         $api_url = sprintf(
             'https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count&access_token=%s&limit=%d',
             rawurlencode( $access_token ),
@@ -806,9 +824,6 @@ class BWG_IGF_Instagram_API {
         $response = wp_remote_get( $api_url, array(
             'timeout' => $this->timeout,
         ) );
-
-        // Use provided account_id or fall back to current_account_id.
-        $track_account_id = $account_id > 0 ? $account_id : $this->current_account_id;
 
         if ( is_wp_error( $response ) ) {
             // Log the failed API call.
@@ -836,9 +851,20 @@ class BWG_IGF_Instagram_API {
                 $response,
                 'rate_limited'
             );
+
+            // Feature #13: Record rate limit and apply exponential backoff.
+            $backoff_state = array( 'current_delay' => 60 ); // Default message.
+            if ( $track_account_id > 0 && class_exists( 'BWG_IGF_API_Tracker' ) ) {
+                $backoff_state = BWG_IGF_API_Tracker::record_rate_limit( $track_account_id );
+            }
+
             return new WP_Error(
                 'rate_limited',
-                __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+                sprintf(
+                    /* translators: %d: number of seconds to wait */
+                    __( 'Instagram is temporarily limiting requests. Next retry in %d seconds. Your cached posts will continue to display.', 'bwg-instagram-feed' ),
+                    $backoff_state['current_delay']
+                )
             );
         }
 
@@ -861,9 +887,20 @@ class BWG_IGF_Instagram_API {
                     $response,
                     'rate_limited'
                 );
+
+                // Feature #13: Record rate limit and apply exponential backoff.
+                $backoff_state = array( 'current_delay' => 60 ); // Default message.
+                if ( $track_account_id > 0 && class_exists( 'BWG_IGF_API_Tracker' ) ) {
+                    $backoff_state = BWG_IGF_API_Tracker::record_rate_limit( $track_account_id );
+                }
+
                 return new WP_Error(
                     'rate_limited',
-                    __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+                    sprintf(
+                        /* translators: %d: number of seconds to wait */
+                        __( 'Instagram is temporarily limiting requests. Next retry in %d seconds. Your cached posts will continue to display.', 'bwg-instagram-feed' ),
+                        $backoff_state['current_delay']
+                    )
                 );
             }
 
@@ -889,6 +926,11 @@ class BWG_IGF_Instagram_API {
             $status_code,
             $response
         );
+
+        // Feature #13: Clear backoff on successful API call (recovery detection).
+        if ( $track_account_id > 0 && class_exists( 'BWG_IGF_API_Tracker' ) ) {
+            BWG_IGF_API_Tracker::clear_backoff( $track_account_id );
+        }
 
         if ( empty( $data['data'] ) ) {
             return array();

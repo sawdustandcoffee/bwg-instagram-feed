@@ -33,6 +33,30 @@ class BWG_IGF_API_Tracker {
     const RETENTION_DAYS = 7;
 
     /**
+     * Initial backoff delay in seconds (1 minute).
+     * Feature #13: Exponential backoff on rate limit detection.
+     *
+     * @var int
+     */
+    const INITIAL_BACKOFF_SECONDS = 60;
+
+    /**
+     * Maximum backoff delay in seconds (1 hour).
+     * Feature #13: Cap the maximum backoff time.
+     *
+     * @var int
+     */
+    const MAX_BACKOFF_SECONDS = 3600;
+
+    /**
+     * Backoff multiplier for exponential increase.
+     * Feature #13: Each subsequent rate limit doubles the wait time.
+     *
+     * @var int
+     */
+    const BACKOFF_MULTIPLIER = 2;
+
+    /**
      * Initialize the tracker.
      */
     public static function init() {
@@ -396,6 +420,214 @@ class BWG_IGF_API_Tracker {
 
         $table_name = self::get_table_name();
         $wpdb->query( "DROP TABLE IF EXISTS $table_name" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    }
+
+    /**
+     * Get the backoff state for an account.
+     *
+     * Feature #13: Exponential backoff on rate limit detection.
+     * Returns the current backoff state including when the next retry is allowed.
+     *
+     * @param int $account_id Account ID.
+     * @return array Array with backoff state: 'in_backoff', 'retry_after', 'current_delay', 'retry_count'.
+     */
+    public static function get_backoff_state( $account_id ) {
+        $transient_key = 'bwg_igf_backoff_' . absint( $account_id );
+        $state = get_transient( $transient_key );
+
+        if ( false === $state || ! is_array( $state ) ) {
+            return array(
+                'in_backoff'    => false,
+                'retry_after'   => null,
+                'current_delay' => 0,
+                'retry_count'   => 0,
+            );
+        }
+
+        // Check if the backoff period has expired.
+        $now = time();
+        if ( isset( $state['retry_after'] ) && $now >= $state['retry_after'] ) {
+            // Backoff period expired, but don't clear yet - let the next API call do that.
+            // This allows us to detect recovery.
+            return array(
+                'in_backoff'    => false, // Can retry now.
+                'retry_after'   => $state['retry_after'],
+                'current_delay' => $state['current_delay'] ?? self::INITIAL_BACKOFF_SECONDS,
+                'retry_count'   => $state['retry_count'] ?? 1,
+            );
+        }
+
+        return array(
+            'in_backoff'    => true,
+            'retry_after'   => $state['retry_after'],
+            'current_delay' => $state['current_delay'] ?? self::INITIAL_BACKOFF_SECONDS,
+            'retry_count'   => $state['retry_count'] ?? 1,
+        );
+    }
+
+    /**
+     * Check if an account should wait before making API calls.
+     *
+     * Feature #13: Returns true if the account is in a backoff period and should not make API calls.
+     *
+     * @param int $account_id Account ID.
+     * @return bool True if in backoff period, false if ready to retry.
+     */
+    public static function should_backoff( $account_id ) {
+        $state = self::get_backoff_state( $account_id );
+        return $state['in_backoff'];
+    }
+
+    /**
+     * Get the number of seconds until retry is allowed.
+     *
+     * Feature #13: Returns remaining seconds in backoff, or 0 if ready to retry.
+     *
+     * @param int $account_id Account ID.
+     * @return int Seconds until retry allowed.
+     */
+    public static function get_backoff_remaining( $account_id ) {
+        $state = self::get_backoff_state( $account_id );
+
+        if ( ! $state['in_backoff'] || empty( $state['retry_after'] ) ) {
+            return 0;
+        }
+
+        $remaining = $state['retry_after'] - time();
+        return max( 0, $remaining );
+    }
+
+    /**
+     * Record a rate limit hit and update backoff state.
+     *
+     * Feature #13: Implements exponential backoff - each rate limit doubles the wait time.
+     *
+     * @param int $account_id Account ID.
+     * @return array The new backoff state.
+     */
+    public static function record_rate_limit( $account_id ) {
+        $account_id = absint( $account_id );
+        $transient_key = 'bwg_igf_backoff_' . $account_id;
+
+        // Get current state to calculate next delay.
+        $current_state = get_transient( $transient_key );
+
+        if ( false === $current_state || ! is_array( $current_state ) ) {
+            // First rate limit - use initial backoff delay.
+            $new_delay = self::INITIAL_BACKOFF_SECONDS;
+            $retry_count = 1;
+        } else {
+            // Exponential backoff - double the previous delay.
+            $previous_delay = $current_state['current_delay'] ?? self::INITIAL_BACKOFF_SECONDS;
+            $new_delay = min( $previous_delay * self::BACKOFF_MULTIPLIER, self::MAX_BACKOFF_SECONDS );
+            $retry_count = ( $current_state['retry_count'] ?? 0 ) + 1;
+        }
+
+        $retry_after = time() + $new_delay;
+
+        $new_state = array(
+            'account_id'    => $account_id,
+            'current_delay' => $new_delay,
+            'retry_after'   => $retry_after,
+            'retry_count'   => $retry_count,
+            'recorded_at'   => time(),
+        );
+
+        // Store with expiration slightly longer than the backoff to allow for detection.
+        $transient_expiration = $new_delay + 300; // Add 5 minutes buffer.
+        set_transient( $transient_key, $new_state, $transient_expiration );
+
+        return array(
+            'in_backoff'    => true,
+            'retry_after'   => $retry_after,
+            'current_delay' => $new_delay,
+            'retry_count'   => $retry_count,
+        );
+    }
+
+    /**
+     * Clear backoff state after successful API call (recovery).
+     *
+     * Feature #13: Resets backoff when rate limits have cleared.
+     *
+     * @param int $account_id Account ID.
+     * @return bool True if state was cleared.
+     */
+    public static function clear_backoff( $account_id ) {
+        $transient_key = 'bwg_igf_backoff_' . absint( $account_id );
+        return delete_transient( $transient_key );
+    }
+
+    /**
+     * Get a human-readable backoff status message.
+     *
+     * Feature #13: Returns a message for display in admin UI.
+     *
+     * @param int $account_id Account ID.
+     * @return string Status message or empty string if not in backoff.
+     */
+    public static function get_backoff_message( $account_id ) {
+        $state = self::get_backoff_state( $account_id );
+
+        if ( ! $state['in_backoff'] ) {
+            return '';
+        }
+
+        $remaining = self::get_backoff_remaining( $account_id );
+
+        if ( $remaining <= 0 ) {
+            return '';
+        }
+
+        // Format the remaining time.
+        if ( $remaining >= 3600 ) {
+            $time_str = sprintf(
+                /* translators: %d: number of minutes */
+                _n( '%d hour', '%d hours', floor( $remaining / 3600 ), 'bwg-instagram-feed' ),
+                floor( $remaining / 3600 )
+            );
+        } elseif ( $remaining >= 60 ) {
+            $time_str = sprintf(
+                /* translators: %d: number of minutes */
+                _n( '%d minute', '%d minutes', floor( $remaining / 60 ), 'bwg-instagram-feed' ),
+                floor( $remaining / 60 )
+            );
+        } else {
+            $time_str = sprintf(
+                /* translators: %d: number of seconds */
+                _n( '%d second', '%d seconds', $remaining, 'bwg-instagram-feed' ),
+                $remaining
+            );
+        }
+
+        return sprintf(
+            /* translators: %s: time remaining */
+            __( 'Rate limited. Retry in %s.', 'bwg-instagram-feed' ),
+            $time_str
+        );
+    }
+
+    /**
+     * Get detailed backoff info for debugging/display.
+     *
+     * Feature #13: Returns comprehensive backoff information.
+     *
+     * @param int $account_id Account ID.
+     * @return array Detailed backoff information.
+     */
+    public static function get_backoff_info( $account_id ) {
+        $state = self::get_backoff_state( $account_id );
+
+        return array(
+            'in_backoff'      => $state['in_backoff'],
+            'retry_after'     => $state['retry_after'] ? date( 'Y-m-d H:i:s', $state['retry_after'] ) : null,
+            'current_delay'   => $state['current_delay'],
+            'retry_count'     => $state['retry_count'],
+            'remaining_secs'  => self::get_backoff_remaining( $account_id ),
+            'message'         => self::get_backoff_message( $account_id ),
+            'max_delay'       => self::MAX_BACKOFF_SECONDS,
+            'initial_delay'   => self::INITIAL_BACKOFF_SECONDS,
+        );
     }
 
     /**
