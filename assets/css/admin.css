@@ -875,6 +875,99 @@ button.bwg-igf-saving .spinner {
     text-decoration: underline;
 }
 
+/* Feature #42: Slider preview navigation arrows and dots */
+.bwg-igf-slider-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.bwg-igf-slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.bwg-igf-slider-arrow:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.bwg-igf-slider-arrow:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.bwg-igf-slider-arrow svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+.bwg-igf-slider-prev {
+    left: 10px;
+}
+
+.bwg-igf-slider-next {
+    right: 10px;
+}
+
+.bwg-igf-slider-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 10px 0;
+}
+
+.bwg-igf-slider-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #c3c4c7;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.bwg-igf-slider-dot:hover {
+    background: #8c8f94;
+    transform: scale(1.2);
+}
+
+.bwg-igf-slider-dot:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.bwg-igf-slider-dot.active {
+    background: #2271b1;
+    transform: scale(1.3);
+}
+
+.bwg-igf-preview.bwg-igf-slider-active {
+    position: relative;
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: more) {
     .bwg-igf-editor-tab:focus,

@@ -35,6 +35,7 @@
             this.initPopupToggle(); // Feature #29: Toggle popup options visibility
             this.initImageHeightModeToggle(); // Feature #165: Toggle fixed height field visibility
             this.initLikesCommentsToggle(); // Feature #38: Toggle likes/comments visibility in preview
+            this.initPopupPreviewToggle(); // Feature #43: Update preview cursor when popup is toggled
         },
 
         bindEvents: function() {
@@ -330,6 +331,24 @@
             });
 
             $showComments.on('change', function() {
+                BWGIGFAdmin.updatePreview();
+            });
+        },
+
+        /**
+         * Feature #43: Update preview cursor when popup is toggled
+         * When popup_enabled is unchecked, preview items should not show pointer cursor
+         * to indicate they won't be clickable (won't open in popup)
+         */
+        initPopupPreviewToggle: function() {
+            var $popupEnabled = $('#bwg-igf-popup-enabled');
+
+            if (!$popupEnabled.length) {
+                return;
+            }
+
+            // Update preview when popup checkbox changes
+            $popupEnabled.on('change', function() {
                 BWGIGFAdmin.updatePreview();
             });
         },
@@ -833,6 +852,62 @@
                 }
             }
 
+            // Feature #42: Slider preview with navigation arrows and dots
+            var $sliderNav = $previewWrapper.find('.bwg-igf-slider-nav');
+            var $sliderDots = $previewWrapper.find('.bwg-igf-slider-dots');
+
+            if (settings.layoutType === 'slider') {
+                // Show/create navigation arrows based on showArrows setting
+                if (settings.showArrows) {
+                    if (!$sliderNav.length) {
+                        var navHtml = '<div class="bwg-igf-slider-nav">' +
+                            '<button type="button" class="bwg-igf-slider-arrow bwg-igf-slider-prev" aria-label="Previous slide">' +
+                            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>' +
+                            '</button>' +
+                            '<button type="button" class="bwg-igf-slider-arrow bwg-igf-slider-next" aria-label="Next slide">' +
+                            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>' +
+                            '</button>' +
+                            '</div>';
+                        $preview.append(navHtml);
+                        $sliderNav = $previewWrapper.find('.bwg-igf-slider-nav');
+                    }
+                    $sliderNav.show();
+                } else {
+                    $sliderNav.hide();
+                }
+
+                // Show/create pagination dots based on showDots setting
+                if (settings.showDots) {
+                    // Calculate number of dots based on post count and slides to show
+                    var slidesToShow = parseInt(settings.slidesToShow, 10) || 3;
+                    var postCount = parseInt(settings.postCount, 10) || 9;
+                    var dotsCount = Math.ceil(postCount / slidesToShow);
+                    dotsCount = Math.max(1, Math.min(dotsCount, 10)); // Cap between 1 and 10 dots
+
+                    if (!$sliderDots.length) {
+                        $sliderDots = $('<div class="bwg-igf-slider-dots"></div>');
+                        $preview.after($sliderDots);
+                    }
+
+                    // Generate dots HTML
+                    var dotsHtml = '';
+                    for (var d = 0; d < dotsCount; d++) {
+                        dotsHtml += '<button type="button" class="bwg-igf-slider-dot' + (d === 0 ? ' active' : '') + '" aria-label="Go to slide ' + (d + 1) + '"></button>';
+                    }
+                    $sliderDots.html(dotsHtml).show();
+                } else {
+                    $sliderDots.hide();
+                }
+
+                // Add active class to indicate slider mode
+                $preview.addClass('bwg-igf-slider-active');
+            } else {
+                // Grid mode - hide slider navigation elements
+                $sliderNav.hide();
+                $sliderDots.hide();
+                $preview.removeClass('bwg-igf-slider-active');
+            }
+
             // Handle follow button visibility (Feature #27)
             var $followButtonWrapper = $previewWrapper.find('.bwg-igf-preview-follow-wrapper');
             if (settings.showFollowButton) {
@@ -857,6 +932,16 @@
                 }
             } else {
                 $followButtonWrapper.hide();
+            }
+
+            // Feature #43: Apply cursor style based on popup enabled state
+            // When popup is disabled, items should not show pointer cursor (indicating they're not clickable)
+            if (settings.popupEnabled) {
+                // Popup is enabled - items are clickable, show pointer cursor
+                $preview.find('.bwg-igf-item').css('cursor', 'pointer');
+            } else {
+                // Popup is disabled - items are not clickable, use default cursor
+                $preview.find('.bwg-igf-item').css('cursor', 'default');
             }
         },
 
@@ -894,7 +979,9 @@
                 feedPadding: parseInt($('#bwg-igf-feed-padding').val(), 10) || 0,
                 // Feature #39: Image height mode settings
                 imageHeightMode: $('#bwg-igf-image-height-mode').val() || 'square',
-                imageFixedHeight: parseInt($('#bwg-igf-image-fixed-height').val(), 10) || 200
+                imageFixedHeight: parseInt($('#bwg-igf-image-fixed-height').val(), 10) || 200,
+                // Feature #43: Popup enabled state
+                popupEnabled: $('#bwg-igf-popup-enabled').is(':checked')
             };
         },
 
