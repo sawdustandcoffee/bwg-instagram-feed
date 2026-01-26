@@ -1,0 +1,77 @@
+## Session: 2026-01-26 (Feature #43 - Parallel Agent)
+
+### Feature #43 Completed: Preview reflects popup enabled/disabled state
+
+**Status:** ✅ PASSING
+
+**Category:** Admin Preview
+
+**Description:** When popup/lightbox is disabled, the preview items should indicate they won't open in a popup by changing cursor style from 'pointer' to 'default'.
+
+**Verification Steps:**
+
+1. ✅ **Navigated to feed editor** (Feed ID 54)
+   - URL: http://localhost:8088/wp-admin/admin.php?page=bwg-igf-feeds&action=edit&feed_id=54
+
+2. ✅ **Verified popup enabled by default**
+   - Popup tab active, "Enable popup/lightbox" checkbox checked
+   - Preview items have `cursor: pointer` style applied
+   - Verified with browser evaluation: `cursorStyle: "pointer"`
+
+3. ✅ **Unchecked popup checkbox**
+   - Clicked "Enable popup/lightbox" checkbox to disable
+   - Preview items cursor changed to `cursor: default`
+   - Verified with browser evaluation: `cursorStyle: "default"`
+
+4. ✅ **Re-checked popup checkbox**
+   - Clicked checkbox again to re-enable popup
+   - Preview items cursor restored to `cursor: pointer`
+   - Verified with browser evaluation: `cursorStyle: "pointer"`
+
+5. ✅ **No console errors detected**
+
+**Implementation Details:**
+
+The feature is implemented in `assets/js/admin.js`:
+
+1. **initPopupPreviewToggle()** method (lines 343-353):
+   - Listens for changes to #bwg-igf-popup-enabled checkbox
+   - Triggers updatePreview() when checkbox state changes
+
+2. **getFormSettings()** method (line 984):
+   - Captures popupEnabled state: `$('#bwg-igf-popup-enabled').is(':checked')`
+
+3. **updatePreview()** method (lines 937-945):
+   - Applies cursor style based on popup state:
+     - When `settings.popupEnabled === true`: applies `cursor: pointer`
+     - When `settings.popupEnabled === false`: applies `cursor: default`
+
+**User Experience:**
+
+The cursor change provides clear visual feedback:
+- **Pointer cursor** indicates items are clickable and will open in popup
+- **Default cursor** indicates items are non-interactive (no popup)
+
+This helps users understand the effect of the popup setting immediately in the preview.
+
+**Screenshots:**
+- `.playwright-mcp/feature-43-popup-enabled-pointer-cursor.png` - Popup enabled, cursor: pointer
+- `.playwright-mcp/feature-43-popup-disabled-default-cursor.png` - Popup disabled, cursor: default
+- `.playwright-mcp/feature-43-popup-re-enabled-pointer-cursor.png` - Popup re-enabled, cursor: pointer
+
+**No console errors detected.**
+
+**Commit:** 2b0f0d1 - "Feature #43: Preview reflects popup enabled/disabled state - VERIFIED"
+
+---
+
+### Current Progress (Updated):
+- Passing: 46/49 (93.9%)
+- Features completed this session: #43
+
+### Notes:
+- Feature #43 was already fully implemented - this session verified functionality
+- The cursor change is subtle but provides important UX feedback
+- Works seamlessly with existing preview system
+- No code changes needed - implementation was already complete and correct
+- Feature depends on Feature #37 (realistic placeholder images)
