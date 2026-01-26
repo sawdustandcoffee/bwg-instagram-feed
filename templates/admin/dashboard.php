@@ -86,10 +86,22 @@ if ( ! defined( 'ABSPATH' ) ) {
             $rate_limit_message = '';
             $any_limited = false;
             $approaching_limit = false;
+            $api_quota_info = array(); // Feature #29: Store quota info per account.
+            $default_rate_limit = 200; // Instagram default hourly rate limit.
 
             if ( ! empty( $connected_accounts ) && class_exists( 'BWG_IGF_API_Tracker' ) ) {
                 foreach ( $connected_accounts as $account ) {
                     $status = BWG_IGF_API_Tracker::get_rate_limit_status( $account->id );
+
+                    // Feature #29: Collect quota info for each account.
+                    if ( null !== $status['remaining'] ) {
+                        $api_quota_info[] = array(
+                            'username'  => $account->username,
+                            'remaining' => $status['remaining'],
+                            'total'     => $default_rate_limit,
+                            'last_call' => $status['last_call'],
+                        );
+                    }
 
                     // Check if rate limited.
                     if ( $status['is_limited'] ) {
@@ -101,7 +113,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     }
 
                     // Check if approaching limits (80% or more of quota used, if we have that info).
-                    if ( null !== $status['remaining'] && $status['remaining'] <= 20 ) {
+                    if ( null !== $status['remaining'] && $status['remaining'] <= 40 ) {
                         $approaching_limit = true;
                         $rate_limit_status = 'warning';
                         /* translators: 1: Instagram username, 2: remaining API calls */
@@ -135,6 +147,48 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <?php endif; ?>
                 <?php endif; ?>
             </p>
+
+            <!-- Feature #29: Display remaining API quota when available -->
+            <?php if ( ! empty( $api_quota_info ) ) : ?>
+            <p>
+                <strong><?php esc_html_e( 'API Quota:', 'bwg-instagram-feed' ); ?></strong>
+                <?php
+                foreach ( $api_quota_info as $quota ) :
+                    $percentage_used = ( ( $quota['total'] - $quota['remaining'] ) / $quota['total'] ) * 100;
+                    $bar_color = '#46b450'; // Green.
+                    if ( $percentage_used >= 80 ) {
+                        $bar_color = '#dc3232'; // Red.
+                    } elseif ( $percentage_used >= 60 ) {
+                        $bar_color = '#dba617'; // Yellow.
+                    }
+                    ?>
+                    <span class="bwg-igf-quota-display" style="display: block; margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid <?php echo esc_attr( $bar_color ); ?>;">
+                        <span style="font-weight: 500;">@<?php echo esc_html( $quota['username'] ); ?>:</span>
+                        <span style="color: <?php echo esc_attr( $bar_color ); ?>; font-weight: bold;">
+                            <?php
+                            /* translators: 1: remaining API calls, 2: total API calls */
+                            printf(
+                                esc_html__( '%1$d/%2$d calls remaining', 'bwg-instagram-feed' ),
+                                intval( $quota['remaining'] ),
+                                intval( $quota['total'] )
+                            );
+                            ?>
+                        </span>
+                        <?php if ( $quota['last_call'] ) : ?>
+                            <br>
+                            <small style="color: #666;">
+                                <?php
+                                $last_call_time = strtotime( $quota['last_call'] );
+                                $human_diff = human_time_diff( $last_call_time, current_time( 'timestamp' ) );
+                                /* translators: %s: human-readable time difference */
+                                printf( esc_html__( 'Last API call: %s ago', 'bwg-instagram-feed' ), esc_html( $human_diff ) );
+                                ?>
+                            </small>
+                        <?php endif; ?>
+                    </span>
+                <?php endforeach; ?>
+            </p>
+            <?php endif; ?>
         </div>
 
         <!-- Getting Started -->
