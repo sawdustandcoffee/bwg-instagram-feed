@@ -186,7 +186,18 @@ class BWG_IGF_Frontend_Ajax {
         $post_count = absint( $feed->post_count ) ?: 9;
 
         if ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
-            // Fetch using connected account with automatic token refresh.
+            // Feature #24: Check for cache warming data first.
+            // When an account is connected, posts are pre-fetched and stored in a transient.
+            // This allows feeds using that account to display immediately without additional API calls.
+            $warmed_cache = get_transient( 'bwg_igf_account_cache_' . $feed->connected_account_id );
+            if ( ! empty( $warmed_cache ) && ! empty( $warmed_cache['posts'] ) ) {
+                // Use warmed cache data (limit to post_count).
+                $posts = array_slice( $warmed_cache['posts'], 0, $post_count );
+                // Note: Don't delete the transient - it can be used by other feeds using this account.
+                return $posts;
+            }
+
+            // No warmed cache - fetch using connected account with automatic token refresh.
             // Load encryption class if needed.
             if ( ! class_exists( 'BWG_IGF_Encryption' ) ) {
                 require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-encryption.php';

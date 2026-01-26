@@ -130,6 +130,7 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
                             array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' ),
                             array( '%d' )
                         );
+                        $account_id = $existing->id;
                         $oauth_message = sprintf(
                             /* translators: %s: Instagram username */
                             __( 'Instagram account @%s reconnected successfully!', 'bwg-instagram-feed' ),
@@ -151,11 +152,51 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
                             ),
                             array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
                         );
+                        $account_id = $wpdb->insert_id;
                         $oauth_message = sprintf(
                             /* translators: %s: Instagram username */
                             __( 'Instagram account @%s connected successfully!', 'bwg-instagram-feed' ),
                             esc_html( $username )
                         );
+                    }
+
+                    // Feature #24: Cache warming on account connection.
+                    // Immediately fetch and cache posts after connecting an account.
+                    // This ensures feeds using this account display immediately without additional API calls.
+                    if ( $account_id > 0 && ! empty( $access_token ) ) {
+                        // Load the Instagram API class.
+                        if ( ! class_exists( 'BWG_IGF_Instagram_API' ) ) {
+                            require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
+                        }
+
+                        $instagram_api = new BWG_IGF_Instagram_API();
+                        $instagram_api->set_current_account_id( $account_id );
+
+                        // Fetch initial posts (12 posts for cache warming).
+                        $warmed_posts = $instagram_api->fetch_connected_posts( $access_token, 12, $account_id );
+
+                        if ( ! is_wp_error( $warmed_posts ) && ! empty( $warmed_posts ) ) {
+                            // Store the warmed cache in a transient keyed by account ID.
+                            // This cache will be used when creating feeds with this account.
+                            // Cache duration: 1 hour (3600 seconds).
+                            set_transient(
+                                'bwg_igf_account_cache_' . $account_id,
+                                array(
+                                    'posts'      => $warmed_posts,
+                                    'fetched_at' => time(),
+                                    'username'   => $username,
+                                ),
+                                3600
+                            );
+
+                            // Update success message to indicate posts were fetched.
+                            $oauth_message = sprintf(
+                                /* translators: 1: Instagram username, 2: Number of posts fetched */
+                                __( 'Instagram account @%1$s connected successfully! %2$d posts cached and ready to display.', 'bwg-instagram-feed' ),
+                                esc_html( $username ),
+                                count( $warmed_posts )
+                            );
+                        }
                     }
                 } else {
                     $oauth_error = __( 'Failed to retrieve Instagram user information.', 'bwg-instagram-feed' );

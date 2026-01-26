@@ -109,9 +109,49 @@ if ( ! $has_cache ) {
     $expired_cache_created_at = $expired_row ? $expired_row->created_at : null;
 }
 
-// Determine if we need async loading (no cache but have usernames)
+// Determine if we need async loading (no cache but have usernames or connected account)
 // This shows a loading state while AJAX fetches the data
-$needs_async_load = empty( $posts ) && ! empty( $feed->instagram_usernames );
+$has_source = ! empty( $feed->instagram_usernames ) || ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) );
+$needs_async_load = empty( $posts ) && $has_source;
+
+// Feature #24: For connected feeds, check for cache warming data before showing loading state.
+// When an account is connected, posts are pre-fetched and stored in a transient.
+if ( $needs_async_load && 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
+    $warmed_cache = get_transient( 'bwg_igf_account_cache_' . $feed->connected_account_id );
+    if ( ! empty( $warmed_cache ) && ! empty( $warmed_cache['posts'] ) ) {
+        // Use warmed cache data.
+        $post_count = absint( $feed->post_count ) ?: 9;
+        $posts = array_slice( $warmed_cache['posts'], 0, $post_count );
+        $needs_async_load = false;
+
+        // Store the warmed cache data in the feed cache for future use.
+        if ( ! empty( $posts ) ) {
+            $cache_duration = absint( $feed->cache_duration ) ?: 3600;
+            $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
+            $cache_key = 'feed_' . $feed->id . '_warmed_' . md5( wp_json_encode( $posts ) );
+
+            // Delete old cache entries for this feed.
+            $wpdb->delete(
+                $wpdb->prefix . 'bwg_igf_cache',
+                array( 'feed_id' => $feed->id ),
+                array( '%d' )
+            );
+
+            // Insert the warmed cache as feed cache.
+            $wpdb->insert(
+                $wpdb->prefix . 'bwg_igf_cache',
+                array(
+                    'feed_id'    => $feed->id,
+                    'cache_key'  => $cache_key,
+                    'cache_data' => wp_json_encode( $posts ),
+                    'created_at' => current_time( 'mysql' ),
+                    'expires_at' => $expires_at,
+                ),
+                array( '%d', '%s', '%s', '%s', '%s' )
+            );
+        }
+    }
+}
 
 // For private accounts, we need to try fetching synchronously to show the error
 // Otherwise, the async JS will just show loading indefinitely
