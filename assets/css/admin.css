@@ -280,6 +280,51 @@
     transition: transform 0.3s ease, filter 0.3s ease;
 }
 
+/* ==========================================================================
+   Feature #39: Image Height Mode Preview Styles
+   ========================================================================== */
+
+/*
+ * When image height mode is set to 'original', preserve the aspect ratio
+ * of the images instead of forcing a square crop.
+ */
+.bwg-igf-preview-content.bwg-igf-height-original .bwg-igf-item {
+    aspect-ratio: auto;
+}
+
+.bwg-igf-preview-content.bwg-igf-height-original .bwg-igf-item img {
+    height: auto;
+    object-fit: contain;
+}
+
+/*
+ * When image height mode is set to 'fixed', use a specified height value.
+ * The height is set via inline styles from JavaScript.
+ */
+.bwg-igf-preview-content.bwg-igf-height-fixed .bwg-igf-item {
+    aspect-ratio: auto;
+}
+
+.bwg-igf-preview-content.bwg-igf-height-fixed .bwg-igf-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/*
+ * Square mode (default) - 1:1 aspect ratio with cover fit.
+ * This is the default behavior, but we explicitly define it for clarity.
+ */
+.bwg-igf-preview-content.bwg-igf-height-square .bwg-igf-item {
+    aspect-ratio: 1 / 1;
+}
+
+.bwg-igf-preview-content.bwg-igf-height-square .bwg-igf-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 /* Preview hover effects */
 .bwg-igf-preview-content.bwg-igf-hover-zoom .bwg-igf-item:hover img {
     transform: scale(1.1);

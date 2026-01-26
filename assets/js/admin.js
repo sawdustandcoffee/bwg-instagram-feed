@@ -277,10 +277,12 @@
 
         /**
          * Feature #165: Toggle fixed height field visibility based on image height mode selection
+         * Feature #39: Update preview when image height mode changes
          */
         initImageHeightModeToggle: function() {
             var $imageHeightMode = $('#bwg-igf-image-height-mode');
             var $fixedHeightField = $('#bwg-igf-fixed-height-field');
+            var $fixedHeightInput = $('#bwg-igf-image-fixed-height');
 
             if (!$imageHeightMode.length) {
                 return;
@@ -302,6 +304,11 @@
 
             // Check on change
             $imageHeightMode.on('change', toggleFixedHeightField);
+
+            // Feature #39: Update preview when fixed height value changes
+            $fixedHeightInput.on('input change', function() {
+                BWGIGFAdmin.updatePreview();
+            });
         },
 
         /**
@@ -626,11 +633,17 @@
             // Update background color
             if (settings.backgroundColor) {
                 $preview.css('background-color', settings.backgroundColor);
-                $preview.css('padding', '15px');
+                // Feature #41: Use explicit feed padding if set, otherwise use default 15px for background
+                $preview.css('padding', (settings.feedPadding > 0 ? settings.feedPadding : 15) + 'px');
                 $preview.css('border-radius', '8px');
             } else {
                 $preview.css('background-color', '');
-                $preview.css('padding', '');
+                // Feature #41: Preserve feed padding even without background color
+                if (settings.feedPadding > 0) {
+                    $preview.css('padding', settings.feedPadding + 'px');
+                } else {
+                    $preview.css('padding', '');
+                }
                 $preview.css('border-radius', '');
             }
 
@@ -661,6 +674,16 @@
                 }
             } else {
                 $preview.css('max-width', '');
+            }
+
+            // Feature #41: Apply feed padding setting to preview
+            if (settings.feedPadding > 0) {
+                $preview.css('padding', settings.feedPadding + 'px');
+            } else {
+                // Only clear padding if no background color is set (background color sets its own padding)
+                if (!settings.backgroundColor) {
+                    $preview.css('padding', '');
+                }
             }
 
             // Apply custom CSS to preview
@@ -761,6 +784,55 @@
             // Re-apply border radius to any new items
             $preview.find('.bwg-igf-item').css('border-radius', settings.borderRadius + 'px');
 
+            // Feature #39: Apply image height mode to preview items
+            // Remove any existing height mode classes first
+            $preview.removeClass('bwg-igf-height-square bwg-igf-height-original bwg-igf-height-fixed');
+            $preview.find('.bwg-igf-item').css({
+                'aspect-ratio': '',
+                'height': ''
+            });
+            $preview.find('.bwg-igf-item img').css({
+                'aspect-ratio': '',
+                'height': '',
+                'object-fit': ''
+            });
+
+            // Apply new height mode based on settings (unless captions are shown, which overrides)
+            if (!settings.showCaption) {
+                if (settings.imageHeightMode === 'square') {
+                    // Square: 1:1 aspect ratio
+                    $preview.addClass('bwg-igf-height-square');
+                    $preview.find('.bwg-igf-item').css('aspect-ratio', '1 / 1');
+                    $preview.find('.bwg-igf-item img').css({
+                        'width': '100%',
+                        'height': '100%',
+                        'object-fit': 'cover'
+                    });
+                } else if (settings.imageHeightMode === 'original') {
+                    // Original: Preserve aspect ratio
+                    $preview.addClass('bwg-igf-height-original');
+                    $preview.find('.bwg-igf-item').css('aspect-ratio', 'auto');
+                    $preview.find('.bwg-igf-item img').css({
+                        'width': '100%',
+                        'height': 'auto',
+                        'object-fit': 'contain'
+                    });
+                } else if (settings.imageHeightMode === 'fixed') {
+                    // Fixed: Use specified height value
+                    $preview.addClass('bwg-igf-height-fixed');
+                    var fixedHeight = settings.imageFixedHeight + 'px';
+                    $preview.find('.bwg-igf-item').css({
+                        'aspect-ratio': 'auto',
+                        'height': fixedHeight
+                    });
+                    $preview.find('.bwg-igf-item img').css({
+                        'width': '100%',
+                        'height': '100%',
+                        'object-fit': 'cover'
+                    });
+                }
+            }
+
             // Handle follow button visibility (Feature #27)
             var $followButtonWrapper = $previewWrapper.find('.bwg-igf-preview-follow-wrapper');
             if (settings.showFollowButton) {
@@ -817,7 +889,12 @@
                 postCount: parseInt($('#bwg-igf-post-count').val(), 10) || 9,
                 // Feature #40: Feed width settings
                 feedWidth: $('#bwg-igf-feed-width').val() || '100%',
-                feedMaxWidth: $('#bwg-igf-feed-max-width').val() || ''
+                feedMaxWidth: $('#bwg-igf-feed-max-width').val() || '',
+                // Feature #41: Feed padding setting
+                feedPadding: parseInt($('#bwg-igf-feed-padding').val(), 10) || 0,
+                // Feature #39: Image height mode settings
+                imageHeightMode: $('#bwg-igf-image-height-mode').val() || 'square',
+                imageFixedHeight: parseInt($('#bwg-igf-image-fixed-height').val(), 10) || 200
             };
         },
 
