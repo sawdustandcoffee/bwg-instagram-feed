@@ -46,6 +46,7 @@ reset_*.php
 restore_*.php
 populate_*.php
 simulate_*.php
+schedule_*.php
 mock_*.php
 clear_*.php
 recreate_*.php
