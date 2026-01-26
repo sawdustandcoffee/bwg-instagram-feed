@@ -207,6 +207,17 @@
     color: #856404;
 }
 
+/* Feature #27: Additional account health status indicators */
+.bwg-igf-status-expiring {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.bwg-igf-status-rate-limited {
+    background: #f8d7da;
+    color: #721c24;
+}
+
 /* Tab content visibility */
 .bwg-igf-tab-content {
     display: none;

@@ -279,21 +279,119 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
                         <th><?php esc_html_e( 'Username', 'bwg-instagram-feed' ); ?></th>
                         <th><?php esc_html_e( 'Type', 'bwg-instagram-feed' ); ?></th>
                         <th><?php esc_html_e( 'Status', 'bwg-instagram-feed' ); ?></th>
+                        <th><?php esc_html_e( 'API Quota', 'bwg-instagram-feed' ); ?></th>
                         <th><?php esc_html_e( 'Expires', 'bwg-instagram-feed' ); ?></th>
                         <th><?php esc_html_e( 'Actions', 'bwg-instagram-feed' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ( $accounts as $account ) : ?>
+                    <?php foreach ( $accounts as $account ) :
+                        // Determine account health status (Feature #27).
+                        $health_status = 'connected'; // Default: healthy.
+                        $health_class = 'active';
+                        $health_label = __( 'Connected', 'bwg-instagram-feed' );
+                        $health_icon = 'yes-alt';
+                        $health_icon_color = '#46b450';
+
+                        // Check for rate limiting first (highest priority indicator).
+                        // Uses both is_rate_limited (429 errors) and should_backoff (exponential backoff state).
+                        $rate_status = null;
+                        $default_rate_limit = 200; // Instagram default hourly rate limit (Feature #29).
+                        $is_in_backoff = false;
+                        if ( class_exists( 'BWG_IGF_API_Tracker' ) ) {
+                            $rate_status = BWG_IGF_API_Tracker::get_rate_limit_status( $account->id );
+                            $is_in_backoff = BWG_IGF_API_Tracker::should_backoff( $account->id );
+                            if ( $rate_status['is_limited'] || $is_in_backoff ) {
+                                $health_status = 'rate_limited';
+                                $health_class = 'inactive';
+                                $health_label = __( 'Rate Limited', 'bwg-instagram-feed' );
+                                $health_icon = 'dismiss';
+                                $health_icon_color = '#dc3232';
+                            }
+                        }
+
+                        // Check token expiration (second priority).
+                        if ( 'rate_limited' !== $health_status && $account->expires_at ) {
+                            $expires = strtotime( $account->expires_at );
+                            $days_left = ceil( ( $expires - time() ) / DAY_IN_SECONDS );
+                            if ( $days_left <= 0 ) {
+                                $health_status = 'expired';
+                                $health_class = 'inactive';
+                                $health_label = __( 'Expired', 'bwg-instagram-feed' );
+                                $health_icon = 'warning';
+                                $health_icon_color = '#dc3232';
+                            } elseif ( $days_left <= 7 ) {
+                                $health_status = 'expiring';
+                                $health_class = 'error';
+                                $health_label = __( 'Expiring Soon', 'bwg-instagram-feed' );
+                                $health_icon = 'warning';
+                                $health_icon_color = '#dba617';
+                            }
+                        }
+
+                        // Check account status (error state).
+                        if ( 'active' !== $account->status ) {
+                            $health_status = 'error';
+                            $health_class = 'inactive';
+                            $health_label = ucfirst( $account->status );
+                            $health_icon = 'dismiss';
+                            $health_icon_color = '#dc3232';
+                        }
+                    ?>
                         <tr>
                             <td>
                                 <strong>@<?php echo esc_html( $account->username ); ?></strong>
                             </td>
                             <td><?php echo esc_html( ucfirst( $account->account_type ) ); ?></td>
                             <td>
-                                <span class="bwg-igf-status bwg-igf-status-<?php echo esc_attr( $account->status ); ?>">
-                                    <?php echo esc_html( ucfirst( $account->status ) ); ?>
+                                <span class="bwg-igf-status bwg-igf-status-<?php echo esc_attr( $health_class ); ?>">
+                                    <span class="dashicons dashicons-<?php echo esc_attr( $health_icon ); ?>" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-right: 3px; color: <?php echo esc_attr( $health_icon_color ); ?>;"></span>
+                                    <?php echo esc_html( $health_label ); ?>
                                 </span>
+                            </td>
+                            <!-- Feature #29: Display remaining API quota when available -->
+                            <td>
+                                <?php
+                                if ( $rate_status && null !== $rate_status['remaining'] ) :
+                                    $remaining = intval( $rate_status['remaining'] );
+                                    $total = $default_rate_limit;
+                                    $percentage_used = ( ( $total - $remaining ) / $total ) * 100;
+                                    $quota_color = '#46b450'; // Green.
+                                    if ( $percentage_used >= 80 ) {
+                                        $quota_color = '#dc3232'; // Red.
+                                    } elseif ( $percentage_used >= 60 ) {
+                                        $quota_color = '#dba617'; // Yellow.
+                                    }
+                                    ?>
+                                    <div class="bwg-igf-quota-indicator" style="display: inline-block;">
+                                        <span style="color: <?php echo esc_attr( $quota_color ); ?>; font-weight: bold;">
+                                            <?php
+                                            /* translators: 1: remaining API calls, 2: total API calls */
+                                            printf(
+                                                esc_html__( '%1$d/%2$d', 'bwg-instagram-feed' ),
+                                                $remaining,
+                                                $total
+                                            );
+                                            ?>
+                                        </span>
+                                        <span style="color: #666; font-size: 12px;"><?php esc_html_e( 'calls remaining', 'bwg-instagram-feed' ); ?></span>
+                                        <?php if ( $rate_status['last_call'] ) : ?>
+                                            <br>
+                                            <small style="color: #999;">
+                                                <?php
+                                                $last_call_time = strtotime( $rate_status['last_call'] );
+                                                $human_diff = human_time_diff( $last_call_time, current_time( 'timestamp' ) );
+                                                /* translators: %s: human-readable time difference */
+                                                printf( esc_html__( 'Updated %s ago', 'bwg-instagram-feed' ), esc_html( $human_diff ) );
+                                                ?>
+                                            </small>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php else : ?>
+                                    <span style="color: #999;"><?php esc_html_e( 'N/A', 'bwg-instagram-feed' ); ?></span>
+                                    <br>
+                                    <small style="color: #999;"><?php esc_html_e( 'No recent API calls', 'bwg-instagram-feed' ); ?></small>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php
