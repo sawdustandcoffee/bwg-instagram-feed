@@ -115,9 +115,10 @@ $is_new = empty( $feed );
                         </div>
 
                         <?php
-                        // Get connected accounts for the dropdown - $wpdb already declared at top of file
+                        // Get connected accounts for the dropdown with expiration info for status indicators (Feature #32).
+                        // Only show active accounts, but include expires_at for health status display.
                         $connected_accounts = $wpdb->get_results(
-                            "SELECT id, username, account_type, status FROM {$wpdb->prefix}bwg_igf_accounts WHERE status = 'active' ORDER BY username ASC"
+                            "SELECT id, username, account_type, status, expires_at FROM {$wpdb->prefix}bwg_igf_accounts WHERE status = 'active' ORDER BY username ASC"
                         );
                         $selected_account_id = $feed ? absint( $feed->connected_account_id ) : 0;
                         ?>
@@ -134,13 +135,62 @@ $is_new = empty( $feed );
                             <?php else : ?>
                                 <select id="bwg-igf-connected-account" name="connected_account_id">
                                     <option value=""><?php esc_html_e( '— Select an account —', 'bwg-instagram-feed' ); ?></option>
-                                    <?php foreach ( $connected_accounts as $account ) : ?>
-                                        <option value="<?php echo esc_attr( $account->id ); ?>" <?php selected( $selected_account_id, $account->id ); ?>>
-                                            @<?php echo esc_html( $account->username ); ?> (<?php echo esc_html( ucfirst( $account->account_type ) ); ?>)
+                                    <?php foreach ( $connected_accounts as $account ) :
+                                        // Feature #32: Determine account health status for dropdown display.
+                                        $health_status = 'connected';
+                                        $status_emoji = '✓'; // Green checkmark for connected.
+                                        $status_text = __( 'Connected', 'bwg-instagram-feed' );
+
+                                        // Check for rate limiting (highest priority indicator).
+                                        $is_rate_limited = false;
+                                        if ( class_exists( 'BWG_IGF_API_Tracker' ) ) {
+                                            $rate_status = BWG_IGF_API_Tracker::get_rate_limit_status( $account->id );
+                                            $is_in_backoff = BWG_IGF_API_Tracker::should_backoff( $account->id );
+                                            if ( $rate_status['is_limited'] || $is_in_backoff ) {
+                                                $health_status = 'rate_limited';
+                                                $status_emoji = '⚠'; // Warning for rate limited.
+                                                $status_text = __( 'Rate Limited', 'bwg-instagram-feed' );
+                                            }
+                                        }
+
+                                        // Check token expiration (second priority).
+                                        if ( 'rate_limited' !== $health_status && $account->expires_at ) {
+                                            $expires = strtotime( $account->expires_at );
+                                            $days_left = ceil( ( $expires - time() ) / DAY_IN_SECONDS );
+                                            if ( $days_left <= 0 ) {
+                                                $health_status = 'expired';
+                                                $status_emoji = '✗'; // X for expired.
+                                                $status_text = __( 'Expired', 'bwg-instagram-feed' );
+                                            } elseif ( $days_left <= 7 ) {
+                                                $health_status = 'expiring';
+                                                $status_emoji = '⚠'; // Warning for expiring soon.
+                                                $status_text = __( 'Expiring Soon', 'bwg-instagram-feed' );
+                                            }
+                                        }
+
+                                        // Build the option label with status indicator.
+                                        $option_label = sprintf(
+                                            '@%s (%s) — %s %s',
+                                            $account->username,
+                                            ucfirst( $account->account_type ),
+                                            $status_emoji,
+                                            $status_text
+                                        );
+                                    ?>
+                                        <option value="<?php echo esc_attr( $account->id ); ?>" <?php selected( $selected_account_id, $account->id ); ?> data-health-status="<?php echo esc_attr( $health_status ); ?>">
+                                            <?php echo esc_html( $option_label ); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                                 <p class="description"><?php esc_html_e( 'Select a connected Instagram account to display posts from.', 'bwg-instagram-feed' ); ?></p>
+                                <?php
+                                // Feature #32: Show legend for status indicators.
+                                ?>
+                                <p class="description bwg-igf-account-status-legend" style="margin-top: 8px; font-size: 11px; color: #666;">
+                                    <span style="color: #46b450;">✓</span> <?php esc_html_e( 'Connected', 'bwg-instagram-feed' ); ?> &nbsp;|&nbsp;
+                                    <span style="color: #dba617;">⚠</span> <?php esc_html_e( 'Expiring/Limited', 'bwg-instagram-feed' ); ?> &nbsp;|&nbsp;
+                                    <span style="color: #dc3232;">✗</span> <?php esc_html_e( 'Error', 'bwg-instagram-feed' ); ?>
+                                </p>
                             <?php endif; ?>
                         </div>
                     </div>
