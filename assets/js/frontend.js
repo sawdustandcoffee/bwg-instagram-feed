@@ -705,7 +705,13 @@
                 '<button class="bwg-igf-popup-nav bwg-igf-popup-prev" aria-label="Previous post">&lsaquo;</button>',
                 '<button class="bwg-igf-popup-nav bwg-igf-popup-next" aria-label="Next post">&rsaquo;</button>',
                 '<div class="bwg-igf-popup-content">',
-                '  <img class="bwg-igf-popup-image" src="" alt="">',
+                '  <div class="bwg-igf-popup-media-container">',
+                '    <img class="bwg-igf-popup-image" src="" alt="">',
+                '    <video class="bwg-igf-popup-video" controls style="display:none;">',
+                '      <source src="" type="video/mp4">',
+                '      Your browser does not support the video tag.',
+                '    </video>',
+                '  </div>',
                 '  <div class="bwg-igf-popup-details">',
                 '    <p class="bwg-igf-popup-caption"></p>',
                 '    <div class="bwg-igf-popup-stats"></div>',
@@ -836,6 +842,12 @@
         },
 
         close: function() {
+            // Stop video playback when closing popup (Feature #48)
+            var popupVideo = this.popup.querySelector('.bwg-igf-popup-video');
+            if (popupVideo && !popupVideo.paused) {
+                popupVideo.pause();
+            }
+
             this.popup.classList.remove('active');
             document.body.style.overflow = '';
 
@@ -848,9 +860,53 @@
         updateContent: function() {
             var item = this.items[this.currentIndex];
             var img = item.querySelector('img');
+            var popupImage = this.popup.querySelector('.bwg-igf-popup-image');
+            var popupVideo = this.popup.querySelector('.bwg-igf-popup-video');
+            var videoSource = popupVideo.querySelector('source');
 
-            this.popup.querySelector('.bwg-igf-popup-image').src = item.dataset.fullImage || img.src;
-            this.popup.querySelector('.bwg-igf-popup-image').alt = img.alt || '';
+            // Check if this is a video post (Feature #48)
+            var isVideo = item.dataset.mediaType === 'video' && item.dataset.videoUrl;
+
+            if (isVideo) {
+                // Show video, hide image
+                popupImage.style.display = 'none';
+                popupVideo.style.display = 'block';
+
+                // Stop any currently playing video first
+                if (!popupVideo.paused) {
+                    popupVideo.pause();
+                }
+
+                // Set video source and load
+                videoSource.src = item.dataset.videoUrl;
+                popupVideo.load();
+
+                // Try to autoplay with muted audio (required by browsers)
+                popupVideo.muted = true;
+                var playPromise = popupVideo.play();
+
+                // Handle autoplay failures gracefully
+                if (playPromise !== undefined) {
+                    playPromise.catch(function(error) {
+                        // Autoplay was prevented, video will require manual play
+                        console.log('Video autoplay prevented:', error);
+                    });
+                }
+            } else {
+                // Show image, hide video
+                popupImage.style.display = 'block';
+                popupVideo.style.display = 'none';
+
+                // Stop video if it was playing
+                if (!popupVideo.paused) {
+                    popupVideo.pause();
+                }
+
+                popupImage.src = item.dataset.fullImage || img.src;
+                popupImage.alt = img.alt || '';
+            }
+
+            // Update caption, stats, and link (same for both image and video)
             this.popup.querySelector('.bwg-igf-popup-caption').textContent = item.dataset.caption || '';
             this.popup.querySelector('.bwg-igf-popup-stats').innerHTML = [
                 item.dataset.likes ? '<span>❤️ ' + item.dataset.likes + '</span>' : '',
