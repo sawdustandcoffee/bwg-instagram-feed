@@ -706,6 +706,54 @@ button.bwg-igf-saving .spinner {
     color: #666;
 }
 
+/* ==========================================================================
+   Rate Limit Warning Banner (Feature #15)
+   ========================================================================== */
+
+/*
+ * Prominent warning banner displayed when approaching or hitting rate limits.
+ * Appears at the top of all plugin admin pages.
+ */
+
+.bwg-igf-rate-limit-banner {
+    padding: 15px 20px;
+    margin: 15px 20px 15px 0;
+    border-left-width: 4px;
+}
+
+.bwg-igf-rate-limit-banner p {
+    margin: 0.5em 0;
+}
+
+.bwg-igf-rate-limit-banner p:first-child {
+    margin-top: 0;
+}
+
+.bwg-igf-rate-limit-banner p:last-child {
+    margin-bottom: 0;
+}
+
+.bwg-igf-rate-limit-banner ul {
+    margin: 10px 0 5px 20px;
+}
+
+.bwg-igf-rate-limit-banner ul li {
+    margin-bottom: 5px;
+}
+
+.bwg-igf-rate-limit-banner .dashicons {
+    vertical-align: middle;
+}
+
+.bwg-igf-rate-limit-banner a {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.bwg-igf-rate-limit-banner a:hover {
+    text-decoration: underline;
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: more) {
     .bwg-igf-editor-tab:focus,

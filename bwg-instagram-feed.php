@@ -72,6 +72,9 @@ final class BWG_Instagram_Feed {
         add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'frontend_enqueue_scripts' ) );
 
+        // Display rate limit warning banner on plugin admin pages.
+        add_action( 'admin_notices', array( $this, 'display_rate_limit_warning_banner' ) );
+
         // Register shortcode.
         add_shortcode( 'bwg_igf', array( $this, 'render_shortcode' ) );
 
@@ -423,6 +426,134 @@ final class BWG_Instagram_Feed {
      */
     public function render_settings_page() {
         include BWG_IGF_PLUGIN_DIR . 'templates/admin/settings.php';
+    }
+
+    /**
+     * Display rate limit warning banner on plugin admin pages.
+     *
+     * Feature #15: Warning displayed when approaching rate limits.
+     * Shows a prominent warning banner when API usage is approaching rate limits (80% of quota used).
+     */
+    public function display_rate_limit_warning_banner() {
+        // Only show on plugin admin pages.
+        $screen = get_current_screen();
+        if ( ! $screen || strpos( $screen->id, 'bwg-igf' ) === false ) {
+            return;
+        }
+
+        // Check if API tracker class is available.
+        if ( ! class_exists( 'BWG_IGF_API_Tracker' ) ) {
+            return;
+        }
+
+        global $wpdb;
+
+        // Get all connected accounts.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Admin notice check, caching not needed.
+        $connected_accounts = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT id, username FROM %i WHERE status = %s',
+                $wpdb->prefix . 'bwg_igf_accounts',
+                'active'
+            )
+        );
+
+        if ( empty( $connected_accounts ) ) {
+            return;
+        }
+
+        $warning_accounts = array();
+        $limited_accounts = array();
+
+        foreach ( $connected_accounts as $account ) {
+            $status = BWG_IGF_API_Tracker::get_rate_limit_status( $account->id );
+
+            // Check if rate limited (most severe).
+            if ( $status['is_limited'] ) {
+                $limited_accounts[] = $account->username;
+                continue;
+            }
+
+            // Check if approaching limits.
+            // Instagram's rate limit is typically around 200 calls/hour.
+            // 80% = 160 calls, so remaining <= 40 means approaching limit.
+            // Also check if remaining is very low (e.g., <= 20) as a stricter threshold.
+            if ( null !== $status['remaining'] ) {
+                // If remaining is below 40 (80% of typical 200 quota used), show warning.
+                if ( $status['remaining'] <= 40 ) {
+                    $warning_accounts[] = array(
+                        'username'  => $account->username,
+                        'remaining' => $status['remaining'],
+                    );
+                }
+            }
+        }
+
+        // Display rate limited banner (most severe).
+        if ( ! empty( $limited_accounts ) ) {
+            $usernames = array_map(
+                function( $username ) {
+                    return '@' . esc_html( $username );
+                },
+                $limited_accounts
+            );
+            ?>
+            <div class="notice notice-error bwg-igf-rate-limit-banner is-dismissible">
+                <p>
+                    <strong><span class="dashicons dashicons-warning" style="color: #d63638; margin-right: 5px;"></span><?php esc_html_e( 'Instagram Rate Limit Reached', 'bwg-instagram-feed' ); ?></strong>
+                </p>
+                <p>
+                    <?php
+                    printf(
+                        /* translators: %s: comma-separated list of Instagram usernames */
+                        esc_html__( 'The following account(s) are currently rate limited by Instagram: %s', 'bwg-instagram-feed' ),
+                        '<strong>' . implode( ', ', $usernames ) . '</strong>'
+                    );
+                    ?>
+                </p>
+                <p>
+                    <?php esc_html_e( 'Your cached posts will continue to display. To reduce API usage:', 'bwg-instagram-feed' ); ?>
+                </p>
+                <ul style="list-style: disc; margin-left: 20px;">
+                    <li><?php esc_html_e( 'Increase the cache duration in Settings (e.g., 6 hours or 24 hours)', 'bwg-instagram-feed' ); ?></li>
+                    <li><?php esc_html_e( 'Reduce the number of feeds using this account', 'bwg-instagram-feed' ); ?></li>
+                    <li><?php esc_html_e( 'Wait for the rate limit to reset (usually within an hour)', 'bwg-instagram-feed' ); ?></li>
+                </ul>
+            </div>
+            <?php
+            return; // Don't show warning if already rate limited.
+        }
+
+        // Display approaching limits warning.
+        if ( ! empty( $warning_accounts ) ) {
+            ?>
+            <div class="notice notice-warning bwg-igf-rate-limit-banner is-dismissible">
+                <p>
+                    <strong><span class="dashicons dashicons-warning" style="color: #dba617; margin-right: 5px;"></span><?php esc_html_e( 'Approaching Instagram Rate Limits', 'bwg-instagram-feed' ); ?></strong>
+                </p>
+                <p>
+                    <?php
+                    foreach ( $warning_accounts as $account ) {
+                        printf(
+                            /* translators: 1: Instagram username, 2: number of remaining API calls */
+                            esc_html__( 'Account @%1$s has only %2$s API calls remaining.', 'bwg-instagram-feed' ),
+                            esc_html( $account['username'] ),
+                            '<strong>' . esc_html( $account['remaining'] ) . '</strong>'
+                        );
+                        echo '<br>';
+                    }
+                    ?>
+                </p>
+                <p>
+                    <strong><?php esc_html_e( 'Suggestion:', 'bwg-instagram-feed' ); ?></strong>
+                    <?php esc_html_e( 'Consider increasing your cache duration to reduce API calls.', 'bwg-instagram-feed' ); ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-settings' ) ); ?>">
+                        <?php esc_html_e( 'Go to Settings', 'bwg-instagram-feed' ); ?> →
+                    </a>
+                </p>
+            </div>
+            <?php
+        }
     }
 
     /**
