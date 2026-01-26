@@ -419,6 +419,20 @@ class BWG_IGF_Instagram_API {
                 $is_video = false;
             }
 
+            // Feature #46: Capture video_url for VIDEO posts from public profile scraping
+            // Instagram's public data may include video_url field for video posts
+            $video_url = '';
+            if ( $is_video ) {
+                // Try different fields where video URL might be stored
+                if ( isset( $node['video_url'] ) ) {
+                    $video_url = $node['video_url'];
+                } elseif ( isset( $node['video_resources'] ) && ! empty( $node['video_resources'] ) ) {
+                    // Use highest quality video resource if available
+                    $last_resource = end( $node['video_resources'] );
+                    $video_url = isset( $last_resource['src'] ) ? $last_resource['src'] : '';
+                }
+            }
+
             if ( ! empty( $thumbnail ) ) {
                 $posts[] = array(
                     'thumbnail'  => $thumbnail,
@@ -431,6 +445,7 @@ class BWG_IGF_Instagram_API {
                     'id'         => isset( $node['id'] ) ? $node['id'] : '',
                     'media_type' => $media_type,    // Feature #45: Store media type
                     'is_video'   => $is_video,       // Feature #45: Boolean flag for video detection
+                    'video_url'  => $video_url,      // Feature #46: Video URL for VIDEO posts
                 );
             }
         }
@@ -495,6 +510,17 @@ class BWG_IGF_Instagram_API {
                 $post_num
             );
 
+            // Feature #46: Generate mock video URL for video posts
+            // Use a sample video URL for testing video playback in frontend
+            $video_url = '';
+            if ( $is_video ) {
+                // Use a small sample MP4 video for testing
+                $video_url = sprintf(
+                    'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_%ds.mp4',
+                    ( ( $post_num % 3 ) + 1 ) * 10 // 10s, 20s, or 30s video
+                );
+            }
+
             $posts[] = array(
                 'thumbnail'  => $placeholder_url,
                 'full_image' => $placeholder_url,
@@ -506,6 +532,7 @@ class BWG_IGF_Instagram_API {
                 'id'         => sprintf( 'test_%s_%d', $username, $post_num ),
                 'media_type' => $media_type,    // Feature #45: Store media type
                 'is_video'   => $is_video,       // Feature #45: Boolean flag for video detection
+                'video_url'  => $video_url,      // Feature #46: Video URL for VIDEO posts
             );
         }
 
@@ -592,6 +619,7 @@ class BWG_IGF_Instagram_API {
                 'id'         => sprintf( 'longcaption_%d', $post_num ),
                 'media_type' => 'IMAGE',    // Feature #45: Store media type
                 'is_video'   => false,       // Feature #45: Boolean flag for video detection
+                'video_url'  => '',          // Feature #46: Empty for IMAGE posts
             );
         }
 
@@ -988,6 +1016,14 @@ class BWG_IGF_Instagram_API {
             $media_type = isset( $item['media_type'] ) ? strtoupper( $item['media_type'] ) : 'IMAGE';
             $is_video = ( 'VIDEO' === $media_type );
 
+            // Feature #46: Capture video_url for VIDEO posts
+            // For VIDEO type, media_url contains the actual video URL
+            // For IMAGE type, media_url contains the image URL
+            $video_url = '';
+            if ( $is_video && ! empty( $item['media_url'] ) ) {
+                $video_url = $item['media_url'];
+            }
+
             $posts[] = array(
                 'thumbnail'  => $thumbnail,
                 'full_image' => $full_image,
@@ -999,6 +1035,7 @@ class BWG_IGF_Instagram_API {
                 'id'         => $item['id'] ?? '',
                 'media_type' => $media_type,    // Feature #45: Store media type
                 'is_video'   => $is_video,       // Feature #45: Boolean flag for video detection
+                'video_url'  => $video_url,      // Feature #46: Video URL for VIDEO posts
             );
         }
 
