@@ -187,6 +187,12 @@ if ( $is_rate_limited ) {
         $rate_limit_warning = __( 'Instagram is temporarily limiting requests. Showing previously cached posts. Please wait a few minutes and try again.', 'bwg-instagram-feed' );
     }
 
+    // Feature #17: If rate limited with NO cache at all, show a user-friendly error message
+    if ( empty( $posts ) && empty( $expired_cache_data ) ) {
+        $no_cache_message = __( 'Instagram is temporarily limiting requests. Please wait a few minutes and try again later. We apologize for the inconvenience.', 'bwg-instagram-feed' );
+        $rate_limit_warning = ''; // Don't show warning banner if we have no posts to show
+    }
+
     // Don't show loading state if rate limited
     $needs_async_load = false;
 }
@@ -475,6 +481,8 @@ if ( ! empty( $custom_css ) ) :
         // Check for "is private" phrase to avoid false matches with usernames containing "private"
         $is_private_account = strpos( $no_cache_message, 'is private' ) !== false || strpos( $no_cache_message, 'Private accounts cannot' ) !== false;
         $is_user_not_found = strpos( $no_cache_message, 'not found' ) !== false || strpos( $no_cache_message, 'was not found' ) !== false;
+        // Feature #17: Detect rate limit error when no cache is available
+        $is_rate_limit_error = strpos( $no_cache_message, 'temporarily limiting' ) !== false || strpos( $no_cache_message, 'rate limit' ) !== false || $is_rate_limited;
         $has_error = ! empty( $no_cache_message );
 
         // Determine the appropriate warning style
@@ -483,6 +491,8 @@ if ( ! empty( $custom_css ) ) :
             $warning_class = 'bwg-igf-private-account-warning';
         } elseif ( $is_user_not_found ) {
             $warning_class = 'bwg-igf-user-not-found-warning';
+        } elseif ( $is_rate_limit_error ) {
+            $warning_class = 'bwg-igf-rate-limit-error';
         }
         ?>
         <div class="bwg-igf-empty-state <?php echo esc_attr( $warning_class ); ?>">
@@ -497,6 +507,11 @@ if ( ! empty( $custom_css ) ) :
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
                     </svg>
+                <?php elseif ( $is_rate_limit_error ) : ?>
+                    <!-- Clock/timer icon for rate limiting -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
+                    </svg>
                 <?php else : ?>
                     <!-- Instagram icon for other errors -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -510,6 +525,8 @@ if ( ! empty( $custom_css ) ) :
                     esc_html_e( 'Private Account', 'bwg-instagram-feed' );
                 } elseif ( $is_user_not_found ) {
                     esc_html_e( 'User Not Found', 'bwg-instagram-feed' );
+                } elseif ( $is_rate_limit_error ) {
+                    esc_html_e( 'Temporarily Unavailable', 'bwg-instagram-feed' );
                 } else {
                     esc_html_e( 'No Posts Found', 'bwg-instagram-feed' );
                 }
@@ -519,6 +536,8 @@ if ( ! empty( $custom_css ) ) :
                 <?php
                 if ( ! empty( $no_cache_message ) ) {
                     echo esc_html( $no_cache_message );
+                } elseif ( $is_rate_limit_error ) {
+                    esc_html_e( 'Instagram is temporarily limiting requests. Please wait a few minutes and try again later. We apologize for the inconvenience.', 'bwg-instagram-feed' );
                 } else {
                     esc_html_e( 'This feed doesn\'t have any posts to display yet. Please check the Instagram username or try again later.', 'bwg-instagram-feed' );
                 }

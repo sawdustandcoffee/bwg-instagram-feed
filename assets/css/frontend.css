@@ -876,6 +876,43 @@
     max-width: 400px;
 }
 
+/* Feature #17: Rate Limit Error State (when no cache available) */
+.bwg-igf-rate-limit-error {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border: 2px solid #ff9800;
+}
+
+.bwg-igf-rate-limit-error .bwg-igf-empty-state-icon {
+    background: linear-gradient(45deg, #ff9800 0%, #f57c00 50%, #ff5722 100%);
+    opacity: 0.9;
+    animation: bwg-igf-pulse 2s ease-in-out infinite;
+}
+
+.bwg-igf-rate-limit-error .bwg-igf-empty-state-icon svg {
+    fill: #fff;
+}
+
+.bwg-igf-rate-limit-error h3 {
+    color: #e65100;
+}
+
+.bwg-igf-rate-limit-error p {
+    color: #bf360c;
+    max-width: 420px;
+}
+
+/* Pulse animation for rate limit icon */
+@keyframes bwg-igf-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .bwg-igf-grid-4,

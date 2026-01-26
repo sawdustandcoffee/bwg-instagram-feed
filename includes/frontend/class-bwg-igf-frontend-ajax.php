@@ -84,11 +84,25 @@ class BWG_IGF_Frontend_Ajax {
         $posts = $this->fetch_instagram_data( $feed );
 
         if ( is_wp_error( $posts ) ) {
+            $error_code = $posts->get_error_code();
+            $error_message = $posts->get_error_message();
+
+            // Feature #17: User-friendly rate limit error messages
+            if ( 'rate_limited' === $error_code || 'backoff_active' === $error_code ) {
+                wp_send_json_error( array(
+                    'message'       => __( 'Instagram is temporarily limiting requests. Please wait a few minutes and try again later. We apologize for the inconvenience.', 'bwg-instagram-feed' ),
+                    'error_code'    => $error_code,
+                    'is_rate_limit' => true,
+                ) );
+            }
+
             wp_send_json_error( array(
                 'message' => sprintf(
+                    /* translators: %s: Error message */
                     __( 'Could not fetch Instagram posts: %s', 'bwg-instagram-feed' ),
-                    $posts->get_error_message()
+                    $error_message
                 ),
+                'error_code' => $error_code,
             ) );
         }
 
