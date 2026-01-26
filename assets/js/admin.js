@@ -34,6 +34,7 @@
             this.initFollowButtonToggle(); // Feature #27: Toggle follow button options
             this.initPopupToggle(); // Feature #29: Toggle popup options visibility
             this.initImageHeightModeToggle(); // Feature #165: Toggle fixed height field visibility
+            this.initLikesCommentsToggle(); // Feature #38: Toggle likes/comments visibility in preview
         },
 
         bindEvents: function() {
@@ -303,6 +304,29 @@
             $imageHeightMode.on('change', toggleFixedHeightField);
         },
 
+        /**
+         * Feature #38: Toggle likes/comments visibility in admin preview
+         * When show_likes or show_comments checkboxes change, update the preview
+         * to show/hide the corresponding stats in the overlay.
+         */
+        initLikesCommentsToggle: function() {
+            var $showLikes = $('#bwg-igf-show-likes');
+            var $showComments = $('#bwg-igf-show-comments');
+
+            if (!$showLikes.length && !$showComments.length) {
+                return;
+            }
+
+            // Update preview when likes/comments visibility toggles change
+            $showLikes.on('change', function() {
+                BWGIGFAdmin.updatePreview();
+            });
+
+            $showComments.on('change', function() {
+                BWGIGFAdmin.updatePreview();
+            });
+        },
+
         initPostCountValidation: function() {
             var $postCount = $('#bwg-igf-post-count');
             var minValue = 1;
@@ -567,10 +591,32 @@
             $preview.find('.bwg-igf-item').css('border-radius', settings.borderRadius + 'px');
 
             // Handle overlay effect - add/remove overlay elements
+            // Feature #38: Respect show_likes and show_comments visibility toggles
             if (settings.hoverEffect === 'overlay') {
                 $preview.find('.bwg-igf-item').each(function() {
-                    if (!$(this).find('.bwg-igf-overlay').length) {
-                        $(this).append('<div class="bwg-igf-overlay"><div class="bwg-igf-overlay-content"><div class="bwg-igf-stats"><span class="bwg-igf-stat">❤️ 123</span><span class="bwg-igf-stat">💬 45</span></div></div></div>');
+                    var $item = $(this);
+                    var $overlay = $item.find('.bwg-igf-overlay');
+
+                    // Build stats HTML based on visibility settings
+                    var statsHtml = '';
+                    if (settings.showLikes) {
+                        statsHtml += '<span class="bwg-igf-stat bwg-igf-stat-likes">❤️ 123</span>';
+                    }
+                    if (settings.showComments) {
+                        statsHtml += '<span class="bwg-igf-stat bwg-igf-stat-comments">💬 45</span>';
+                    }
+
+                    // If at least one stat is visible, show the overlay
+                    if (statsHtml) {
+                        if (!$overlay.length) {
+                            $item.append('<div class="bwg-igf-overlay"><div class="bwg-igf-overlay-content"><div class="bwg-igf-stats">' + statsHtml + '</div></div></div>');
+                        } else {
+                            // Update existing overlay stats
+                            $overlay.find('.bwg-igf-stats').html(statsHtml);
+                        }
+                    } else {
+                        // Both likes and comments are hidden - remove overlay
+                        $overlay.remove();
                     }
                 });
             } else {
@@ -656,11 +702,17 @@
             // Add or remove items to match the post count
             if (currentItemCount < desiredCount) {
                 // Need to add more items - use realistic placeholder images (Feature #37)
+                // Feature #49: Some items will be videos (approximately every 3rd-4th item)
                 for (var i = currentItemCount; i < desiredCount; i++) {
                     // Use unique seeds for variety - add offset based on index to get different images
                     var seed = 100 + (i * 13) % 200; // Generate varied seeds between 100-299
                     var placeholderUrl = 'https://picsum.photos/seed/' + seed + '/400/400';
-                    var newItem = '<div class="bwg-igf-item" data-placeholder-seed="' + seed + '"><img src="' + placeholderUrl + '" alt="Preview placeholder" loading="lazy"></div>';
+                    // Feature #49: Make approximately every 3rd or 4th item a video
+                    var isVideo = (i % 3 === 2 || i % 7 === 5);
+                    var itemClass = 'bwg-igf-item' + (isVideo ? ' bwg-igf-video-preview-item' : '');
+                    var mediaType = isVideo ? 'VIDEO' : 'IMAGE';
+                    var videoIcon = isVideo ? '<div class="bwg-igf-preview-video-icon" aria-label="Video"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' : '';
+                    var newItem = '<div class="' + itemClass + '" data-placeholder-seed="' + seed + '" data-media-type="' + mediaType + '"><img src="' + placeholderUrl + '" alt="Preview placeholder" loading="lazy">' + videoIcon + '</div>';
                     $preview.append(newItem);
                 }
             } else if (currentItemCount > desiredCount) {
@@ -728,6 +780,8 @@
                 customCSS: $('#bwg-igf-custom-css').val() || '',
                 showAccountName: $('#bwg-igf-show-account-name').is(':checked'),
                 showCaption: $('input[name="show_caption"]').is(':checked'),
+                showLikes: $('input[name="show_likes"]').is(':checked'),
+                showComments: $('input[name="show_comments"]').is(':checked'),
                 showFollowButton: $('#bwg-igf-show-follow-button').is(':checked'),
                 followButtonText: $('#bwg-igf-follow-button-text').val() || 'Follow on Instagram',
                 followButtonStyle: $('#bwg-igf-follow-button-style').val() || 'gradient',

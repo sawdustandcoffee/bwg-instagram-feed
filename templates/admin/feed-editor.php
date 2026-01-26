@@ -367,14 +367,14 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
 
                         <div class="bwg-igf-field">
                             <label>
-                                <input type="checkbox" name="show_likes" value="1" <?php checked( $show_likes, true ); ?>>
+                                <input type="checkbox" id="bwg-igf-show-likes" name="show_likes" value="1" <?php checked( $show_likes, true ); ?>>
                                 <?php esc_html_e( 'Show like count', 'bwg-instagram-feed' ); ?>
                             </label>
                         </div>
 
                         <div class="bwg-igf-field">
                             <label>
-                                <input type="checkbox" name="show_comments" value="1" <?php checked( $show_comments, true ); ?>>
+                                <input type="checkbox" id="bwg-igf-show-comments" name="show_comments" value="1" <?php checked( $show_comments, true ); ?>>
                                 <?php esc_html_e( 'Show comment count', 'bwg-instagram-feed' ); ?>
                             </label>
                         </div>
@@ -654,13 +654,25 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                     <?php
                     // Use realistic placeholder images from picsum.photos
                     // Each image has a unique seed to show variety like a real Instagram feed
+                    // Feature #49: Some items are marked as videos to show video indicator
                     $placeholder_seeds = array( 10, 22, 35, 48, 51, 64, 77, 83, 96 );
+                    $video_indices = array( 2, 5, 7 ); // Items at indices 2, 5, 7 will show video indicator
                     for ( $i = 0; $i < 9; $i++ ) :
                         $seed = $placeholder_seeds[ $i ];
                         $placeholder_url = "https://picsum.photos/seed/{$seed}/400/400";
+                        $is_video = in_array( $i, $video_indices, true );
+                        $item_class = 'bwg-igf-item' . ( $is_video ? ' bwg-igf-video-preview-item' : '' );
                     ?>
-                        <div class="bwg-igf-item" data-placeholder-seed="<?php echo esc_attr( $seed ); ?>">
+                        <div class="<?php echo esc_attr( $item_class ); ?>" data-placeholder-seed="<?php echo esc_attr( $seed ); ?>" data-media-type="<?php echo $is_video ? 'VIDEO' : 'IMAGE'; ?>">
                             <img src="<?php echo esc_url( $placeholder_url ); ?>" alt="<?php esc_attr_e( 'Preview placeholder', 'bwg-instagram-feed' ); ?>" loading="lazy">
+                            <?php if ( $is_video ) : ?>
+                            <!-- Feature #49: Video indicator icon -->
+                            <div class="bwg-igf-preview-video-icon" aria-label="<?php esc_attr_e( 'Video', 'bwg-instagram-feed' ); ?>">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     <?php endfor; ?>
                 </div>

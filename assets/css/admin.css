@@ -438,6 +438,71 @@
     white-space: nowrap;
 }
 
+/* ==========================================================================
+   Feature #49: Video indicator icon on admin preview items
+   ========================================================================== */
+
+/*
+ * Shows a play icon on preview items that represent video content.
+ * This helps users visualize how video posts will appear in their feed.
+ */
+
+.bwg-igf-video-preview-item {
+    position: relative;
+}
+
+.bwg-igf-preview-video-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    pointer-events: none;
+    transition: background 0.3s ease, transform 0.3s ease;
+    z-index: 5;
+}
+
+.bwg-igf-preview-video-icon svg {
+    width: 20px;
+    height: 20px;
+    margin-left: 3px; /* Slight offset to center the play triangle visually */
+}
+
+/* Hover effect for video preview items */
+.bwg-igf-video-preview-item:hover .bwg-igf-preview-video-icon {
+    background: rgba(225, 48, 108, 0.85); /* Instagram pink */
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Small badge variant for compact view */
+.bwg-igf-preview-video-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.bwg-igf-preview-video-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
 /* Responsive */
 @media (max-width: 782px) {
     .bwg-igf-editor {
