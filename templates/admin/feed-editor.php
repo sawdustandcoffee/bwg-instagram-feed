@@ -41,6 +41,37 @@ if ( $is_edit_action && $feed_id > 0 && empty( $feed ) ) {
 }
 
 $is_new = empty( $feed );
+
+// Feature #35: Check if this feed's connected account has issues (for existing feeds only).
+$connected_account_warning = '';
+$connected_account_username = '';
+if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
+    $account_check = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id, username, status, expires_at FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d",
+        $feed->connected_account_id
+    ) );
+
+    if ( ! $account_check ) {
+        // Account was deleted.
+        $connected_account_warning = __( 'The connected Instagram account for this feed has been removed. Consider switching to a Public feed type as an alternative.', 'bwg-instagram-feed' );
+    } elseif ( 'active' !== $account_check->status ) {
+        // Account is inactive/disconnected.
+        $connected_account_warning = sprintf(
+            /* translators: %s: Instagram username */
+            __( 'The Instagram account @%s is no longer connected. Consider switching to a Public feed type as an alternative.', 'bwg-instagram-feed' ),
+            esc_html( $account_check->username )
+        );
+        $connected_account_username = $account_check->username;
+    } elseif ( ! empty( $account_check->expires_at ) && strtotime( $account_check->expires_at ) < time() ) {
+        // Token has expired.
+        $connected_account_warning = sprintf(
+            /* translators: %s: Instagram username */
+            __( 'The access token for @%s has expired. Please reconnect the account, or switch to a Public feed type as an alternative.', 'bwg-instagram-feed' ),
+            esc_html( $account_check->username )
+        );
+        $connected_account_username = $account_check->username;
+    }
+}
 ?>
 <div class="wrap">
     <!-- Breadcrumb Navigation -->
@@ -63,6 +94,34 @@ $is_new = empty( $feed );
             <?php echo $is_new ? esc_html__( 'Create New Feed', 'bwg-instagram-feed' ) : esc_html__( 'Edit Feed', 'bwg-instagram-feed' ); ?>
         </h1>
     </div>
+
+    <?php
+    // Feature #35: Show warning notice if connected account has issues.
+    if ( ! empty( $connected_account_warning ) ) :
+    ?>
+        <div class="notice notice-warning bwg-igf-connected-account-warning" style="margin: 15px 0;">
+            <p>
+                <strong><?php esc_html_e( 'Connected Account Issue', 'bwg-instagram-feed' ); ?></strong>
+            </p>
+            <p><?php echo esc_html( $connected_account_warning ); ?></p>
+            <p>
+                <strong><?php esc_html_e( 'Quick Fix:', 'bwg-instagram-feed' ); ?></strong>
+                <?php esc_html_e( 'Change "Feed Type" to "Public (Username)" and enter the Instagram username to display.', 'bwg-instagram-feed' ); ?>
+                <?php if ( ! empty( $connected_account_username ) ) : ?>
+                    <br>
+                    <em>
+                        <?php
+                        printf(
+                            /* translators: %s: Instagram username */
+                            esc_html__( 'Tip: You can enter "%s" as the username to show the same account\'s posts.', 'bwg-instagram-feed' ),
+                            esc_html( $connected_account_username )
+                        );
+                        ?>
+                    </em>
+                <?php endif; ?>
+            </p>
+        </div>
+    <?php endif; ?>
 
     <form id="bwg-igf-feed-form" method="post">
         <input type="hidden" name="feed_id" value="<?php echo esc_attr( $feed_id ); ?>">
