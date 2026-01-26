@@ -38,6 +38,13 @@ if ( $delete_data ) {
             $wpdb->prefix . 'bwg_igf_cache'
         )
     );
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Intentional table drop on uninstall
+    $wpdb->query(
+        $wpdb->prepare(
+            'DROP TABLE IF EXISTS %i',
+            $wpdb->prefix . 'bwg_igf_api_calls'
+        )
+    );
 
     // Delete options.
     // Note: instagram_app_id and instagram_app_secret are no longer stored in wp_options

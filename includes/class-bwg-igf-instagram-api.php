@@ -773,13 +773,30 @@ class BWG_IGF_Instagram_API {
     }
 
     /**
+     * Current account ID for API tracking.
+     *
+     * @var int
+     */
+    private $current_account_id = 0;
+
+    /**
+     * Set the current account ID for API call tracking.
+     *
+     * @param int $account_id The account ID.
+     */
+    public function set_current_account_id( $account_id ) {
+        $this->current_account_id = absint( $account_id );
+    }
+
+    /**
      * Fetch posts using connected account (OAuth token).
      *
      * @param string $access_token Decrypted access token.
      * @param int    $count        Number of posts to fetch.
+     * @param int    $account_id   Optional. Account ID for tracking.
      * @return array|WP_Error Array of posts or WP_Error.
      */
-    public function fetch_connected_posts( $access_token, $count = 12 ) {
+    public function fetch_connected_posts( $access_token, $count = 12, $account_id = 0 ) {
         $api_url = sprintf(
             'https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count&access_token=%s&limit=%d',
             rawurlencode( $access_token ),
@@ -790,7 +807,18 @@ class BWG_IGF_Instagram_API {
             'timeout' => $this->timeout,
         ) );
 
+        // Use provided account_id or fall back to current_account_id.
+        $track_account_id = $account_id > 0 ? $account_id : $this->current_account_id;
+
         if ( is_wp_error( $response ) ) {
+            // Log the failed API call.
+            $this->log_api_call(
+                $track_account_id,
+                'graph.instagram.com/me/media',
+                0,
+                $response,
+                $response->get_error_code()
+            );
             return $response;
         }
 
@@ -800,6 +828,14 @@ class BWG_IGF_Instagram_API {
 
         // Check for rate limiting (429 Too Many Requests)
         if ( 429 === $status_code ) {
+            // Log the rate limited call.
+            $this->log_api_call(
+                $track_account_id,
+                'graph.instagram.com/me/media',
+                $status_code,
+                $response,
+                'rate_limited'
+            );
             return new WP_Error(
                 'rate_limited',
                 __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
@@ -817,17 +853,42 @@ class BWG_IGF_Instagram_API {
                  stripos( $error_message, 'rate' ) !== false ||
                  stripos( $error_message, 'limit' ) !== false ||
                  stripos( $error_message, 'too many' ) !== false ) {
+                // Log the rate limited call.
+                $this->log_api_call(
+                    $track_account_id,
+                    'graph.instagram.com/me/media',
+                    $status_code,
+                    $response,
+                    'rate_limited'
+                );
                 return new WP_Error(
                     'rate_limited',
                     __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
                 );
             }
 
+            // Log the error call.
+            $this->log_api_call(
+                $track_account_id,
+                'graph.instagram.com/me/media',
+                $status_code,
+                $response,
+                'api_error_' . $error_code
+            );
+
             return new WP_Error(
                 'api_error',
                 sprintf( __( 'Instagram API error: %s', 'bwg-instagram-feed' ), $error_message )
             );
         }
+
+        // Log successful API call.
+        $this->log_api_call(
+            $track_account_id,
+            'graph.instagram.com/me/media',
+            $status_code,
+            $response
+        );
 
         if ( empty( $data['data'] ) ) {
             return array();
@@ -855,15 +916,44 @@ class BWG_IGF_Instagram_API {
     }
 
     /**
+     * Log an API call to the tracker.
+     *
+     * @param int          $account_id Account ID.
+     * @param string       $endpoint   API endpoint.
+     * @param int          $status_code HTTP status code.
+     * @param array|WP_Error $response  HTTP response.
+     * @param string|null  $error_code Optional error code.
+     */
+    private function log_api_call( $account_id, $endpoint, $status_code, $response, $error_code = null ) {
+        // Only log if the API tracker class is available.
+        if ( ! class_exists( 'BWG_IGF_API_Tracker' ) ) {
+            return;
+        }
+
+        // Parse rate limit headers from response.
+        $rate_limit_info = BWG_IGF_API_Tracker::parse_rate_limit_headers( $response );
+
+        BWG_IGF_API_Tracker::log_call(
+            $account_id,
+            $endpoint,
+            $status_code,
+            $rate_limit_info['remaining'],
+            $rate_limit_info['reset'],
+            $error_code
+        );
+    }
+
+    /**
      * Refresh an Instagram access token.
      *
      * Instagram long-lived tokens can be refreshed if they haven't expired yet.
      * This should be called when a token is near expiration (within 7 days).
      *
      * @param string $access_token Current valid access token.
+     * @param int    $account_id   Optional. Account ID for tracking.
      * @return array|WP_Error Array with new token data or WP_Error on failure.
      */
-    public function refresh_access_token( $access_token ) {
+    public function refresh_access_token( $access_token, $account_id = 0 ) {
         $refresh_url = sprintf(
             'https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=%s',
             rawurlencode( $access_token )
@@ -873,7 +963,18 @@ class BWG_IGF_Instagram_API {
             'timeout' => $this->timeout,
         ) );
 
+        // Use provided account_id or fall back to current_account_id.
+        $track_account_id = $account_id > 0 ? $account_id : $this->current_account_id;
+
         if ( is_wp_error( $response ) ) {
+            // Log the failed API call.
+            $this->log_api_call(
+                $track_account_id,
+                'graph.instagram.com/refresh_access_token',
+                0,
+                $response,
+                $response->get_error_code()
+            );
             return $response;
         }
 
@@ -883,12 +984,36 @@ class BWG_IGF_Instagram_API {
 
         if ( 200 !== $status_code || isset( $data['error'] ) ) {
             $error_message = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error during token refresh.', 'bwg-instagram-feed' );
+            // Log the failed API call.
+            $this->log_api_call(
+                $track_account_id,
+                'graph.instagram.com/refresh_access_token',
+                $status_code,
+                $response,
+                'token_refresh_failed'
+            );
             return new WP_Error( 'token_refresh_failed', $error_message );
         }
 
         if ( ! isset( $data['access_token'] ) ) {
+            // Log the failed API call.
+            $this->log_api_call(
+                $track_account_id,
+                'graph.instagram.com/refresh_access_token',
+                $status_code,
+                $response,
+                'no_token_returned'
+            );
             return new WP_Error( 'token_refresh_failed', __( 'No access token returned from refresh.', 'bwg-instagram-feed' ) );
         }
+
+        // Log successful API call.
+        $this->log_api_call(
+            $track_account_id,
+            'graph.instagram.com/refresh_access_token',
+            $status_code,
+            $response
+        );
 
         return array(
             'access_token' => $data['access_token'],
@@ -937,7 +1062,7 @@ class BWG_IGF_Instagram_API {
         }
 
         // Token expires soon, attempt to refresh it.
-        $refresh_result = $this->refresh_access_token( $access_token );
+        $refresh_result = $this->refresh_access_token( $access_token, $account_id );
 
         if ( is_wp_error( $refresh_result ) ) {
             // Refresh failed, but we can still use the current token until it actually expires.

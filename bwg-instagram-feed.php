@@ -90,6 +90,11 @@ final class BWG_Instagram_Feed {
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
         BWG_IGF_Image_Proxy::schedule_cleanup();
 
+        // Initialize API tracker (creates table and schedules cleanup).
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-api-tracker.php';
+        BWG_IGF_API_Tracker::create_table();
+        BWG_IGF_API_Tracker::init();
+
         flush_rewrite_rules();
     }
 
@@ -100,6 +105,10 @@ final class BWG_Instagram_Feed {
         // Unschedule image proxy cache cleanup cron job.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
         BWG_IGF_Image_Proxy::unschedule_cleanup();
+
+        // Unschedule API tracker cleanup cron job.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-api-tracker.php';
+        BWG_IGF_API_Tracker::unschedule_cleanup();
 
         flush_rewrite_rules();
     }
@@ -132,6 +141,10 @@ final class BWG_Instagram_Feed {
 
         // Load Instagram credentials (built-in OAuth credentials).
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-credentials.php';
+
+        // Load API tracker for rate limit monitoring.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-api-tracker.php';
+        BWG_IGF_API_Tracker::init();
 
         // Load Instagram API service.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
