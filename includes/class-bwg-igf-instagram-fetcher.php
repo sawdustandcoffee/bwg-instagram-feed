@@ -332,9 +332,10 @@ class BWG_IGF_Instagram_Fetcher {
      * @param int   $feed_id Feed ID.
      * @param array $posts Array of post data.
      * @param int   $cache_duration Cache duration in seconds.
+     * @param int   $account_id Optional. Account ID for rate limit check.
      * @return bool True on success, false on failure.
      */
-    public static function store_cache( $feed_id, $posts, $cache_duration = 3600 ) {
+    public static function store_cache( $feed_id, $posts, $cache_duration = 3600, $account_id = 0 ) {
         global $wpdb;
 
         // Delete any existing cache for this feed.
@@ -344,8 +345,15 @@ class BWG_IGF_Instagram_Fetcher {
             array( '%d' )
         );
 
+        // Feature #21: Get effective cache duration (may be extended during rate limit).
+        if ( class_exists( 'BWG_IGF_API_Tracker' ) ) {
+            $effective_duration = BWG_IGF_API_Tracker::get_effective_cache_duration( $cache_duration, $account_id );
+        } else {
+            $effective_duration = $cache_duration;
+        }
+
         // Calculate expiration time.
-        $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
+        $expires_at = gmdate( 'Y-m-d H:i:s', time() + $effective_duration );
 
         // Generate cache key.
         $cache_key = 'feed_' . $feed_id . '_' . md5( serialize( $posts ) );

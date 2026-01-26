@@ -57,6 +57,23 @@ class BWG_IGF_API_Tracker {
     const BACKOFF_MULTIPLIER = 2;
 
     /**
+     * Extended cache duration multiplier during rate limit periods.
+     * Feature #21: Auto-extend cache duration during rate limit.
+     * Original duration is multiplied by this value when rate limited.
+     *
+     * @var int
+     */
+    const RATE_LIMIT_CACHE_MULTIPLIER = 6;
+
+    /**
+     * Maximum extended cache duration in seconds (24 hours).
+     * Feature #21: Cap the maximum extended cache duration.
+     *
+     * @var int
+     */
+    const MAX_EXTENDED_CACHE_DURATION = 86400;
+
+    /**
      * Initialize the tracker.
      */
     public static function init() {
@@ -549,13 +566,22 @@ class BWG_IGF_API_Tracker {
      * Clear backoff state after successful API call (recovery).
      *
      * Feature #13: Resets backoff when rate limits have cleared.
+     * Feature #21: Also clears cache extension state when all accounts recover.
      *
      * @param int $account_id Account ID.
      * @return bool True if state was cleared.
      */
     public static function clear_backoff( $account_id ) {
         $transient_key = 'bwg_igf_backoff_' . absint( $account_id );
-        return delete_transient( $transient_key );
+        $result = delete_transient( $transient_key );
+
+        // Feature #21: Check if any account is still rate limited.
+        // If not, clear the cache extension state.
+        if ( ! self::is_any_account_rate_limited() ) {
+            self::clear_cache_extension_state();
+        }
+
+        return $result;
     }
 
     /**
@@ -683,5 +709,211 @@ class BWG_IGF_API_Tracker {
         }
 
         return $result;
+    }
+
+    /**
+     * Get the effective cache duration, extended during rate limit periods.
+     *
+     * Feature #21: Auto-extend cache duration during rate limit.
+     * When rate limited, this returns the original duration multiplied by RATE_LIMIT_CACHE_MULTIPLIER,
+     * capped at MAX_EXTENDED_CACHE_DURATION.
+     *
+     * @param int $original_duration Original cache duration in seconds.
+     * @param int $account_id        Account ID to check for rate limiting.
+     * @return int Effective cache duration in seconds.
+     */
+    public static function get_effective_cache_duration( $original_duration, $account_id = 0 ) {
+        // Check if any account is currently rate limited.
+        $is_rate_limited = false;
+
+        if ( $account_id > 0 ) {
+            // Check specific account.
+            $rate_limit_check = self::is_rate_limited( $account_id );
+            $is_rate_limited = $rate_limit_check['limited'] || self::should_backoff( $account_id );
+        } else {
+            // Check global rate limit state (any account).
+            $is_rate_limited = self::is_any_account_rate_limited();
+        }
+
+        if ( ! $is_rate_limited ) {
+            return intval( $original_duration );
+        }
+
+        // Calculate extended duration.
+        $extended_duration = $original_duration * self::RATE_LIMIT_CACHE_MULTIPLIER;
+
+        // Cap at maximum extended duration.
+        $extended_duration = min( $extended_duration, self::MAX_EXTENDED_CACHE_DURATION );
+
+        // Store the extension state for tracking.
+        self::set_cache_extension_state( true, $original_duration, $extended_duration );
+
+        return intval( $extended_duration );
+    }
+
+    /**
+     * Check if any connected account is currently rate limited.
+     *
+     * Feature #21: Used to determine if cache should be extended.
+     *
+     * @return bool True if any account is rate limited.
+     */
+    public static function is_any_account_rate_limited() {
+        global $wpdb;
+
+        // Check for any backoff transients.
+        $transient_prefix = '_transient_bwg_igf_backoff_';
+        $has_backoff = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $wpdb->esc_like( $transient_prefix ) . '%'
+            )
+        );
+
+        if ( intval( $has_backoff ) > 0 ) {
+            return true;
+        }
+
+        // Also check the API calls table for recent rate limit errors.
+        $table_name = self::get_table_name();
+
+        if ( ! self::table_exists() ) {
+            return false;
+        }
+
+        $rate_limited = $wpdb->get_var(
+            "SELECT COUNT(*) FROM $table_name
+            WHERE (response_code = 429 OR error_code IN ('rate_limited', '4', '17', '32'))
+            AND timestamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR)"
+        );
+
+        return intval( $rate_limited ) > 0;
+    }
+
+    /**
+     * Set the cache extension state for tracking.
+     *
+     * Feature #21: Stores information about cache extension for admin display.
+     *
+     * @param bool $is_extended       Whether cache is currently extended.
+     * @param int  $original_duration Original cache duration in seconds.
+     * @param int  $extended_duration Extended cache duration in seconds.
+     */
+    public static function set_cache_extension_state( $is_extended, $original_duration = 0, $extended_duration = 0 ) {
+        $state = array(
+            'is_extended'       => $is_extended,
+            'original_duration' => $original_duration,
+            'extended_duration' => $extended_duration,
+            'extended_at'       => time(),
+        );
+
+        // Store for 2 hours (longer than typical rate limit period).
+        set_transient( 'bwg_igf_cache_extension_state', $state, 7200 );
+    }
+
+    /**
+     * Get the cache extension state.
+     *
+     * Feature #21: Returns information about current cache extension status.
+     *
+     * @return array Cache extension state.
+     */
+    public static function get_cache_extension_state() {
+        $state = get_transient( 'bwg_igf_cache_extension_state' );
+
+        if ( false === $state || ! is_array( $state ) ) {
+            return array(
+                'is_extended'       => false,
+                'original_duration' => 0,
+                'extended_duration' => 0,
+                'extended_at'       => null,
+            );
+        }
+
+        // Check if the rate limit has cleared.
+        if ( $state['is_extended'] && ! self::is_any_account_rate_limited() ) {
+            // Rate limit has cleared, mark as no longer extended.
+            self::clear_cache_extension_state();
+            return array(
+                'is_extended'       => false,
+                'original_duration' => $state['original_duration'],
+                'extended_duration' => 0,
+                'extended_at'       => null,
+            );
+        }
+
+        return $state;
+    }
+
+    /**
+     * Clear the cache extension state.
+     *
+     * Feature #21: Called when rate limits have cleared.
+     */
+    public static function clear_cache_extension_state() {
+        delete_transient( 'bwg_igf_cache_extension_state' );
+    }
+
+    /**
+     * Get human-readable cache extension info.
+     *
+     * Feature #21: Returns a formatted message about cache extension status.
+     *
+     * @return string Status message or empty string if not extended.
+     */
+    public static function get_cache_extension_message() {
+        $state = self::get_cache_extension_state();
+
+        if ( ! $state['is_extended'] ) {
+            return '';
+        }
+
+        // Format durations.
+        $original_formatted = self::format_duration( $state['original_duration'] );
+        $extended_formatted = self::format_duration( $state['extended_duration'] );
+
+        return sprintf(
+            /* translators: 1: original duration, 2: extended duration */
+            __( 'Cache duration temporarily extended from %1$s to %2$s due to rate limiting.', 'bwg-instagram-feed' ),
+            $original_formatted,
+            $extended_formatted
+        );
+    }
+
+    /**
+     * Format a duration in seconds to a human-readable string.
+     *
+     * @param int $seconds Duration in seconds.
+     * @return string Formatted duration string.
+     */
+    private static function format_duration( $seconds ) {
+        if ( $seconds >= 86400 ) {
+            $hours = floor( $seconds / 86400 );
+            return sprintf(
+                /* translators: %d: number of days */
+                _n( '%d day', '%d days', $hours, 'bwg-instagram-feed' ),
+                $hours
+            );
+        } elseif ( $seconds >= 3600 ) {
+            $hours = floor( $seconds / 3600 );
+            return sprintf(
+                /* translators: %d: number of hours */
+                _n( '%d hour', '%d hours', $hours, 'bwg-instagram-feed' ),
+                $hours
+            );
+        } elseif ( $seconds >= 60 ) {
+            $minutes = floor( $seconds / 60 );
+            return sprintf(
+                /* translators: %d: number of minutes */
+                _n( '%d minute', '%d minutes', $minutes, 'bwg-instagram-feed' ),
+                $minutes
+            );
+        } else {
+            return sprintf(
+                /* translators: %d: number of seconds */
+                _n( '%d second', '%d seconds', $seconds, 'bwg-instagram-feed' ),
+                $seconds
+            );
+        }
     }
 }
