@@ -634,6 +634,35 @@
                 $preview.css('border-radius', '');
             }
 
+            // Feature #40: Apply feed width and max-width settings to preview
+            if (settings.feedWidth) {
+                // Normalize the width value (add 'px' if it's just a number)
+                var widthVal = settings.feedWidth.trim();
+                if (widthVal && !isNaN(parseFloat(widthVal)) && !widthVal.match(/[%a-z]/i)) {
+                    widthVal = widthVal + 'px';
+                }
+                $preview.css('width', widthVal);
+            } else {
+                $preview.css('width', '');
+            }
+
+            if (settings.feedMaxWidth) {
+                // Normalize the max-width value (add 'px' if it's just a number)
+                var maxWidthVal = settings.feedMaxWidth.trim();
+                if (maxWidthVal && maxWidthVal.toLowerCase() !== 'none') {
+                    if (!isNaN(parseFloat(maxWidthVal)) && !maxWidthVal.match(/[%a-z]/i)) {
+                        maxWidthVal = maxWidthVal + 'px';
+                    }
+                    $preview.css('max-width', maxWidthVal);
+                } else if (maxWidthVal.toLowerCase() === 'none') {
+                    $preview.css('max-width', 'none');
+                } else {
+                    $preview.css('max-width', '');
+                }
+            } else {
+                $preview.css('max-width', '');
+            }
+
             // Apply custom CSS to preview
             var customCSS = settings.customCSS || '';
             // Replace .bwg-igf-feed with .bwg-igf-preview-content for admin preview
@@ -785,7 +814,10 @@
                 showFollowButton: $('#bwg-igf-show-follow-button').is(':checked'),
                 followButtonText: $('#bwg-igf-follow-button-text').val() || 'Follow on Instagram',
                 followButtonStyle: $('#bwg-igf-follow-button-style').val() || 'gradient',
-                postCount: parseInt($('#bwg-igf-post-count').val(), 10) || 9
+                postCount: parseInt($('#bwg-igf-post-count').val(), 10) || 9,
+                // Feature #40: Feed width settings
+                feedWidth: $('#bwg-igf-feed-width').val() || '100%',
+                feedMaxWidth: $('#bwg-igf-feed-max-width').val() || ''
             };
         },
 
