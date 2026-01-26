@@ -913,6 +913,59 @@
     }
 }
 
+/* Feature #23: Stale Data Indicator */
+.bwg-igf-stale-data-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    background: rgba(120, 120, 120, 0.08);
+    border-radius: 20px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.bwg-igf-stale-data-indicator:hover {
+    background: rgba(120, 120, 120, 0.12);
+    color: #555;
+}
+
+.bwg-igf-stale-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bwg-igf-stale-icon svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    opacity: 0.7;
+}
+
+.bwg-igf-stale-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive adjustments for stale indicator */
+@media (max-width: 480px) {
+    .bwg-igf-stale-data-indicator {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+
+    .bwg-igf-stale-icon svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .bwg-igf-grid-4,

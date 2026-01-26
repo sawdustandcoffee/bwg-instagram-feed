@@ -74,10 +74,17 @@ $show_dots = isset( $layout_settings['show_dots'] ) ? (bool) $layout_settings['s
 
 // Check if we have cached posts
 global $wpdb;
-$cache_data = $wpdb->get_var( $wpdb->prepare(
-    "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
+
+// Feature #23: Track cache status for stale data indicator
+$cache_row = $wpdb->get_row( $wpdb->prepare(
+    "SELECT cache_data, created_at, expires_at FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
     $feed->id
 ) );
+
+$cache_data = $cache_row ? $cache_row->cache_data : null;
+$cache_created_at = $cache_row ? $cache_row->created_at : null;
+$cache_expires_at = $cache_row ? $cache_row->expires_at : null;
+$is_using_stale_cache = false;
 
 // Determine if we have cached posts
 $has_cache = ! empty( $cache_data );
@@ -91,12 +98,15 @@ if ( $has_cache ) {
 
 // Also check for expired cache (useful for showing stale data during rate limiting)
 $expired_cache_data = null;
+$expired_cache_created_at = null;
 if ( ! $has_cache ) {
     // Get any existing cache, even if expired
-    $expired_cache_data = $wpdb->get_var( $wpdb->prepare(
-        "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d ORDER BY created_at DESC LIMIT 1",
+    $expired_row = $wpdb->get_row( $wpdb->prepare(
+        "SELECT cache_data, created_at FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d ORDER BY created_at DESC LIMIT 1",
         $feed->id
     ) );
+    $expired_cache_data = $expired_row ? $expired_row->cache_data : null;
+    $expired_cache_created_at = $expired_row ? $expired_row->created_at : null;
 }
 
 // Determine if we need async loading (no cache but have usernames)
@@ -184,6 +194,8 @@ if ( $is_rate_limited ) {
     // If no current cache but have expired cache, use expired cache
     if ( empty( $posts ) && ! empty( $expired_cache_data ) ) {
         $posts = json_decode( $expired_cache_data, true ) ?: array();
+        $is_using_stale_cache = true;
+        $cache_created_at = $expired_cache_created_at; // Use the expired cache timestamp
         $rate_limit_warning = __( 'Instagram is temporarily limiting requests. Showing previously cached posts. Please wait a few minutes and try again.', 'bwg-instagram-feed' );
     }
 
@@ -416,6 +428,58 @@ if ( ! empty( $custom_css ) ) :
                 <strong><?php esc_html_e( 'Rate Limit Reached', 'bwg-instagram-feed' ); ?></strong>
                 <p><?php echo esc_html( $rate_limit_warning ); ?></p>
             </div>
+        </div>
+    <?php endif; ?>
+
+    <?php
+    // Feature #23: Show stale data indicator if enabled and we have cached data
+    $show_stale_indicator = get_option( 'bwg_igf_show_stale_data_indicator', 0 );
+    $should_show_stale_indicator = $show_stale_indicator && ! empty( $posts ) && ! empty( $cache_created_at );
+
+    // Calculate how old the cache is for display
+    $cache_age_text = '';
+    if ( $should_show_stale_indicator && ! empty( $cache_created_at ) ) {
+        $cache_time = strtotime( $cache_created_at );
+        $time_diff = time() - $cache_time;
+
+        if ( $time_diff < 60 ) {
+            $cache_age_text = __( 'Just now', 'bwg-instagram-feed' );
+        } elseif ( $time_diff < 3600 ) {
+            $minutes = floor( $time_diff / 60 );
+            /* translators: %d: number of minutes */
+            $cache_age_text = sprintf( _n( '%d minute ago', '%d minutes ago', $minutes, 'bwg-instagram-feed' ), $minutes );
+        } elseif ( $time_diff < 86400 ) {
+            $hours = floor( $time_diff / 3600 );
+            /* translators: %d: number of hours */
+            $cache_age_text = sprintf( _n( '%d hour ago', '%d hours ago', $hours, 'bwg-instagram-feed' ), $hours );
+        } else {
+            $days = floor( $time_diff / 86400 );
+            /* translators: %d: number of days */
+            $cache_age_text = sprintf( _n( '%d day ago', '%d days ago', $days, 'bwg-instagram-feed' ), $days );
+        }
+    }
+    ?>
+
+    <?php if ( $should_show_stale_indicator ) : ?>
+        <!-- Feature #23: Stale Data Indicator -->
+        <div class="bwg-igf-stale-data-indicator" title="<?php esc_attr_e( 'Cached data - may not be the most current', 'bwg-instagram-feed' ); ?>">
+            <span class="bwg-igf-stale-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </span>
+            <span class="bwg-igf-stale-text">
+                <?php
+                if ( $is_using_stale_cache ) {
+                    /* translators: %s: time ago (e.g., "2 hours ago") */
+                    printf( esc_html__( 'Showing cached data from %s', 'bwg-instagram-feed' ), esc_html( $cache_age_text ) );
+                } else {
+                    /* translators: %s: time ago (e.g., "2 hours ago") */
+                    printf( esc_html__( 'Last updated %s', 'bwg-instagram-feed' ), esc_html( $cache_age_text ) );
+                }
+                ?>
+            </span>
         </div>
     <?php endif; ?>
 

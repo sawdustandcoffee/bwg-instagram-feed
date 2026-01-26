@@ -14,12 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( isset( $_POST['bwg_igf_save_settings'] ) && check_admin_referer( 'bwg_igf_settings_nonce' ) ) {
     update_option( 'bwg_igf_default_cache_duration', absint( $_POST['default_cache_duration'] ) );
     update_option( 'bwg_igf_delete_data_on_uninstall', isset( $_POST['delete_data_on_uninstall'] ) ? 1 : 0 );
+    update_option( 'bwg_igf_show_stale_data_indicator', isset( $_POST['show_stale_data_indicator'] ) ? 1 : 0 );
 
     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'bwg-instagram-feed' ) . '</p></div>';
 }
 
 $default_cache = get_option( 'bwg_igf_default_cache_duration', 3600 );
 $delete_data = get_option( 'bwg_igf_delete_data_on_uninstall', 0 );
+$show_stale_indicator = get_option( 'bwg_igf_show_stale_data_indicator', 0 );
 ?>
 <div class="wrap">
     <div class="bwg-igf-header">
@@ -66,6 +68,18 @@ $delete_data = get_option( 'bwg_igf_delete_data_on_uninstall', 0 );
                             <?php esc_html_e( 'Delete all plugin data when uninstalling', 'bwg-instagram-feed' ); ?>
                         </label>
                         <p class="description"><?php esc_html_e( 'Warning: This will permanently delete all feeds, settings, and connected accounts.', 'bwg-instagram-feed' ); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="show_stale_data_indicator"><?php esc_html_e( 'Show Stale Data Indicator', 'bwg-instagram-feed' ); ?></label>
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="show_stale_data_indicator" id="show_stale_data_indicator" value="1" <?php checked( $show_stale_indicator, 1 ); ?>>
+                            <?php esc_html_e( 'Show a subtle indicator when displaying cached/stale data', 'bwg-instagram-feed' ); ?>
+                        </label>
+                        <p class="description"><?php esc_html_e( 'When enabled, a small indicator will appear on feeds showing that the data may not be the most current.', 'bwg-instagram-feed' ); ?></p>
                     </td>
                 </tr>
             </table>
