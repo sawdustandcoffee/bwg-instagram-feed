@@ -401,6 +401,24 @@ class BWG_IGF_Instagram_API {
             // Get timestamp
             $timestamp = isset( $node['taken_at_timestamp'] ) ? intval( $node['taken_at_timestamp'] ) : time();
 
+            // Feature #45: Detect media type from public profile scraping
+            // Instagram's public data uses __typename for media type indication
+            // GraphImage, GraphVideo, GraphSidecar (carousel)
+            $typename = isset( $node['__typename'] ) ? $node['__typename'] : '';
+            $is_video_flag = isset( $node['is_video'] ) ? (bool) $node['is_video'] : false;
+
+            // Determine media_type based on typename or is_video flag
+            if ( 'GraphVideo' === $typename || $is_video_flag ) {
+                $media_type = 'VIDEO';
+                $is_video = true;
+            } elseif ( 'GraphSidecar' === $typename ) {
+                $media_type = 'CAROUSEL_ALBUM';
+                $is_video = false;
+            } else {
+                $media_type = 'IMAGE';
+                $is_video = false;
+            }
+
             if ( ! empty( $thumbnail ) ) {
                 $posts[] = array(
                     'thumbnail'  => $thumbnail,
@@ -411,6 +429,8 @@ class BWG_IGF_Instagram_API {
                     'link'       => $link,
                     'timestamp'  => $timestamp,
                     'id'         => isset( $node['id'] ) ? $node['id'] : '',
+                    'media_type' => $media_type,    // Feature #45: Store media type
+                    'is_video'   => $is_video,       // Feature #45: Boolean flag for video detection
                 );
             }
         }
@@ -452,22 +472,40 @@ class BWG_IGF_Instagram_API {
             $color = $placeholder_colors[ $i % count( $placeholder_colors ) ];
             $post_num = $i + 1;
 
+            // Feature #45: Make every 3rd post a video, every 5th a carousel, rest are images
+            // This provides realistic test data for media type handling
+            if ( 0 === $i % 3 && $i > 0 ) {
+                $media_type = 'VIDEO';
+                $is_video = true;
+            } elseif ( 0 === $i % 5 && $i > 0 ) {
+                $media_type = 'CAROUSEL_ALBUM';
+                $is_video = false;
+            } else {
+                $media_type = 'IMAGE';
+                $is_video = false;
+            }
+
             // Generate placeholder image URL using placehold.co
+            // Add media type indicator to placeholder text
+            $type_label = $is_video ? 'Video' : ( 'CAROUSEL_ALBUM' === $media_type ? 'Album' : 'Post' );
             $placeholder_url = sprintf(
-                'https://placehold.co/640x640/%s/ffffff?text=Post+%d',
+                'https://placehold.co/640x640/%s/ffffff?text=%s+%d',
                 $color,
+                $type_label,
                 $post_num
             );
 
             $posts[] = array(
                 'thumbnail'  => $placeholder_url,
                 'full_image' => $placeholder_url,
-                'caption'    => sprintf( 'Test post %d from @%s - This is a sample caption for testing purposes. #test #instagram #feed', $post_num, $username ),
+                'caption'    => sprintf( 'Test %s %d from @%s - This is a sample caption for testing purposes. #test #instagram #feed', strtolower( $type_label ), $post_num, $username ),
                 'likes'      => rand( 50, 5000 ),
                 'comments'   => rand( 5, 500 ),
                 'link'       => sprintf( 'https://instagram.com/p/test%d/', $post_num ),
                 'timestamp'  => $base_timestamp - ( $i * 3600 ), // 1 hour apart
                 'id'         => sprintf( 'test_%s_%d', $username, $post_num ),
+                'media_type' => $media_type,    // Feature #45: Store media type
+                'is_video'   => $is_video,       // Feature #45: Boolean flag for video detection
             );
         }
 
@@ -542,6 +580,7 @@ class BWG_IGF_Instagram_API {
                 $post_num
             );
 
+            // Feature #45: Add media_type to long caption test posts (all images for simplicity)
             $posts[] = array(
                 'thumbnail'  => $placeholder_url,
                 'full_image' => $placeholder_url,
@@ -551,6 +590,8 @@ class BWG_IGF_Instagram_API {
                 'link'       => sprintf( 'https://instagram.com/p/longtest%d/', $post_num ),
                 'timestamp'  => $base_timestamp - ( $i * 3600 ),
                 'id'         => sprintf( 'longcaption_%d', $post_num ),
+                'media_type' => 'IMAGE',    // Feature #45: Store media type
+                'is_video'   => false,       // Feature #45: Boolean flag for video detection
             );
         }
 
@@ -942,6 +983,11 @@ class BWG_IGF_Instagram_API {
             $thumbnail = $item['thumbnail_url'] ?? $item['media_url'] ?? '';
             $full_image = $item['media_url'] ?? $thumbnail;
 
+            // Feature #45: Capture media_type from Instagram API
+            // Possible values: IMAGE, VIDEO, CAROUSEL_ALBUM
+            $media_type = isset( $item['media_type'] ) ? strtoupper( $item['media_type'] ) : 'IMAGE';
+            $is_video = ( 'VIDEO' === $media_type );
+
             $posts[] = array(
                 'thumbnail'  => $thumbnail,
                 'full_image' => $full_image,
@@ -951,6 +997,8 @@ class BWG_IGF_Instagram_API {
                 'link'       => $item['permalink'] ?? '',
                 'timestamp'  => isset( $item['timestamp'] ) ? strtotime( $item['timestamp'] ) : time(),
                 'id'         => $item['id'] ?? '',
+                'media_type' => $media_type,    // Feature #45: Store media type
+                'is_video'   => $is_video,       // Feature #45: Boolean flag for video detection
             );
         }
 
