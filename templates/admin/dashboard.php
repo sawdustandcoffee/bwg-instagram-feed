@@ -69,6 +69,72 @@ if ( ! defined( 'ABSPATH' ) ) {
                 }
                 ?>
             </p>
+
+            <!-- Rate Limit Status -->
+            <?php
+            // Get rate limit status for connected accounts.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Dashboard display, caching not needed
+            $connected_accounts = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT id, username FROM %i WHERE status = %s',
+                    $wpdb->prefix . 'bwg_igf_accounts',
+                    'active'
+                )
+            );
+
+            $rate_limit_status = 'ok'; // Default status.
+            $rate_limit_message = '';
+            $any_limited = false;
+            $approaching_limit = false;
+
+            if ( ! empty( $connected_accounts ) && class_exists( 'BWG_IGF_API_Tracker' ) ) {
+                foreach ( $connected_accounts as $account ) {
+                    $status = BWG_IGF_API_Tracker::get_rate_limit_status( $account->id );
+
+                    // Check if rate limited.
+                    if ( $status['is_limited'] ) {
+                        $any_limited = true;
+                        $rate_limit_status = 'limited';
+                        /* translators: %s: Instagram username */
+                        $rate_limit_message = sprintf( __( 'Account @%s is currently rate limited by Instagram.', 'bwg-instagram-feed' ), $account->username );
+                        break;
+                    }
+
+                    // Check if approaching limits (80% or more of quota used, if we have that info).
+                    if ( null !== $status['remaining'] && $status['remaining'] <= 20 ) {
+                        $approaching_limit = true;
+                        $rate_limit_status = 'warning';
+                        /* translators: 1: Instagram username, 2: remaining API calls */
+                        $rate_limit_message = sprintf( __( 'Account @%1$s is approaching rate limits (%2$s calls remaining).', 'bwg-instagram-feed' ), $account->username, $status['remaining'] );
+                    }
+                }
+            }
+            ?>
+            <p>
+                <strong><?php esc_html_e( 'API Status:', 'bwg-instagram-feed' ); ?></strong>
+                <?php if ( 'ok' === $rate_limit_status ) : ?>
+                    <span class="bwg-igf-status bwg-igf-status-active">
+                        <span class="dashicons dashicons-yes-alt" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-right: 3px;"></span>
+                        <?php esc_html_e( 'OK', 'bwg-instagram-feed' ); ?>
+                    </span>
+                <?php elseif ( 'warning' === $rate_limit_status ) : ?>
+                    <span class="bwg-igf-status bwg-igf-status-error">
+                        <span class="dashicons dashicons-warning" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-right: 3px;"></span>
+                        <?php esc_html_e( 'Approaching Limits', 'bwg-instagram-feed' ); ?>
+                    </span>
+                    <?php if ( $rate_limit_message ) : ?>
+                        <br><small style="color: #856404; margin-top: 5px; display: inline-block;"><?php echo esc_html( $rate_limit_message ); ?></small>
+                    <?php endif; ?>
+                <?php else : ?>
+                    <span class="bwg-igf-status bwg-igf-status-inactive">
+                        <span class="dashicons dashicons-dismiss" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle; margin-right: 3px;"></span>
+                        <?php esc_html_e( 'Rate Limited', 'bwg-instagram-feed' ); ?>
+                    </span>
+                    <?php if ( $rate_limit_message ) : ?>
+                        <br><small style="color: #721c24; margin-top: 5px; display: inline-block;"><?php echo esc_html( $rate_limit_message ); ?></small>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </p>
         </div>
 
         <!-- Getting Started -->
