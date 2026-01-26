@@ -486,8 +486,9 @@ $is_new = empty( $feed );
                         </div>
 
                         <?php
-                        // Get current cache duration from feed or use default
-                        $current_cache_duration = $feed ? intval( $feed->cache_duration ) : 3600;
+                        // Get current cache duration from feed or use default from settings
+                        $default_cache_duration = get_option( 'bwg_igf_default_cache_duration', 3600 );
+                        $current_cache_duration = $feed ? intval( $feed->cache_duration ) : intval( $default_cache_duration );
                         ?>
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-cache-duration"><?php esc_html_e( 'Cache Duration', 'bwg-instagram-feed' ); ?></label>
