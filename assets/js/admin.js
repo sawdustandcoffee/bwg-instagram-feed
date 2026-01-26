@@ -655,9 +655,12 @@
 
             // Add or remove items to match the post count
             if (currentItemCount < desiredCount) {
-                // Need to add more items
+                // Need to add more items - use realistic placeholder images (Feature #37)
                 for (var i = currentItemCount; i < desiredCount; i++) {
-                    var newItem = '<div class="bwg-igf-item"><img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1 1\'%3E%3Crect fill=\'%23e1306c\' width=\'1\' height=\'1\'/%3E%3C/svg%3E" alt="Preview placeholder"></div>';
+                    // Use unique seeds for variety - add offset based on index to get different images
+                    var seed = 100 + (i * 13) % 200; // Generate varied seeds between 100-299
+                    var placeholderUrl = 'https://picsum.photos/seed/' + seed + '/400/400';
+                    var newItem = '<div class="bwg-igf-item" data-placeholder-seed="' + seed + '"><img src="' + placeholderUrl + '" alt="Preview placeholder" loading="lazy"></div>';
                     $preview.append(newItem);
                 }
             } else if (currentItemCount > desiredCount) {

@@ -542,9 +542,16 @@ $is_new = empty( $feed );
             <div class="bwg-igf-preview">
                 <h3><?php esc_html_e( 'Preview', 'bwg-instagram-feed' ); ?></h3>
                 <div class="bwg-igf-preview-content bwg-igf-grid bwg-igf-grid-3">
-                    <?php for ( $i = 0; $i < 9; $i++ ) : ?>
-                        <div class="bwg-igf-item">
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e1306c' width='1' height='1'/%3E%3C/svg%3E" alt="Preview placeholder">
+                    <?php
+                    // Use realistic placeholder images from picsum.photos
+                    // Each image has a unique seed to show variety like a real Instagram feed
+                    $placeholder_seeds = array( 10, 22, 35, 48, 51, 64, 77, 83, 96 );
+                    for ( $i = 0; $i < 9; $i++ ) :
+                        $seed = $placeholder_seeds[ $i ];
+                        $placeholder_url = "https://picsum.photos/seed/{$seed}/400/400";
+                    ?>
+                        <div class="bwg-igf-item" data-placeholder-seed="<?php echo esc_attr( $seed ); ?>">
+                            <img src="<?php echo esc_url( $placeholder_url ); ?>" alt="<?php esc_attr_e( 'Preview placeholder', 'bwg-instagram-feed' ); ?>" loading="lazy">
                         </div>
                     <?php endfor; ?>
                 </div>
