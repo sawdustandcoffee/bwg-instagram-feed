@@ -17,13 +17,14 @@
 .agent.lock
 .claude/
 .claude_settings*.json
-!.claude_settings.json
+.claude_assistant_settings.json
 CLAUDE.md
 prompts/
 app_spec.txt
 init.sh
 claude-progress.txt
 progress_notes.md
+feature*_verification.txt
 
 # -------------------------------------------
 # Test/debug scripts (keep locally, not on GitHub)
@@ -82,6 +83,9 @@ feature_*.json
 test-results/
 playwright-report/
 
+# HTML test files
+test_*.html
+
 # -------------------------------------------
 # IDE and editor files
 # -------------------------------------------
@@ -108,6 +112,7 @@ Desktop.ini
 # -------------------------------------------
 node_modules/
 vendor/
+package.json
 package-lock.json
 
 # -------------------------------------------
