@@ -116,7 +116,6 @@ Desktop.ini
 # -------------------------------------------
 node_modules/
 vendor/
-includes/lib/
 package.json
 package-lock.json
 
