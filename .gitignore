@@ -116,6 +116,8 @@ Desktop.ini
 # -------------------------------------------
 node_modules/
 vendor/
+# Exception: plugin-update-checker vendor is required at runtime
+!includes/lib/plugin-update-checker/vendor/
 package.json
 package-lock.json
 
