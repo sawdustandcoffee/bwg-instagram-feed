@@ -260,6 +260,17 @@ class BWG_IGF_Admin_Ajax {
         $show_dots = isset( $_POST['show_dots'] ) ? 1 : 0;
         $infinite_loop = isset( $_POST['infinite_loop'] ) ? 1 : 0;
 
+        // Get responsive settings (Feature #52).
+        $mobile_columns = isset( $_POST['mobile_columns'] ) ? absint( $_POST['mobile_columns'] ) : 2;
+        $mobile_columns = max( 1, min( 4, $mobile_columns ) ); // Enforce 1-4 range for mobile
+        $mobile_rows = isset( $_POST['mobile_rows'] ) ? absint( $_POST['mobile_rows'] ) : 0;
+        $mobile_rows = max( 0, min( 10, $mobile_rows ) ); // Enforce 0-10 range
+
+        $tablet_columns = isset( $_POST['tablet_columns'] ) ? absint( $_POST['tablet_columns'] ) : 3;
+        $tablet_columns = max( 1, min( 6, $tablet_columns ) ); // Enforce 1-6 range for tablet
+        $tablet_rows = isset( $_POST['tablet_rows'] ) ? absint( $_POST['tablet_rows'] ) : 0;
+        $tablet_rows = max( 0, min( 10, $tablet_rows ) ); // Enforce 0-10 range
+
         // Get display settings.
         $post_count = isset( $_POST['post_count'] ) ? absint( $_POST['post_count'] ) : 9;
         // Enforce post count range: minimum 1, maximum 50.
@@ -311,6 +322,11 @@ class BWG_IGF_Admin_Ajax {
             'show_arrows'      => (bool) $show_arrows,
             'show_dots'        => (bool) $show_dots,
             'infinite_loop'    => (bool) $infinite_loop,
+            // Responsive settings (Feature #52).
+            'mobile_columns'   => $mobile_columns,
+            'mobile_rows'      => $mobile_rows,
+            'tablet_columns'   => $tablet_columns,
+            'tablet_rows'      => $tablet_rows,
         ) );
 
         $display_settings = wp_json_encode( array(

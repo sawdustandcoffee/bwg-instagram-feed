@@ -57,6 +57,12 @@ $background_color = isset( $styling_settings['background_color'] ) ? $styling_se
 $popup_enabled = isset( $popup_settings['enabled'] ) ? $popup_settings['enabled'] : true;
 $custom_css = isset( $styling_settings['custom_css'] ) ? $styling_settings['custom_css'] : '';
 
+// Responsive settings (Feature #52)
+$mobile_columns = isset( $layout_settings['mobile_columns'] ) ? absint( $layout_settings['mobile_columns'] ) : 2;
+$mobile_rows = isset( $layout_settings['mobile_rows'] ) ? absint( $layout_settings['mobile_rows'] ) : 0;
+$tablet_columns = isset( $layout_settings['tablet_columns'] ) ? absint( $layout_settings['tablet_columns'] ) : 3;
+$tablet_rows = isset( $layout_settings['tablet_rows'] ) ? absint( $layout_settings['tablet_rows'] ) : 0;
+
 // Feed Size settings (Feature #165)
 $feed_width = isset( $styling_settings['feed_width'] ) ? $styling_settings['feed_width'] : '100%';
 $feed_max_width = isset( $styling_settings['feed_max_width'] ) ? $styling_settings['feed_max_width'] : '';
@@ -471,6 +477,36 @@ if ( ! empty( $custom_css ) ) :
 <?php echo wp_strip_all_tags( $custom_css ); ?>
 </style>
 <?php endif; ?>
+
+<?php
+// Output responsive CSS for Feature #52
+$feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
+?>
+<style type="text/css" id="bwg-igf-responsive-css-<?php echo esc_attr( $feed->id ); ?>">
+/* Tablet breakpoint (768px - 1024px) */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    <?php echo $feed_selector; ?>.bwg-igf-grid {
+        grid-template-columns: repeat(<?php echo absint( $tablet_columns ); ?>, 1fr) !important;
+    }
+    <?php if ( $tablet_rows > 0 ) : ?>
+    <?php echo $feed_selector; ?>.bwg-igf-grid .bwg-igf-item:nth-child(n+<?php echo ( $tablet_columns * $tablet_rows ) + 1; ?>) {
+        display: none !important;
+    }
+    <?php endif; ?>
+}
+
+/* Mobile breakpoint (< 768px) */
+@media screen and (max-width: 767px) {
+    <?php echo $feed_selector; ?>.bwg-igf-grid {
+        grid-template-columns: repeat(<?php echo absint( $mobile_columns ); ?>, 1fr) !important;
+    }
+    <?php if ( $mobile_rows > 0 ) : ?>
+    <?php echo $feed_selector; ?>.bwg-igf-grid .bwg-igf-item:nth-child(n+<?php echo ( $mobile_columns * $mobile_rows ) + 1; ?>) {
+        display: none !important;
+    }
+    <?php endif; ?>
+}
+</style>
 <div
     class="<?php echo esc_attr( implode( ' ', $feed_classes ) ); ?><?php echo $needs_async_load ? ' bwg-igf-loading-feed' : ''; ?>"
     data-feed-id="<?php echo esc_attr( $feed->id ); ?>"
@@ -482,6 +518,10 @@ if ( ! empty( $custom_css ) ) :
     data-show-likes="<?php echo ! empty( $display_settings['show_likes'] ) ? 'true' : 'false'; ?>"
     data-show-comments="<?php echo ! empty( $display_settings['show_comments'] ) ? 'true' : 'false'; ?>"
     data-show-follow="<?php echo ! empty( $display_settings['show_follow_button'] ) ? 'true' : 'false'; ?>"
+    data-mobile-columns="<?php echo esc_attr( $mobile_columns ); ?>"
+    data-mobile-rows="<?php echo esc_attr( $mobile_rows ); ?>"
+    data-tablet-columns="<?php echo esc_attr( $tablet_columns ); ?>"
+    data-tablet-rows="<?php echo esc_attr( $tablet_rows ); ?>"
     <?php if ( 'slider' === $feed->layout_type ) : ?>
     data-slides-to-show="<?php echo esc_attr( $slides_to_show ); ?>"
     data-autoplay="<?php echo $autoplay ? 'true' : 'false'; ?>"

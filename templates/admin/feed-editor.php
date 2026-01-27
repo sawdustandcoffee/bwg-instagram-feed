@@ -269,6 +269,12 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                         $show_arrows = isset( $layout_settings['show_arrows'] ) ? $layout_settings['show_arrows'] : true;
                         $show_dots = isset( $layout_settings['show_dots'] ) ? $layout_settings['show_dots'] : true;
                         $infinite_loop = isset( $layout_settings['infinite_loop'] ) ? $layout_settings['infinite_loop'] : true;
+
+                        // Responsive settings
+                        $mobile_columns = isset( $layout_settings['mobile_columns'] ) ? $layout_settings['mobile_columns'] : 2;
+                        $mobile_rows = isset( $layout_settings['mobile_rows'] ) ? $layout_settings['mobile_rows'] : 0;
+                        $tablet_columns = isset( $layout_settings['tablet_columns'] ) ? $layout_settings['tablet_columns'] : 3;
+                        $tablet_rows = isset( $layout_settings['tablet_rows'] ) ? $layout_settings['tablet_rows'] : 0;
                         ?>
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-layout-type"><?php esc_html_e( 'Layout Type', 'bwg-instagram-feed' ); ?></label>
@@ -335,6 +341,44 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                                     <input type="checkbox" id="bwg-igf-infinite-loop" name="infinite_loop" value="1" <?php checked( $infinite_loop, true ); ?>>
                                     <?php esc_html_e( 'Infinite Loop', 'bwg-instagram-feed' ); ?>
                                 </label>
+                            </div>
+                        </div>
+
+                        <!-- Responsive Settings -->
+                        <div class="bwg-igf-responsive-settings">
+                            <h3><?php esc_html_e( 'Responsive Settings', 'bwg-instagram-feed' ); ?></h3>
+                            <p class="description"><?php esc_html_e( 'Configure how your feed displays on different screen sizes. Leave rows at 0 to show all posts.', 'bwg-instagram-feed' ); ?></p>
+
+                            <!-- Tablet Settings -->
+                            <div class="bwg-igf-responsive-group">
+                                <h4><?php esc_html_e( 'Tablet (768px - 1024px)', 'bwg-instagram-feed' ); ?></h4>
+                                <div class="bwg-igf-responsive-fields">
+                                    <div class="bwg-igf-field">
+                                        <label for="bwg-igf-tablet-columns"><?php esc_html_e( 'Columns', 'bwg-instagram-feed' ); ?></label>
+                                        <input type="number" id="bwg-igf-tablet-columns" name="tablet_columns" value="<?php echo esc_attr( $tablet_columns ); ?>" min="1" max="6">
+                                    </div>
+                                    <div class="bwg-igf-field">
+                                        <label for="bwg-igf-tablet-rows"><?php esc_html_e( 'Rows', 'bwg-instagram-feed' ); ?></label>
+                                        <input type="number" id="bwg-igf-tablet-rows" name="tablet_rows" value="<?php echo esc_attr( $tablet_rows ); ?>" min="0" max="10">
+                                        <p class="description"><?php esc_html_e( '0 = show all posts', 'bwg-instagram-feed' ); ?></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mobile Settings -->
+                            <div class="bwg-igf-responsive-group">
+                                <h4><?php esc_html_e( 'Mobile (< 768px)', 'bwg-instagram-feed' ); ?></h4>
+                                <div class="bwg-igf-responsive-fields">
+                                    <div class="bwg-igf-field">
+                                        <label for="bwg-igf-mobile-columns"><?php esc_html_e( 'Columns', 'bwg-instagram-feed' ); ?></label>
+                                        <input type="number" id="bwg-igf-mobile-columns" name="mobile_columns" value="<?php echo esc_attr( $mobile_columns ); ?>" min="1" max="4">
+                                    </div>
+                                    <div class="bwg-igf-field">
+                                        <label for="bwg-igf-mobile-rows"><?php esc_html_e( 'Rows', 'bwg-instagram-feed' ); ?></label>
+                                        <input type="number" id="bwg-igf-mobile-rows" name="mobile_rows" value="<?php echo esc_attr( $mobile_rows ); ?>" min="0" max="10">
+                                        <p class="description"><?php esc_html_e( '0 = show all posts', 'bwg-instagram-feed' ); ?></p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

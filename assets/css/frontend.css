@@ -348,7 +348,7 @@
     background: #333;
 }
 
-/* Popup/Lightbox */
+/* Popup/Lightbox - Feature #50: Improved performance */
 .bwg-igf-popup {
     position: fixed;
     top: 0;
@@ -362,7 +362,9 @@
     justify-content: center;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    /* GPU acceleration for smoother performance */
+    will-change: opacity;
 }
 
 .bwg-igf-popup.active {
@@ -375,6 +377,15 @@
     max-height: 90vh;
     display: flex;
     gap: 20px;
+    /* Smooth scale animation for content */
+    transform: scale(0.95);
+    transition: transform 0.2s ease;
+    /* GPU acceleration */
+    will-change: transform;
+}
+
+.bwg-igf-popup.active .bwg-igf-popup-content {
+    transform: scale(1);
 }
 
 .bwg-igf-popup-image {

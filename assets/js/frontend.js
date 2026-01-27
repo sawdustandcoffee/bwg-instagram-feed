@@ -507,20 +507,25 @@
 
         /**
          * Calculate the number of slides to show based on viewport width
-         * Mobile (< 480px): 1 slide
-         * Tablet (< 768px): 2 slides or configured value (whichever is smaller)
-         * Desktop: configured value
+         * Uses custom responsive settings from Feature #52 if available
+         * Mobile (< 768px): uses data-mobile-columns or defaults to 1
+         * Tablet (768px - 1024px): uses data-tablet-columns or defaults to 2
+         * Desktop (> 1024px): configured value
          */
         getResponsiveSlidesToShow: function() {
             var viewportWidth = window.innerWidth;
             var configured = this.configuredSlidesToShow;
 
-            if (viewportWidth < 480) {
-                // Mobile: always show 1 slide
-                return 1;
-            } else if (viewportWidth < 768) {
-                // Tablet: show 2 slides or configured value (whichever is smaller)
-                return Math.min(configured, 2);
+            // Get custom responsive settings from data attributes (Feature #52)
+            var mobileColumns = parseInt(this.element.dataset.mobileColumns) || 1;
+            var tabletColumns = parseInt(this.element.dataset.tabletColumns) || 2;
+
+            if (viewportWidth < 768) {
+                // Mobile: use custom mobile columns setting
+                return mobileColumns;
+            } else if (viewportWidth < 1024) {
+                // Tablet: use custom tablet columns setting
+                return Math.min(tabletColumns, configured);
             } else {
                 // Desktop: show configured value
                 return configured;
@@ -832,13 +837,14 @@
                 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
             );
 
-            // Use setTimeout to ensure the popup is fully visible before focusing
-            setTimeout(function() {
+            // Feature #50: Improved performance - use requestAnimationFrame instead of setTimeout
+            // This ensures focus happens on the next paint, smoother than arbitrary delay
+            requestAnimationFrame(function() {
                 var closeBtn = self.popup.querySelector('.bwg-igf-popup-close');
                 if (closeBtn) {
                     closeBtn.focus();
                 }
-            }, 50);
+            });
         },
 
         close: function() {
