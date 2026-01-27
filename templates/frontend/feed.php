@@ -602,16 +602,29 @@ $feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
 
     <?php
     // Feature #53: Display header with account name and/or Follow button
-    $show_header = ( ! empty( $display_settings['show_account_name'] ) || ! empty( $display_settings['show_follow_button'] ) ) && ! empty( $feed->instagram_usernames );
+    // Support both public feeds (instagram_usernames) and connected feeds (connected_account_info)
+    $header_usernames = array();
 
-    if ( $show_header ) :
+    // Get usernames from public feed setting
+    if ( ! empty( $feed->instagram_usernames ) ) {
         $header_usernames = json_decode( $feed->instagram_usernames, true );
         if ( ! is_array( $header_usernames ) ) {
             $header_usernames = array( $feed->instagram_usernames );
         }
-        // Filter out empty usernames
-        $header_usernames = array_filter( $header_usernames );
-        $first_username = is_array( $header_usernames ) ? $header_usernames[0] : $header_usernames;
+    }
+
+    // For connected feeds, use the connected account username
+    if ( empty( $header_usernames ) && ! empty( $connected_account_info->username ) ) {
+        $header_usernames = array( $connected_account_info->username );
+    }
+
+    // Filter out empty usernames
+    $header_usernames = array_filter( $header_usernames );
+
+    $show_header = ( ! empty( $display_settings['show_account_name'] ) || ! empty( $display_settings['show_follow_button'] ) ) && ! empty( $header_usernames );
+
+    if ( $show_header ) :
+        $first_username = ! empty( $header_usernames ) ? $header_usernames[0] : '';
         ?>
         <div class="bwg-igf-feed-header">
             <?php if ( ! empty( $display_settings['show_account_name'] ) ) : ?>
