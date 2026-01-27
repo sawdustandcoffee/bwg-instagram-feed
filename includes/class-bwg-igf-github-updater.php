@@ -22,7 +22,7 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
  * Class BWG_IGF_GitHub_Updater
  *
  * Integrates with WordPress plugin update system to check GitHub for new versions.
- * Uses the Plugin Update Checker library (v5.5) for reliable update detection.
+ * Uses the Plugin Update Checker library (v5.6) for reliable update detection.
  *
  * Supports optional private repository authentication via GitHub personal access token.
  * Set the token in wp_options as 'bwg_igf_github_token' to enable authentication.
@@ -61,7 +61,7 @@ class BWG_IGF_GitHub_Updater {
     /**
      * Plugin Update Checker instance.
      *
-     * @var \YahnisElsts\PluginUpdateChecker\v5p5\Vcs\PluginUpdateChecker
+     * @var \YahnisElsts\PluginUpdateChecker\v5p6\Vcs\PluginUpdateChecker
      */
     private $update_checker = null;
 
@@ -390,7 +390,7 @@ class BWG_IGF_GitHub_Updater {
             'configured'             => $this->is_configured(),
             'github_url'             => self::GITHUB_REPO_URL,
             'version'                => BWG_IGF_VERSION,
-            'library'                => 'Plugin Update Checker v5.5',
+            'library'                => 'Plugin Update Checker v5.6',
             'release_assets'         => true,
             'authentication_enabled' => $this->is_authentication_enabled(),
             'private_repo_support'   => true, // Feature #184: Always indicate support is available.
@@ -426,7 +426,7 @@ class BWG_IGF_GitHub_Updater {
     /**
      * Get the update checker instance for external use.
      *
-     * @return \YahnisElsts\PluginUpdateChecker\v5p5\Vcs\PluginUpdateChecker|null
+     * @return \YahnisElsts\PluginUpdateChecker\v5p6\Vcs\PluginUpdateChecker|null
      */
     public function get_update_checker() {
         return $this->update_checker;
