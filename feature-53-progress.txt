@@ -1,0 +1,90 @@
+## Session: 2026-01-27 (Feature #53 - Move Follow Button to Header)
+
+### Feature #53 Completed: Move Follow on Instagram Button to Header
+
+**Status:** ✅ PASSING
+
+**Category:** UI
+
+**Description:** The 'Follow on Instagram' button was at the bottom of grid/slider layouts, requiring users to scroll. Moved it to the top header area so it's immediately visible without scrolling.
+
+**Implementation Details:**
+
+1. **Modified templates/frontend/feed.php:**
+   - Combined account header logic with Follow button display
+   - Created new `.bwg-igf-feed-header` container (lines 602-662)
+   - Header shows when either account name OR Follow button is enabled
+   - Moved Follow button from bottom (removed lines 879-890) to header
+   - Button placed on right side using flexbox space-between
+
+2. **Modified assets/css/frontend.css:**
+   - Renamed `.bwg-igf-account-header` to `.bwg-igf-feed-header`
+   - Added `justify-content: space-between` for proper alignment
+   - Added `flex: 1` to `.bwg-igf-account-info` for proper spacing
+   - Added responsive CSS for mobile (lines 1221-1229):
+     - Header stacks vertically on mobile (flex-direction: column)
+     - Follow button stretches full width on mobile
+     - Button centered using justify-content: center
+
+**Verification Steps:**
+
+1. ✅ **Desktop Grid Layout** (1280x720):
+   - Follow button appears in header, right-aligned
+   - No scrolling needed to see button
+   - Grid posts display below header
+
+2. ✅ **Desktop Slider Layout**:
+   - Follow button appears in header above slider
+   - Slider navigation and dots work correctly
+   - Button visible without scrolling
+
+3. ✅ **Mobile Layout** (375x667):
+   - Header stacks vertically
+   - Follow button full width below stale indicator
+   - Button remains accessible at top
+
+4. ✅ **No duplicate button at bottom**:
+   - Scrolled to bottom of feed
+   - Confirmed button only appears in header
+   - Feed ends with Instagram posts
+
+5. ✅ **No console errors detected**
+
+**User Experience Improvements:**
+- Button immediately visible on page load
+- No need to scroll to find Follow button
+- Works consistently across Grid and Slider layouts
+- Mobile-friendly responsive design
+- Clean, professional header layout
+
+**Screenshots:**
+- `feature-53-before-current-layout.png` - Initial page view
+- `feature-53-follow-button-at-bottom.png` - OLD: Button at bottom (before fix)
+- `feature-53-current-feed-layout.png` - Page title view
+- `feature-53-header-with-follow-button.png` - NEW: Button in header (desktop)
+- `feature-53-feed-grid-view.png` - Grid feed with header button
+- `feature-53-no-button-at-bottom.png` - Verified no duplicate at bottom
+- `feature-53-mobile-header-top.png` - Mobile responsive layout
+- `feature-53-slider-layout.png` - Slider page view
+- `feature-53-slider-with-header-button.png` - Slider with header button
+
+**Technical Notes:**
+- Header displays when `show_account_name` OR `show_follow_button` is enabled
+- Uses existing Instagram gradient button styles
+- Maintains backward compatibility with account name feature
+- Flexbox layout ensures proper spacing on all screen sizes
+
+**No console errors detected.**
+
+---
+
+### Current Progress (Updated):
+- Passing: 51/55 (92.7%)
+- In Progress: 2 features (others being worked on in parallel)
+- Features completed this session: #53
+
+### Notes:
+- Feature #53 significantly improves UX by making Follow button immediately accessible
+- Works seamlessly with both Grid and Slider layouts
+- Mobile responsive design ensures accessibility on all devices
+- Clean implementation using existing CSS patterns and styles

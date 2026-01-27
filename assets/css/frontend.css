@@ -418,6 +418,14 @@ a.bwg-igf-item:focus {
     background: #000;
 }
 
+/* Feature #55: Wrapper for media and View on Instagram link */
+.bwg-igf-popup-media-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
 .bwg-igf-popup-media-container {
     display: flex;
     align-items: center;
@@ -1279,17 +1287,6 @@ a.bwg-igf-item:focus {
         gap: 15px;
         margin-bottom: 10px;
         font-size: 14px;
-    }
-
-    .bwg-igf-popup-link {
-        display: inline-block;
-        padding: 10px 20px;
-        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-        color: #fff;
-        text-decoration: none;
-        border-radius: 5px;
-        font-weight: 600;
-        margin-top: 10px;
     }
 
     /* Ensure close button is always visible and accessible */
