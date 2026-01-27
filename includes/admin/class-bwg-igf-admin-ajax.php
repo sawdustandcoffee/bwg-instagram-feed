@@ -302,6 +302,7 @@ class BWG_IGF_Admin_Ajax {
         $popup_show_likes = isset( $_POST['popup_show_likes'] ) ? 1 : 0;
         $popup_show_comments = isset( $_POST['popup_show_comments'] ) ? 1 : 0;
         $popup_show_instagram_link = isset( $_POST['popup_show_instagram_link'] ) ? 1 : 0;
+        $link_to_instagram = isset( $_POST['link_to_instagram'] ) ? 1 : 0; // Feature #54
 
         // Get advanced settings.
         $ordering = isset( $_POST['ordering'] ) ? sanitize_text_field( wp_unslash( $_POST['ordering'] ) ) : 'newest';
@@ -358,6 +359,7 @@ class BWG_IGF_Admin_Ajax {
             'show_likes'          => (bool) $popup_show_likes,
             'show_comments'       => (bool) $popup_show_comments,
             'show_instagram_link' => (bool) $popup_show_instagram_link,
+            'link_to_instagram'   => (bool) $link_to_instagram, // Feature #54
         ) );
 
         $filter_settings = wp_json_encode( array(

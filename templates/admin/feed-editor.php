@@ -556,6 +556,7 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                         $popup_show_likes = isset( $popup_settings_data['show_likes'] ) ? (bool) $popup_settings_data['show_likes'] : true;
                         $popup_show_comments = isset( $popup_settings_data['show_comments'] ) ? (bool) $popup_settings_data['show_comments'] : true;
                         $popup_show_instagram_link = isset( $popup_settings_data['show_instagram_link'] ) ? (bool) $popup_settings_data['show_instagram_link'] : true;
+                        $link_to_instagram = isset( $popup_settings_data['link_to_instagram'] ) ? (bool) $popup_settings_data['link_to_instagram'] : false;
                         ?>
                         <div class="bwg-igf-field">
                             <label>
@@ -563,6 +564,17 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                                 <?php esc_html_e( 'Enable popup/lightbox', 'bwg-instagram-feed' ); ?>
                             </label>
                             <p class="description"><?php esc_html_e( 'Opens posts in a lightbox when clicked.', 'bwg-instagram-feed' ); ?></p>
+                        </div>
+
+                        <!-- Link to Instagram Option (shown when popup is DISABLED) -->
+                        <div class="bwg-igf-link-to-instagram-option" id="bwg-igf-link-to-instagram-option" style="<?php echo $popup_enabled ? 'display: none;' : ''; ?>">
+                            <div class="bwg-igf-field">
+                                <label>
+                                    <input type="checkbox" id="bwg-igf-link-to-instagram" name="link_to_instagram" value="1" <?php checked( $link_to_instagram, true ); ?>>
+                                    <?php esc_html_e( 'Link posts to Instagram', 'bwg-instagram-feed' ); ?>
+                                </label>
+                                <p class="description"><?php esc_html_e( 'Make feed items clickable links that open the original Instagram post in a new tab.', 'bwg-instagram-feed' ); ?></p>
+                            </div>
                         </div>
 
                         <!-- Additional Popup Options (shown when popup is enabled) -->

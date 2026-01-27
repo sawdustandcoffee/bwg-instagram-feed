@@ -256,6 +256,7 @@
         initPopupToggle: function() {
             var $popupEnabled = $('#bwg-igf-popup-enabled');
             var $popupOptions = $('#bwg-igf-popup-options');
+            var $linkToInstagramOption = $('#bwg-igf-link-to-instagram-option'); // Feature #54
 
             if (!$popupEnabled.length) {
                 return;
@@ -264,8 +265,10 @@
             function togglePopupOptions() {
                 if ($popupEnabled.is(':checked')) {
                     $popupOptions.slideDown(200);
+                    $linkToInstagramOption.slideUp(200); // Feature #54: Hide link option when popup enabled
                 } else {
                     $popupOptions.slideUp(200);
+                    $linkToInstagramOption.slideDown(200); // Feature #54: Show link option when popup disabled
                 }
             }
 

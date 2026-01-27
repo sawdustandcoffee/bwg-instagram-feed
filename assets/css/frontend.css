@@ -10,21 +10,24 @@
     max-width: 100%;
 }
 
-/* Account Header (Feature #24) */
-.bwg-igf-account-header {
+/* Feed Header (Feature #53 - Follow button moved to header) */
+.bwg-igf-feed-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 15px;
     margin-bottom: 15px;
     background: #fafafa;
     border-radius: 8px;
     border: 1px solid #efefef;
+    gap: 15px;
 }
 
 .bwg-igf-account-info {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
 }
 
 .bwg-igf-account-icon {
@@ -75,6 +78,19 @@
     overflow: hidden;
     border-radius: var(--bwg-igf-border-radius, 0);
     cursor: pointer;
+}
+
+/* Feature #54: When items are links, ensure proper display */
+a.bwg-igf-item {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+a.bwg-igf-item:hover,
+a.bwg-igf-item:focus {
+    text-decoration: none;
+    color: inherit;
 }
 
 /* Grid items maintain square 1:1 aspect ratio for consistent layout */
@@ -1199,6 +1215,18 @@
 
     .bwg-igf-popup-next {
         right: 10px;
+    }
+
+    /* Feature #53: Stack header on mobile */
+    .bwg-igf-feed-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .bwg-igf-feed-header .bwg-igf-follow {
+        align-self: stretch;
+        justify-content: center;
     }
 }
 
