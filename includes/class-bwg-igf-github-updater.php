@@ -16,6 +16,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Load the Plugin Update Checker library.
 require_once BWG_IGF_PLUGIN_DIR . 'includes/lib/plugin-update-checker/plugin-update-checker.php';
 
+// Explicitly load Parsedown to prevent autoloader conflicts with other plugins.
+// When multiple plugins use different versions of PUC, the first plugin's autoloader
+// may not know about our vendor directory, causing "Class Parsedown not found" errors.
+if ( ! class_exists( 'Parsedown', false ) ) {
+    require_once BWG_IGF_PLUGIN_DIR . 'includes/lib/plugin-update-checker/vendor/Parsedown.php';
+}
+
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 /**
