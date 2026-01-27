@@ -491,8 +491,20 @@
 
     BWGIGFSlider.prototype = {
         init: function() {
+            // Clone slides for seamless infinite loop
+            if (this.infinite) {
+                this.cloneSlides();
+            }
+
             this.bindEvents();
             this.updateSlideWidth();
+
+            // Set initial position if infinite mode (account for cloned slides at start)
+            if (this.infinite) {
+                this.realIndex = 0;
+                this.currentIndex = this.slidesToShow; // Start at first real slide
+                this.goToImmediate(this.currentIndex);
+            }
 
             if (this.autoplay) {
                 this.startAutoplay();
@@ -503,6 +515,34 @@
 
             // Handle resize events for responsive behavior
             this.initResponsive();
+        },
+
+        /**
+         * Clone slides at beginning and end for seamless infinite loop
+         * Clones the first slidesToShow slides and appends to end
+         * Clones the last slidesToShow slides and prepends to beginning
+         */
+        cloneSlides: function() {
+            var slideCount = this.slides.length;
+            var cloneCount = this.slidesToShow;
+
+            // Clone last slides and prepend
+            for (var i = slideCount - 1; i >= slideCount - cloneCount; i--) {
+                var clone = this.slides[i].cloneNode(true);
+                clone.classList.add('bwg-igf-slider-clone');
+                this.track.insertBefore(clone, this.track.firstChild);
+            }
+
+            // Clone first slides and append
+            for (var j = 0; j < cloneCount; j++) {
+                var clone = this.slides[j].cloneNode(true);
+                clone.classList.add('bwg-igf-slider-clone');
+                this.track.appendChild(clone);
+            }
+
+            // Update slides reference to include clones
+            this.slides = this.track.querySelectorAll('.bwg-igf-slider-slide');
+            this.totalSlides = slideCount; // Original slide count (without clones)
         },
 
         /**
@@ -557,10 +597,34 @@
             // Only update if the value changed
             if (newSlidesToShow !== this.slidesToShow) {
                 this.slidesToShow = newSlidesToShow;
+
+                // If infinite mode, need to recreate clones
+                if (this.infinite) {
+                    // Remove all clones
+                    var clones = this.track.querySelectorAll('.bwg-igf-slider-clone');
+                    clones.forEach(function(clone) {
+                        clone.remove();
+                    });
+
+                    // Get original slides
+                    this.slides = this.track.querySelectorAll('.bwg-igf-slider-slide');
+
+                    // Recreate clones with new count
+                    this.cloneSlides();
+
+                    // Reset to first slide
+                    this.realIndex = 0;
+                    this.currentIndex = this.slidesToShow;
+                }
+
                 this.updateSlideWidth();
 
                 // Reset to first slide to avoid index issues
-                this.goTo(0);
+                if (this.infinite) {
+                    this.goToImmediate(this.slidesToShow);
+                } else {
+                    this.goTo(0);
+                }
             }
         },
 
@@ -605,22 +669,113 @@
             });
         },
 
-        goTo: function(index) {
+        goTo: function(index, skipTransition) {
+            if (this.infinite) {
+                this.goToInfinite(index, skipTransition);
+            } else {
+                this.goToNormal(index);
+            }
+        },
+
+        /**
+         * Go to slide without transition (instant)
+         */
+        goToImmediate: function(index) {
+            this.currentIndex = index;
+            var offset = -(index * (100 / this.slidesToShow));
+
+            // Disable transition
+            this.track.style.transition = 'none';
+            this.track.style.transform = 'translateX(' + offset + '%)';
+
+            // Force reflow to ensure the transition is disabled
+            this.track.offsetHeight;
+
+            // Re-enable transition for next movement
+            var self = this;
+            setTimeout(function() {
+                self.track.style.transition = '';
+            }, 50);
+        },
+
+        /**
+         * Normal (non-infinite) slider navigation
+         */
+        goToNormal: function(index) {
             var maxIndex = this.slides.length - this.slidesToShow;
 
-            if (this.infinite) {
-                if (index < 0) index = maxIndex;
-                if (index > maxIndex) index = 0;
-            } else {
-                if (index < 0) index = 0;
-                if (index > maxIndex) index = maxIndex;
-            }
+            if (index < 0) index = 0;
+            if (index > maxIndex) index = maxIndex;
 
             this.currentIndex = index;
             var offset = -(index * (100 / this.slidesToShow));
             this.track.style.transform = 'translateX(' + offset + '%)';
 
             this.updateDots();
+        },
+
+        /**
+         * Infinite slider navigation with seamless loop
+         * Uses cloned slides for seamless transitions
+         */
+        goToInfinite: function(index, skipTransition) {
+            var self = this;
+
+            // Calculate offset
+            var offset = -(index * (100 / this.slidesToShow));
+            this.track.style.transform = 'translateX(' + offset + '%)';
+
+            this.currentIndex = index;
+
+            // Update real index for dots
+            this.realIndex = this.getRealIndex(index);
+            this.updateDots();
+
+            // Check if we need to reset position after transition
+            // We have: [clones of last 3] [real slides 1-12] [clones of first 3]
+            // Indices:  [0, 1, 2]          [3, 4, ..., 14]  [15, 16, 17]
+
+            // If we moved to the cloned slides at the end (index >= totalSlides + slidesToShow)
+            // Reset to the real slides at the beginning
+            if (index >= this.totalSlides + this.slidesToShow) {
+                setTimeout(function() {
+                    // Map to equivalent position in real slides
+                    // Example: index 15 (first clone at end) -> index 3 (first real slide)
+                    var resetIndex = self.slidesToShow + (index - (self.totalSlides + self.slidesToShow));
+                    self.goToImmediate(resetIndex);
+                    self.realIndex = self.getRealIndex(resetIndex);
+                }, 300); // Match CSS transition duration
+            }
+
+            // If we moved to the cloned slides at the beginning (index < slidesToShow)
+            // Reset to the real slides at the end
+            if (index < this.slidesToShow) {
+                setTimeout(function() {
+                    // Map to equivalent position in real slides
+                    // Example: index 2 (last clone at start) -> index 14 (last real slide)
+                    var resetIndex = self.totalSlides + index;
+                    self.goToImmediate(resetIndex);
+                    self.realIndex = self.getRealIndex(resetIndex);
+                }, 300); // Match CSS transition duration
+            }
+        },
+
+        /**
+         * Get the real slide index (excluding clones) for dot navigation
+         */
+        getRealIndex: function(index) {
+            // Account for cloned slides at the beginning
+            var realIndex = index - this.slidesToShow;
+
+            // Wrap around if needed
+            if (realIndex < 0) {
+                realIndex = this.totalSlides + realIndex;
+            }
+            if (realIndex >= this.totalSlides) {
+                realIndex = realIndex - this.totalSlides;
+            }
+
+            return realIndex;
         },
 
         next: function() {
@@ -633,9 +788,10 @@
 
         updateDots: function() {
             var self = this;
+            var activeIndex = this.infinite ? this.realIndex : this.currentIndex;
 
             this.dots.forEach(function(dot, index) {
-                dot.classList.toggle('active', index === self.currentIndex);
+                dot.classList.toggle('active', index === activeIndex);
             });
         },
 
@@ -710,17 +866,19 @@
                 '<button class="bwg-igf-popup-nav bwg-igf-popup-prev" aria-label="Previous post">&lsaquo;</button>',
                 '<button class="bwg-igf-popup-nav bwg-igf-popup-next" aria-label="Next post">&rsaquo;</button>',
                 '<div class="bwg-igf-popup-content">',
-                '  <div class="bwg-igf-popup-media-container">',
-                '    <img class="bwg-igf-popup-image" src="" alt="">',
-                '    <video class="bwg-igf-popup-video" controls style="display:none;">',
-                '      <source src="" type="video/mp4">',
-                '      Your browser does not support the video tag.',
-                '    </video>',
+                '  <div class="bwg-igf-popup-media-wrapper">',
+                '    <div class="bwg-igf-popup-media-container">',
+                '      <img class="bwg-igf-popup-image" src="" alt="">',
+                '      <video class="bwg-igf-popup-video" controls style="display:none;">',
+                '        <source src="" type="video/mp4">',
+                '        Your browser does not support the video tag.',
+                '      </video>',
+                '    </div>',
+                '    <a class="bwg-igf-popup-link" href="" target="_blank" rel="noopener">View on Instagram</a>',
                 '  </div>',
                 '  <div class="bwg-igf-popup-details">',
                 '    <p class="bwg-igf-popup-caption"></p>',
                 '    <div class="bwg-igf-popup-stats"></div>',
-                '    <a class="bwg-igf-popup-link" href="" target="_blank" rel="noopener">View on Instagram</a>',
                 '  </div>',
                 '</div>'
             ].join('');
