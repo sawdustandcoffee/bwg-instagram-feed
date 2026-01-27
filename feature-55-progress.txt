@@ -1,0 +1,77 @@
+## Session: 2026-01-27 (Feature #55 - Parallel Agent)
+
+### Feature #55 Completed: Reposition View on Instagram Link in Lightbox
+
+**Status:** ✅ PASSING
+
+**Category:** Lightbox
+
+**Description:** The "View on Instagram" link in the lightbox was at the bottom of the details panel, requiring scrolling with long captions. Moved it to be directly below the media (image/video) so it's always visible.
+
+**Implementation Details:**
+
+1. **JavaScript Changes (assets/js/frontend.js)**:
+   - Modified `createPopup()` method (lines 858-876)
+   - Added new wrapper div: `bwg-igf-popup-media-wrapper`
+   - Moved "View on Instagram" link from `.bwg-igf-popup-details` to wrapper
+   - New structure:
+     ```
+     bwg-igf-popup-content
+       bwg-igf-popup-media-wrapper (NEW)
+         bwg-igf-popup-media-container (image/video)
+         bwg-igf-popup-link (Instagram link)
+       bwg-igf-popup-details
+         bwg-igf-popup-caption
+         bwg-igf-popup-stats
+     ```
+
+2. **CSS Changes (assets/css/frontend.css)**:
+   - Added `.bwg-igf-popup-media-wrapper` styles (line 422)
+     - Flexbox column layout with 15px gap
+     - Centers link below media
+   - Removed duplicate link styles from mobile media query (line 1292)
+
+3. **Version Bump**:
+   - Updated to 1.3.15 in bwg-instagram-feed.php
+   - Updated readme.txt stable tag to 1.3.15
+
+**Verification Steps:**
+
+1. ✅ **Identified current placement**: Link was inside `.bwg-igf-popup-details` below caption and stats
+2. ✅ **Moved link below media**: Now in `.bwg-igf-popup-media-wrapper` directly after image/video
+3. ✅ **Link remains accessible**: Proper styling with Instagram gradient, hover effects, focus states
+4. ✅ **Tested with multiple posts**:
+   - Navigated through feed at http://localhost:8088/aspect-ratio-grid-test/
+   - Clicked post to open lightbox
+   - Link visible immediately without scrolling
+   - Used Next button to navigate to post 2
+   - Link remained in correct position
+
+**User Experience Improvements:**
+- Link always visible without scrolling through caption
+- Logically positioned near the media it links to
+- Details panel can focus on caption and stats
+- Consistent behavior regardless of caption length
+- Works with both image and video posts
+
+**Screenshots:**
+- `.playwright-mcp/feature55-feed-page.png` - Grid feed before opening lightbox
+- `.playwright-mcp/feature55-lightbox-opened.png` - Lightbox with link below image (Post 1)
+- `.playwright-mcp/feature55-next-post.png` - Navigation to Post 2, link still visible
+
+**No console errors detected.**
+
+**Commit:** 2193dfe - Feature #55: Reposition View on Instagram Link in Lightbox
+
+---
+
+### Current Progress (Updated):
+- Passing: 53/55 (96.4%)
+- Features completed this session: #55
+- Remaining: 2 features
+
+### Notes:
+- Feature #55 significantly improves lightbox UX
+- "View on Instagram" link now prominently positioned
+- No breaking changes to existing functionality
+- All lightbox features (popup, navigation, video) still work perfectly
