@@ -247,13 +247,71 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
         <?php
         // Use built-in Instagram App credentials
         $oauth_url = BWG_IGF_Instagram_Credentials::get_oauth_url();
+        $has_credentials = BWG_IGF_Instagram_Credentials::has_credentials();
+        $using_placeholder = BWG_IGF_Instagram_Credentials::is_using_placeholder_credentials();
         ?>
+
+        <?php if ( $using_placeholder ) : ?>
+            <!-- Instagram API Setup Instructions -->
+            <div class="bwg-igf-setup-notice" style="background: #fff8e5; border-left: 4px solid #ffb900; padding: 15px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #826200;">
+                    <span class="dashicons dashicons-warning" style="color: #ffb900;"></span>
+                    <?php esc_html_e( 'Instagram API Setup Required', 'bwg-instagram-feed' ); ?>
+                </h3>
+                <p style="color: #826200;">
+                    <?php esc_html_e( 'To connect your Instagram account, you need to configure your own Instagram/Meta App credentials. Follow these steps:', 'bwg-instagram-feed' ); ?>
+                </p>
+
+                <div style="background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin: 15px 0;">
+                    <h4 style="margin-top: 0;"><?php esc_html_e( 'Step 1: Create a Meta Developer App', 'bwg-instagram-feed' ); ?></h4>
+                    <ol style="margin-left: 20px;">
+                        <li><?php echo wp_kses_post( __( 'Go to <a href="https://developers.facebook.com/" target="_blank" rel="noopener noreferrer">Meta for Developers</a> and log in with your Facebook account.', 'bwg-instagram-feed' ) ); ?></li>
+                        <li><?php esc_html_e( 'Click "My Apps" → "Create App" → Choose "Consumer" or "Business" type.', 'bwg-instagram-feed' ); ?></li>
+                        <li><?php esc_html_e( 'Add the "Instagram Basic Display" product to your app.', 'bwg-instagram-feed' ); ?></li>
+                        <li><?php esc_html_e( 'In Instagram Basic Display settings, add this as a Valid OAuth Redirect URI:', 'bwg-instagram-feed' ); ?>
+                            <br>
+                            <code style="background: #f0f0f0; padding: 5px 10px; display: inline-block; margin: 5px 0; word-break: break-all;"><?php echo esc_html( BWG_IGF_Instagram_Credentials::get_redirect_uri() ); ?></code>
+                            <button type="button" class="button button-small" onclick="navigator.clipboard.writeText('<?php echo esc_js( BWG_IGF_Instagram_Credentials::get_redirect_uri() ); ?>'); this.innerText='Copied!';">
+                                <?php esc_html_e( 'Copy', 'bwg-instagram-feed' ); ?>
+                            </button>
+                        </li>
+                        <li><?php esc_html_e( 'Copy your Instagram App ID and Instagram App Secret from the app settings.', 'bwg-instagram-feed' ); ?></li>
+                    </ol>
+
+                    <h4><?php esc_html_e( 'Step 2: Add Credentials to WordPress', 'bwg-instagram-feed' ); ?></h4>
+                    <p><?php esc_html_e( 'Add the following lines to your wp-config.php file (before the line that says "That\'s all, stop editing!"):', 'bwg-instagram-feed' ); ?></p>
+                    <pre style="background: #23282d; color: #fff; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;">
+<span style="color: #9cdcfe;">// BWG Instagram Feed - API Credentials</span>
+<span style="color: #dcdcaa;">define</span>( <span style="color: #ce9178;">'BWG_IGF_INSTAGRAM_APP_ID'</span>, <span style="color: #ce9178;">'your_app_id_here'</span> );
+<span style="color: #dcdcaa;">define</span>( <span style="color: #ce9178;">'BWG_IGF_INSTAGRAM_APP_SECRET'</span>, <span style="color: #ce9178;">'your_app_secret_here'</span> );</pre>
+                    <button type="button" class="button button-small" onclick="navigator.clipboard.writeText(&quot;// BWG Instagram Feed - API Credentials\ndefine( 'BWG_IGF_INSTAGRAM_APP_ID', 'your_app_id_here' );\ndefine( 'BWG_IGF_INSTAGRAM_APP_SECRET', 'your_app_secret_here' );&quot;); this.innerText='Copied!';">
+                        <?php esc_html_e( 'Copy Code', 'bwg-instagram-feed' ); ?>
+                    </button>
+
+                    <h4><?php esc_html_e( 'Step 3: Refresh This Page', 'bwg-instagram-feed' ); ?></h4>
+                    <p><?php esc_html_e( 'After adding your credentials to wp-config.php, refresh this page. The "Connect Instagram Account" button will then work.', 'bwg-instagram-feed' ); ?></p>
+                </div>
+
+                <p style="margin-bottom: 0;">
+                    <span class="dashicons dashicons-editor-help"></span>
+                    <?php echo wp_kses_post( __( 'Need help? Check out the <a href="https://developers.facebook.com/docs/instagram-basic-display-api/getting-started" target="_blank" rel="noopener noreferrer">Instagram Basic Display API documentation</a>.', 'bwg-instagram-feed' ) ); ?>
+                </p>
+            </div>
+
+            <button type="button" class="button button-secondary" disabled style="opacity: 0.6; cursor: not-allowed;">
+                <?php esc_html_e( 'Connect Instagram Account', 'bwg-instagram-feed' ); ?>
+            </button>
+            <p class="description" style="margin-top: 10px; color: #826200;">
+                <?php esc_html_e( 'Please configure your Instagram API credentials above to enable account connections.', 'bwg-instagram-feed' ); ?>
+            </p>
+        <?php else : ?>
             <a href="<?php echo esc_url( $oauth_url ); ?>" class="button button-primary bwg-igf-connect-account" id="bwg-igf-oauth-connect-btn" data-oauth-url="<?php echo esc_url( $oauth_url ); ?>">
                 <?php esc_html_e( 'Connect Instagram Account', 'bwg-instagram-feed' ); ?>
             </a>
             <p class="description" style="margin-top: 10px;">
                 <?php esc_html_e( 'You will be redirected to Instagram to authorize the connection.', 'bwg-instagram-feed' ); ?>
             </p>
+        <?php endif; ?>
     </div>
 
     <div class="bwg-igf-widget" style="margin-top: 20px;">
