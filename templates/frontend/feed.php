@@ -75,6 +75,7 @@ $image_fixed_height = isset( $styling_settings['image_fixed_height'] ) ? absint(
 $slides_to_show = isset( $layout_settings['slides_to_show'] ) ? absint( $layout_settings['slides_to_show'] ) : 3;
 $autoplay = ! empty( $layout_settings['autoplay'] );
 $autoplay_speed = isset( $layout_settings['autoplay_speed'] ) ? absint( $layout_settings['autoplay_speed'] ) : 3000;
+$transition_duration = isset( $layout_settings['transition_duration'] ) ? absint( $layout_settings['transition_duration'] ) : 600;
 $infinite = isset( $layout_settings['infinite'] ) ? (bool) $layout_settings['infinite'] : true;
 $show_arrows = isset( $layout_settings['show_arrows'] ) ? (bool) $layout_settings['show_arrows'] : true;
 $show_dots = isset( $layout_settings['show_dots'] ) ? (bool) $layout_settings['show_dots'] : true;
@@ -527,6 +528,7 @@ $feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
     data-slides-to-show="<?php echo esc_attr( $slides_to_show ); ?>"
     data-autoplay="<?php echo $autoplay ? 'true' : 'false'; ?>"
     data-autoplay-speed="<?php echo esc_attr( $autoplay_speed ); ?>"
+    data-transition-duration="<?php echo esc_attr( $transition_duration ); ?>"
     data-infinite="<?php echo $infinite ? 'true' : 'false'; ?>"
     <?php endif; ?>
     style="<?php echo esc_attr( implode( '; ', $custom_styles ) ); ?>"

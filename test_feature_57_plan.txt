@@ -1,0 +1,18 @@
+Feature 57: Smooth Slider Transitions - Test Plan
+
+Test Steps:
+1. Navigate to feed editor for Feed ID 12 (slider)
+2. Verify new "Slide Transition Duration (ms)" field exists in Layout tab
+3. Check default value (600ms)
+4. Test with 300ms (faster transition)
+5. Test with 1000ms (slower, smoother transition)
+6. Verify infinite loop still works correctly
+7. Verify autoplay timing is unaffected (only animation speed changes)
+
+Expected Results:
+- New field appears after "Autoplay Speed (ms)" field
+- Field has min=200, max=2000, step=100
+- Default is 600ms
+- Transitions are smooth at all tested values
+- Faster values (300ms) make slides snap quickly
+- Slower values (1000ms) make slides glide smoothly

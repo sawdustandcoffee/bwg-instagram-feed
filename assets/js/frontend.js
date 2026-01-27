@@ -504,6 +504,7 @@
         this.slidesToShow = this.getResponsiveSlidesToShow();
         this.autoplay = element.dataset.autoplay === 'true';
         this.autoplaySpeed = parseInt(element.dataset.autoplaySpeed) || 3000;
+        this.transitionDuration = parseInt(element.dataset.transitionDuration) || 600;
         this.infinite = element.dataset.infinite === 'true';
 
         this.init();
@@ -515,6 +516,9 @@
             if (this.infinite) {
                 this.cloneSlides();
             }
+
+            // Set transition duration from configuration
+            this.setTransitionDuration();
 
             this.bindEvents();
             this.updateSlideWidth();
@@ -563,6 +567,15 @@
             // Update slides reference to include clones
             this.slides = this.track.querySelectorAll('.bwg-igf-slider-slide');
             this.totalSlides = slideCount; // Original slide count (without clones)
+        },
+
+        /**
+         * Set the CSS transition duration based on configuration
+         * This controls how smooth and fast the slide animation is
+         */
+        setTransitionDuration: function() {
+            var durationSeconds = this.transitionDuration / 1000;
+            this.track.style.transition = 'transform ' + durationSeconds + 's cubic-bezier(0.25, 0.1, 0.25, 1)';
         },
 
         /**
@@ -764,7 +777,7 @@
                     var resetIndex = self.slidesToShow + (index - (self.totalSlides + self.slidesToShow));
                     self.goToImmediate(resetIndex);
                     self.realIndex = self.getRealIndex(resetIndex);
-                }, 500); // Match CSS transition duration (0.5s)
+                }, this.transitionDuration); // Match configured transition duration
             }
 
             // If we moved to the cloned slides at the beginning (index < slidesToShow)
@@ -776,7 +789,7 @@
                     var resetIndex = self.totalSlides + index;
                     self.goToImmediate(resetIndex);
                     self.realIndex = self.getRealIndex(resetIndex);
-                }, 500); // Match CSS transition duration (0.5s)
+                }, this.transitionDuration); // Match configured transition duration
             }
         },
 

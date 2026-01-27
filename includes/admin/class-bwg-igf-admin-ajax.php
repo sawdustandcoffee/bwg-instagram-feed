@@ -256,6 +256,9 @@ class BWG_IGF_Admin_Ajax {
         $slides_to_scroll = isset( $_POST['slides_to_scroll'] ) ? absint( $_POST['slides_to_scroll'] ) : 1;
         $autoplay = isset( $_POST['autoplay'] ) ? 1 : 0;
         $autoplay_speed = isset( $_POST['autoplay_speed'] ) ? absint( $_POST['autoplay_speed'] ) : 3000;
+        $transition_duration = isset( $_POST['transition_duration'] ) ? absint( $_POST['transition_duration'] ) : 600;
+        // Enforce transition duration range: 200ms-2000ms
+        $transition_duration = max( 200, min( 2000, $transition_duration ) );
         $show_arrows = isset( $_POST['show_arrows'] ) ? 1 : 0;
         $show_dots = isset( $_POST['show_dots'] ) ? 1 : 0;
         $infinite_loop = isset( $_POST['infinite_loop'] ) ? 1 : 0;
@@ -320,6 +323,7 @@ class BWG_IGF_Admin_Ajax {
             'slides_to_scroll' => $slides_to_scroll,
             'autoplay'         => (bool) $autoplay,
             'autoplay_speed'   => $autoplay_speed,
+            'transition_duration' => $transition_duration,
             'show_arrows'      => (bool) $show_arrows,
             'show_dots'        => (bool) $show_dots,
             'infinite_loop'    => (bool) $infinite_loop,

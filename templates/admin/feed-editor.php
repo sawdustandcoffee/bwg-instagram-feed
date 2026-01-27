@@ -266,6 +266,7 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                         $slides_to_scroll = isset( $layout_settings['slides_to_scroll'] ) ? $layout_settings['slides_to_scroll'] : 1;
                         $autoplay = isset( $layout_settings['autoplay'] ) ? $layout_settings['autoplay'] : false;
                         $autoplay_speed = isset( $layout_settings['autoplay_speed'] ) ? $layout_settings['autoplay_speed'] : 3000;
+                        $transition_duration = isset( $layout_settings['transition_duration'] ) ? $layout_settings['transition_duration'] : 600;
                         $show_arrows = isset( $layout_settings['show_arrows'] ) ? $layout_settings['show_arrows'] : true;
                         $show_dots = isset( $layout_settings['show_dots'] ) ? $layout_settings['show_dots'] : true;
                         $infinite_loop = isset( $layout_settings['infinite_loop'] ) ? $layout_settings['infinite_loop'] : true;
@@ -320,6 +321,12 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                                 <label for="bwg-igf-autoplay-speed"><?php esc_html_e( 'Autoplay Speed (ms)', 'bwg-instagram-feed' ); ?></label>
                                 <input type="number" id="bwg-igf-autoplay-speed" name="autoplay_speed" value="<?php echo esc_attr( $autoplay_speed ); ?>" min="1000" max="10000" step="500">
                                 <p class="description"><?php esc_html_e( 'Time between slides in milliseconds (1000ms = 1 second)', 'bwg-instagram-feed' ); ?></p>
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-transition-duration"><?php esc_html_e( 'Slide Transition Duration (ms)', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-transition-duration" name="transition_duration" value="<?php echo esc_attr( $transition_duration ); ?>" min="200" max="2000" step="100">
+                                <p class="description"><?php esc_html_e( 'Duration of the slide animation in milliseconds. 600-800ms recommended for smooth transitions.', 'bwg-instagram-feed' ); ?></p>
                             </div>
 
                             <div class="bwg-igf-field">

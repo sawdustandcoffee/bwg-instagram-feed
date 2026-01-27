@@ -305,8 +305,9 @@ a.bwg-igf-item:focus {
 
 .bwg-igf-slider-track {
     display: flex;
-    /* Smooth slide animation with longer duration and cubic-bezier for natural deceleration */
-    transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    /* Transition duration set dynamically via JavaScript based on user configuration */
+    /* Default fallback: 0.6s for smooth animation with cubic-bezier easing */
+    transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
     will-change: transform;
 }
 
