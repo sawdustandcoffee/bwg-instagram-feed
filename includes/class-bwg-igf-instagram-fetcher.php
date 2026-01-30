@@ -22,6 +22,9 @@ class BWG_IGF_Instagram_Fetcher {
     /**
      * Fetch posts for a feed and cache them.
      *
+     * Feature #58: Placeholder data is NOT cached to prevent showing fake images on frontend.
+     * Only real Instagram data gets cached with the full duration.
+     *
      * @param object $feed The feed object from database.
      * @return array Array of post data.
      */
@@ -37,7 +40,13 @@ class BWG_IGF_Instagram_Fetcher {
         if ( $cache_data ) {
             $posts = json_decode( $cache_data, true );
             if ( ! empty( $posts ) ) {
-                return $posts;
+                // Feature #58: Check if cached data is placeholder data (from previous versions)
+                // If it is, skip the cache and try to fetch fresh data
+                if ( ! self::is_placeholder_data( $posts ) ) {
+                    return $posts;
+                }
+                // Log that we're skipping cached placeholder data
+                error_log( 'BWG IGF: Skipping cached placeholder data for feed #' . $feed->id . ' - attempting fresh fetch' );
             }
         }
 
@@ -49,12 +58,45 @@ class BWG_IGF_Instagram_Fetcher {
             $posts = self::fetch_public_feed( $feed );
         }
 
-        // If we got posts, cache them.
-        if ( ! empty( $posts ) ) {
+        // Feature #58: Only cache if we got REAL posts (not placeholder data).
+        // Placeholder data should NEVER be cached to avoid showing fake images on frontend.
+        if ( ! empty( $posts ) && ! self::is_placeholder_data( $posts ) ) {
             self::store_cache( $feed->id, $posts, $feed->cache_duration );
+        } elseif ( ! empty( $posts ) && self::is_placeholder_data( $posts ) ) {
+            error_log( 'BWG IGF: NOT caching placeholder data for feed #' . $feed->id . ' - only real Instagram data is cached' );
         }
 
         return $posts;
+    }
+
+    /**
+     * Check if posts array contains placeholder data.
+     *
+     * Feature #58: Detects placeholder data to prevent caching and allow
+     * frontend to show admin-only warnings.
+     *
+     * @param array $posts Array of post data.
+     * @return bool True if any post is placeholder data.
+     */
+    public static function is_placeholder_data( $posts ) {
+        if ( empty( $posts ) || ! is_array( $posts ) ) {
+            return false;
+        }
+
+        // Check first post for is_placeholder flag
+        if ( isset( $posts[0]['is_placeholder'] ) && true === $posts[0]['is_placeholder'] ) {
+            return true;
+        }
+
+        // Also detect by checking for picsum.photos URLs (fallback for data without flag)
+        if ( isset( $posts[0]['thumbnail'] ) ) {
+            $thumbnail = $posts[0]['thumbnail'];
+            if ( strpos( $thumbnail, 'picsum.photos' ) !== false ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -276,11 +318,17 @@ class BWG_IGF_Instagram_Fetcher {
      * This is used when we cannot fetch real data from Instagram.
      * The placeholder data includes the actual username and realistic-looking content.
      *
+     * Feature #58: Placeholder data is now marked with 'is_placeholder' flag
+     * to prevent caching and allow frontend to show admin warnings.
+     *
      * @param string $username The Instagram username.
      * @return array Array of placeholder post data.
      */
     private static function generate_placeholder_data( $username ) {
         $posts = array();
+
+        // Log that we're generating placeholder data
+        error_log( 'BWG IGF: Generating placeholder data for @' . $username . ' - real Instagram data unavailable' );
 
         // Generate 12 placeholder posts with varied, realistic content.
         $image_seeds = array(
@@ -312,14 +360,15 @@ class BWG_IGF_Instagram_Fetcher {
             $post_time = $base_time + ( $i * 86400 ) + rand( 0, 43200 ); // Random time within each day.
 
             $posts[] = array(
-                'thumbnail'  => sprintf( 'https://picsum.photos/seed/%s_%s_%d/400/400', $username, $seed, $i ),
-                'full_image' => sprintf( 'https://picsum.photos/seed/%s_%s_%d/1080/1080', $username, $seed, $i ),
-                'caption'    => sprintf( '@%s: %s', $username, $captions[ $i % count( $captions ) ] ),
-                'likes'      => rand( 100, 5000 ),
-                'comments'   => rand( 5, 200 ),
-                'link'       => sprintf( 'https://www.instagram.com/%s/', $username ),
-                'timestamp'  => $post_time,
-                'username'   => $username,
+                'thumbnail'     => sprintf( 'https://picsum.photos/seed/%s_%s_%d/400/400', $username, $seed, $i ),
+                'full_image'    => sprintf( 'https://picsum.photos/seed/%s_%s_%d/1080/1080', $username, $seed, $i ),
+                'caption'       => sprintf( '@%s: %s', $username, $captions[ $i % count( $captions ) ] ),
+                'likes'         => rand( 100, 5000 ),
+                'comments'      => rand( 5, 200 ),
+                'link'          => sprintf( 'https://www.instagram.com/%s/', $username ),
+                'timestamp'     => $post_time,
+                'username'      => $username,
+                'is_placeholder' => true, // Feature #58: Mark as placeholder data
             );
         }
 
