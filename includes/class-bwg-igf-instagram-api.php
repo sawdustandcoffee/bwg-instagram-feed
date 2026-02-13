@@ -74,13 +74,14 @@ class BWG_IGF_Instagram_API {
         // Try to fetch from Instagram's public profile page
         $posts = $this->fetch_from_profile_page( $username, $count );
 
-        if ( is_wp_error( $posts ) ) {
-            // Log the error for debugging.
-            if ( class_exists( 'BWG_IGF_Logger' ) ) {
-                BWG_IGF_Logger::error(
+        if ( is_wp_error( $posts ) || empty( $posts ) ) {
+            // Profile page failed or returned no posts - try API endpoint as fallback.
+            // Instagram often blocks profile page scraping but allows API requests.
+            if ( is_wp_error( $posts ) && class_exists( 'BWG_IGF_Logger' ) ) {
+                BWG_IGF_Logger::info(
                     sprintf(
                         /* translators: 1: Instagram username, 2: error message */
-                        __( 'Failed to fetch posts for @%1$s: %2$s', 'bwg-instagram-feed' ),
+                        __( 'Profile page fetch failed for @%1$s (%2$s), trying API endpoint...', 'bwg-instagram-feed' ),
                         $username,
                         $posts->get_error_message()
                     ),
@@ -90,7 +91,31 @@ class BWG_IGF_Instagram_API {
                     )
                 );
             }
-            return $posts;
+
+            // Try the API endpoint as fallback.
+            $api_posts = $this->fetch_from_embed_endpoint( $username, $count );
+
+            if ( ! is_wp_error( $api_posts ) && ! empty( $api_posts ) ) {
+                return $api_posts;
+            }
+
+            // Both methods failed - log and return the original error or the API error.
+            $final_error = is_wp_error( $api_posts ) ? $api_posts : $posts;
+            if ( is_wp_error( $final_error ) && class_exists( 'BWG_IGF_Logger' ) ) {
+                BWG_IGF_Logger::error(
+                    sprintf(
+                        /* translators: 1: Instagram username, 2: error message */
+                        __( 'Failed to fetch posts for @%1$s: %2$s', 'bwg-instagram-feed' ),
+                        $username,
+                        $final_error->get_error_message()
+                    ),
+                    array(
+                        'username'   => $username,
+                        'error_code' => $final_error->get_error_code(),
+                    )
+                );
+            }
+            return $final_error;
         }
 
         return $posts;
