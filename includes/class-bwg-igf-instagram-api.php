@@ -110,29 +110,64 @@ class BWG_IGF_Instagram_API {
     private function fetch_from_profile_page( $username, $count ) {
         $profile_url = sprintf( 'https://www.instagram.com/%s/', $username );
 
-        $response = wp_remote_get( $profile_url, array(
-            'timeout'     => $this->timeout,
-            'httpversion' => '1.1', // Use HTTP/1.1 to avoid bot detection
-            'user-agent'  => $this->user_agent,
-            'headers'     => array(
-                'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language' => 'en-US,en;q=0.5',
-                'Cache-Control'   => 'no-cache',
-                'Sec-Fetch-Site'  => 'none',
-                'Sec-Fetch-Mode'  => 'navigate',
-                'Sec-Fetch-User'  => '?1',
-                'Sec-Fetch-Dest'  => 'document',
-            ),
-        ) );
+        // Use native cURL for better compatibility with Instagram's bot detection.
+        // WordPress wp_remote_get uses HTTP/1.0 which Instagram blocks.
+        if ( function_exists( 'curl_init' ) ) {
+            $ch = curl_init();
+            curl_setopt( $ch, CURLOPT_URL, $profile_url );
+            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+            curl_setopt( $ch, CURLOPT_TIMEOUT, $this->timeout );
+            curl_setopt( $ch, CURLOPT_USERAGENT, $this->user_agent );
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language: en-US,en;q=0.5',
+                'Cache-Control: no-cache',
+                'Sec-Fetch-Site: none',
+                'Sec-Fetch-Mode: navigate',
+                'Sec-Fetch-User: ?1',
+                'Sec-Fetch-Dest: document',
+            ) );
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+            curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
 
-        if ( is_wp_error( $response ) ) {
-            return new WP_Error(
-                'request_failed',
-                sprintf( __( 'Failed to fetch Instagram profile: %s', 'bwg-instagram-feed' ), $response->get_error_message() )
-            );
+            $body        = curl_exec( $ch );
+            $status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+            $curl_error  = curl_error( $ch );
+            curl_close( $ch );
+
+            if ( ! empty( $curl_error ) ) {
+                return new WP_Error(
+                    'request_failed',
+                    sprintf( __( 'Failed to fetch Instagram profile: %s', 'bwg-instagram-feed' ), $curl_error )
+                );
+            }
+        } else {
+            // Fallback to wp_remote_get if cURL is not available.
+            $response = wp_remote_get( $profile_url, array(
+                'timeout'     => $this->timeout,
+                'httpversion' => '1.1',
+                'user-agent'  => $this->user_agent,
+                'headers'     => array(
+                    'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language' => 'en-US,en;q=0.5',
+                    'Cache-Control'   => 'no-cache',
+                    'Sec-Fetch-Site'  => 'none',
+                    'Sec-Fetch-Mode'  => 'navigate',
+                    'Sec-Fetch-User'  => '?1',
+                    'Sec-Fetch-Dest'  => 'document',
+                ),
+            ) );
+
+            if ( is_wp_error( $response ) ) {
+                return new WP_Error(
+                    'request_failed',
+                    sprintf( __( 'Failed to fetch Instagram profile: %s', 'bwg-instagram-feed' ), $response->get_error_message() )
+                );
+            }
+
+            $status_code = wp_remote_retrieve_response_code( $response );
+            $body        = wp_remote_retrieve_body( $response );
         }
-
-        $status_code = wp_remote_retrieve_response_code( $response );
 
         if ( 404 === $status_code ) {
             return new WP_Error( 'user_not_found', __( 'Instagram user not found.', 'bwg-instagram-feed' ) );
@@ -151,11 +186,10 @@ class BWG_IGF_Instagram_API {
             // Instagram sometimes returns 403 or other codes when rate limiting
             $rate_limit_indicators = array( 403, 503 );
             if ( in_array( $status_code, $rate_limit_indicators, true ) ) {
-                $body_check = wp_remote_retrieve_body( $response );
-                if ( stripos( $body_check, 'rate' ) !== false ||
-                     stripos( $body_check, 'limit' ) !== false ||
-                     stripos( $body_check, 'too many' ) !== false ||
-                     stripos( $body_check, 'temporarily' ) !== false ) {
+                if ( stripos( $body, 'rate' ) !== false ||
+                     stripos( $body, 'limit' ) !== false ||
+                     stripos( $body, 'too many' ) !== false ||
+                     stripos( $body, 'temporarily' ) !== false ) {
                     return new WP_Error(
                         'rate_limited',
                         __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
@@ -168,8 +202,6 @@ class BWG_IGF_Instagram_API {
                 sprintf( __( 'Instagram returned HTTP error: %d', 'bwg-instagram-feed' ), $status_code )
             );
         }
-
-        $body = wp_remote_retrieve_body( $response );
 
         // Check if the user doesn't exist (Instagram returns 200 but with specific content)
         // Instagram's SPA may HTML-encode apostrophes, so check multiple variations
