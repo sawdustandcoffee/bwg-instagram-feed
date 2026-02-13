@@ -233,41 +233,92 @@ class BWG_IGF_Image_Proxy {
             return self::serve_cached_image( $cache_path, $cache_meta_path );
         }
 
-        // Fetch the image from remote
-        $response = wp_remote_get(
-            $decoded_url,
-            array(
-                'timeout'    => 30,
-                'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'headers'    => array(
-                    'Accept'          => 'image/webp,image/apng,image/*,*/*;q=0.8',
-                    'Accept-Language' => 'en-US,en;q=0.5',
-                    'Referer'         => 'https://www.instagram.com/',
-                ),
-            )
-        );
+        // Fetch the image from remote using native cURL to avoid Instagram's bot detection.
+        // WordPress wp_remote_get uses HTTP/1.0 which Instagram blocks with 429.
+        if ( function_exists( 'curl_init' ) ) {
+            $ch = curl_init();
+            curl_setopt( $ch, CURLOPT_URL, $decoded_url );
+            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+            curl_setopt( $ch, CURLOPT_TIMEOUT, 30 );
+            curl_setopt( $ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' );
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+                'Accept: image/webp,image/apng,image/*,*/*;q=0.8',
+                'Accept-Language: en-US,en;q=0.5',
+                'Referer: https://www.instagram.com/',
+                'Sec-Fetch-Site: cross-site',
+                'Sec-Fetch-Mode: no-cors',
+                'Sec-Fetch-Dest: image',
+            ) );
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+            curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+            curl_setopt( $ch, CURLOPT_HEADER, true );
 
-        if ( is_wp_error( $response ) ) {
-            error_log( 'BWG IGF Image Proxy: Failed to fetch image - ' . $response->get_error_message() );
-            return self::return_placeholder_image();
+            $response    = curl_exec( $ch );
+            $status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+            $header_size = curl_getinfo( $ch, CURLINFO_HEADER_SIZE );
+            $curl_error  = curl_error( $ch );
+            curl_close( $ch );
+
+            if ( ! empty( $curl_error ) ) {
+                error_log( 'BWG IGF Image Proxy: cURL error - ' . $curl_error );
+                return self::return_placeholder_image();
+            }
+
+            if ( 200 !== $status_code ) {
+                error_log( 'BWG IGF Image Proxy: Image returned status ' . $status_code . ' for URL: ' . $decoded_url );
+                return self::return_placeholder_image();
+            }
+
+            $headers_str = substr( $response, 0, $header_size );
+            $body        = substr( $response, $header_size );
+
+            if ( empty( $body ) ) {
+                error_log( 'BWG IGF Image Proxy: Empty response body for URL: ' . $decoded_url );
+                return self::return_placeholder_image();
+            }
+
+            // Extract content-type from headers
+            $content_type = '';
+            if ( preg_match( '/content-type:\s*([^\r\n]+)/i', $headers_str, $matches ) ) {
+                $content_type = trim( $matches[1] );
+            }
+        } else {
+            // Fallback to wp_remote_get if cURL is not available
+            $response = wp_remote_get(
+                $decoded_url,
+                array(
+                    'timeout'     => 30,
+                    'httpversion' => '1.1',
+                    'user-agent'  => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'headers'     => array(
+                        'Accept'          => 'image/webp,image/apng,image/*,*/*;q=0.8',
+                        'Accept-Language' => 'en-US,en;q=0.5',
+                        'Referer'         => 'https://www.instagram.com/',
+                    ),
+                )
+            );
+
+            if ( is_wp_error( $response ) ) {
+                error_log( 'BWG IGF Image Proxy: Failed to fetch image - ' . $response->get_error_message() );
+                return self::return_placeholder_image();
+            }
+
+            $status_code = wp_remote_retrieve_response_code( $response );
+
+            if ( 200 !== $status_code ) {
+                error_log( 'BWG IGF Image Proxy: Image returned status ' . $status_code . ' for URL: ' . $decoded_url );
+                return self::return_placeholder_image();
+            }
+
+            $body = wp_remote_retrieve_body( $response );
+
+            if ( empty( $body ) ) {
+                error_log( 'BWG IGF Image Proxy: Empty response body for URL: ' . $decoded_url );
+                return self::return_placeholder_image();
+            }
+
+            $content_type = wp_remote_retrieve_header( $response, 'content-type' );
         }
-
-        $status_code = wp_remote_retrieve_response_code( $response );
-
-        if ( 200 !== $status_code ) {
-            error_log( 'BWG IGF Image Proxy: Image returned status ' . $status_code . ' for URL: ' . $decoded_url );
-            return self::return_placeholder_image();
-        }
-
-        $body = wp_remote_retrieve_body( $response );
-
-        if ( empty( $body ) ) {
-            error_log( 'BWG IGF Image Proxy: Empty response body for URL: ' . $decoded_url );
-            return self::return_placeholder_image();
-        }
-
-        // Detect content type from response headers or body
-        $content_type = wp_remote_retrieve_header( $response, 'content-type' );
 
         if ( empty( $content_type ) ) {
             // Try to detect from magic bytes

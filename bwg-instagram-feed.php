@@ -558,7 +558,7 @@ final class BWG_Instagram_Feed {
                     <?php esc_html_e( 'Your cached posts will continue to display. To reduce API usage:', 'bwg-instagram-feed' ); ?>
                 </p>
                 <ul style="list-style: disc; margin-left: 20px;">
-                    <li><?php esc_html_e( 'Increase the cache duration in Settings (e.g., 6 hours or 24 hours)', 'bwg-instagram-feed' ); ?></li>
+                    <li><?php esc_html_e( 'Increase the refresh interval in Settings (e.g., every 6 hours or once a day)', 'bwg-instagram-feed' ); ?></li>
                     <li><?php esc_html_e( 'Reduce the number of feeds using this account', 'bwg-instagram-feed' ); ?></li>
                     <li><?php esc_html_e( 'Wait for the rate limit to reset (usually within an hour)', 'bwg-instagram-feed' ); ?></li>
                 </ul>
@@ -589,7 +589,7 @@ final class BWG_Instagram_Feed {
                 </p>
                 <p>
                     <strong><?php esc_html_e( 'Suggestion:', 'bwg-instagram-feed' ); ?></strong>
-                    <?php esc_html_e( 'Consider increasing your cache duration to reduce API calls.', 'bwg-instagram-feed' ); ?>
+                    <?php esc_html_e( 'Consider increasing your refresh interval to reduce API calls.', 'bwg-instagram-feed' ); ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-settings' ) ); ?>">
                         <?php esc_html_e( 'Go to Settings', 'bwg-instagram-feed' ); ?> →
                     </a>

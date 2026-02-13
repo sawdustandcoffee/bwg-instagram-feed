@@ -111,12 +111,17 @@ class BWG_IGF_Instagram_API {
         $profile_url = sprintf( 'https://www.instagram.com/%s/', $username );
 
         $response = wp_remote_get( $profile_url, array(
-            'timeout'    => $this->timeout,
-            'user-agent' => $this->user_agent,
-            'headers'    => array(
+            'timeout'     => $this->timeout,
+            'httpversion' => '1.1', // Use HTTP/1.1 to avoid bot detection
+            'user-agent'  => $this->user_agent,
+            'headers'     => array(
                 'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Language' => 'en-US,en;q=0.5',
                 'Cache-Control'   => 'no-cache',
+                'Sec-Fetch-Site'  => 'none',
+                'Sec-Fetch-Mode'  => 'navigate',
+                'Sec-Fetch-User'  => '?1',
+                'Sec-Fetch-Dest'  => 'document',
             ),
         ) );
 
@@ -258,36 +263,54 @@ class BWG_IGF_Instagram_API {
     }
 
     /**
-     * Fetch posts using Instagram's embed/oembed endpoint.
+     * Fetch posts using Instagram's web API endpoint.
+     *
+     * Uses native cURL instead of wp_remote_get to avoid Instagram's bot detection.
+     * WordPress HTTP API uses HTTP/1.0 by default which Instagram flags as automated traffic.
      *
      * @param string $username Instagram username.
      * @param int    $count    Number of posts to fetch.
      * @return array|WP_Error Array of posts or WP_Error.
      */
     private function fetch_from_embed_endpoint( $username, $count ) {
-        // Try using Instagram's web API (this may require additional handling)
         $api_url = sprintf(
             'https://www.instagram.com/api/v1/users/web_profile_info/?username=%s',
             rawurlencode( $username )
         );
 
-        $response = wp_remote_get( $api_url, array(
-            'timeout'    => $this->timeout,
-            'user-agent' => $this->user_agent,
-            'headers'    => array(
-                'Accept'       => 'application/json',
-                'X-IG-App-ID'  => '936619743392459', // Instagram web app ID
-                'X-Requested-With' => 'XMLHttpRequest',
-            ),
-        ) );
+        // Use native cURL for better compatibility with Instagram's bot detection.
+        // WordPress wp_remote_get uses HTTP/1.0 which Instagram blocks.
+        if ( ! function_exists( 'curl_init' ) ) {
+            // Fallback to wp_remote_get if cURL is not available
+            return $this->fetch_from_embed_endpoint_wp( $username, $count );
+        }
 
-        if ( is_wp_error( $response ) ) {
-            // Return empty array instead of error - fallback will be used
+        $ch = curl_init();
+        curl_setopt( $ch, CURLOPT_URL, $api_url );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $ch, CURLOPT_TIMEOUT, $this->timeout );
+        curl_setopt( $ch, CURLOPT_USERAGENT, $this->user_agent );
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+            'Accept: application/json',
+            'Accept-Language: en-US,en;q=0.9',
+            'X-IG-App-ID: 936619743392459',
+            'X-Requested-With: XMLHttpRequest',
+            'Sec-Fetch-Site: same-origin',
+            'Sec-Fetch-Mode: cors',
+            'Sec-Fetch-Dest: empty',
+        ) );
+        curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+
+        $body        = curl_exec( $ch );
+        $status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+        $curl_error  = curl_error( $ch );
+        curl_close( $ch );
+
+        if ( ! empty( $curl_error ) ) {
             return array();
         }
 
-        $status_code = wp_remote_retrieve_response_code( $response );
-        $body = wp_remote_retrieve_body( $response );
         $data = json_decode( $body, true );
 
         // Check for rate limiting (429 Too Many Requests)
@@ -320,6 +343,56 @@ class BWG_IGF_Instagram_API {
         if ( isset( $data['data'] ) && empty( $data['data']['user'] ) ) {
             return new WP_Error( 'user_not_found', __( 'Instagram user not found.', 'bwg-instagram-feed' ) );
         }
+
+        if ( ! empty( $data['data']['user']['edge_owner_to_timeline_media']['edges'] ) ) {
+            return $this->parse_timeline_edges( $data['data']['user']['edge_owner_to_timeline_media']['edges'], $count );
+        }
+
+        return array();
+    }
+
+    /**
+     * Fallback fetch using WordPress HTTP API.
+     *
+     * Used when cURL is not available. Less reliable due to HTTP/1.0 usage.
+     *
+     * @param string $username Instagram username.
+     * @param int    $count    Number of posts to fetch.
+     * @return array|WP_Error Array of posts or WP_Error.
+     */
+    private function fetch_from_embed_endpoint_wp( $username, $count ) {
+        $api_url = sprintf(
+            'https://www.instagram.com/api/v1/users/web_profile_info/?username=%s',
+            rawurlencode( $username )
+        );
+
+        $response = wp_remote_get( $api_url, array(
+            'timeout'     => $this->timeout,
+            'httpversion' => '1.1',
+            'user-agent'  => $this->user_agent,
+            'headers'     => array(
+                'Accept'           => 'application/json',
+                'Accept-Language'  => 'en-US,en;q=0.9',
+                'X-IG-App-ID'      => '936619743392459',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            return array();
+        }
+
+        $status_code = wp_remote_retrieve_response_code( $response );
+        $body        = wp_remote_retrieve_body( $response );
+
+        if ( 429 === $status_code ) {
+            return new WP_Error(
+                'rate_limited',
+                __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing the feed. Your cached posts will continue to display.', 'bwg-instagram-feed' )
+            );
+        }
+
+        $data = json_decode( $body, true );
 
         if ( ! empty( $data['data']['user']['edge_owner_to_timeline_media']['edges'] ) ) {
             return $this->parse_timeline_edges( $data['data']['user']['edge_owner_to_timeline_media']['edges'], $count );

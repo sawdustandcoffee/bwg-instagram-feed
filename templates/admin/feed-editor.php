@@ -663,17 +663,22 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                         $current_cache_duration = $feed ? intval( $feed->cache_duration ) : intval( $default_cache_duration );
                         ?>
                         <div class="bwg-igf-field">
-                            <label for="bwg-igf-cache-duration"><?php esc_html_e( 'Cache Duration', 'bwg-instagram-feed' ); ?></label>
+                            <label for="bwg-igf-cache-duration"><?php esc_html_e( 'Refresh Interval', 'bwg-instagram-feed' ); ?></label>
                             <select id="bwg-igf-cache-duration" name="cache_duration">
-                                <option value="900" <?php selected( $current_cache_duration, 900 ); ?>><?php esc_html_e( '15 Minutes', 'bwg-instagram-feed' ); ?></option>
-                                <option value="1800" <?php selected( $current_cache_duration, 1800 ); ?>><?php esc_html_e( '30 Minutes', 'bwg-instagram-feed' ); ?></option>
-                                <option value="3600" <?php selected( $current_cache_duration, 3600 ); ?>><?php esc_html_e( '1 Hour', 'bwg-instagram-feed' ); ?></option>
-                                <option value="21600" <?php selected( $current_cache_duration, 21600 ); ?>><?php esc_html_e( '6 Hours', 'bwg-instagram-feed' ); ?></option>
-                                <option value="43200" <?php selected( $current_cache_duration, 43200 ); ?>><?php esc_html_e( '12 Hours', 'bwg-instagram-feed' ); ?></option>
-                                <option value="86400" <?php selected( $current_cache_duration, 86400 ); ?>><?php esc_html_e( '24 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="1800" <?php selected( $current_cache_duration, 1800 ); ?>><?php esc_html_e( 'Every 30 Minutes', 'bwg-instagram-feed' ); ?></option>
+                                <option value="3600" <?php selected( $current_cache_duration, 3600 ); ?>><?php esc_html_e( 'Every Hour', 'bwg-instagram-feed' ); ?></option>
+                                <option value="21600" <?php selected( $current_cache_duration, 21600 ); ?>><?php esc_html_e( 'Every 6 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="43200" <?php selected( $current_cache_duration, 43200 ); ?>><?php esc_html_e( 'Every 12 Hours', 'bwg-instagram-feed' ); ?></option>
+                                <option value="86400" <?php selected( $current_cache_duration, 86400 ); ?>><?php esc_html_e( 'Once a Day', 'bwg-instagram-feed' ); ?></option>
+                                <option value="172800" <?php selected( $current_cache_duration, 172800 ); ?>><?php esc_html_e( 'Every 2 Days', 'bwg-instagram-feed' ); ?></option>
+                                <option value="259200" <?php selected( $current_cache_duration, 259200 ); ?>><?php esc_html_e( 'Every 3 Days', 'bwg-instagram-feed' ); ?></option>
+                                <option value="604800" <?php selected( $current_cache_duration, 604800 ); ?>><?php esc_html_e( 'Once a Week', 'bwg-instagram-feed' ); ?></option>
                             </select>
+                            <p class="description">
+                                <?php esc_html_e( 'How often to check Instagram for new posts. Your feed will always display cached content, even if the refresh fails.', 'bwg-instagram-feed' ); ?>
+                            </p>
                             <p id="bwg-igf-cache-warning" class="description bwg-igf-cache-warning" style="color: #d63638; display: none;">
-                                <?php esc_html_e( '⚠️ Warning: Short cache durations may cause rate limiting from Instagram. Consider using a longer duration unless you need very frequent updates.', 'bwg-instagram-feed' ); ?>
+                                <?php esc_html_e( '⚠️ Warning: Frequent refresh intervals may cause rate limiting from Instagram.', 'bwg-instagram-feed' ); ?>
                             </p>
                         </div>
 

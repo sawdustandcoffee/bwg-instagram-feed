@@ -114,10 +114,10 @@
                 return;
             }
 
-            // Show/hide warning based on cache duration value
+            // Show/hide warning based on refresh interval value
             function updateWarning() {
                 var value = parseInt($select.val(), 10);
-                // Show warning for 15 minutes (900) or 30 minutes (1800)
+                // Show warning only for 30 minutes (1800) - the minimum interval
                 if (value <= 1800) {
                     $warning.slideDown(200);
                 } else {
