@@ -110,6 +110,10 @@ class BWG_IGF_Instagram_API {
     private function fetch_from_profile_page( $username, $count ) {
         $profile_url = sprintf( 'https://www.instagram.com/%s/', $username );
 
+        // Initialize variables before conditional branches.
+        $body        = '';
+        $status_code = 0;
+
         // Use native cURL for better compatibility with Instagram's bot detection.
         // WordPress wp_remote_get uses HTTP/1.0 which Instagram blocks.
         if ( function_exists( 'curl_init' ) ) {
@@ -117,6 +121,7 @@ class BWG_IGF_Instagram_API {
             curl_setopt( $ch, CURLOPT_URL, $profile_url );
             curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
             curl_setopt( $ch, CURLOPT_TIMEOUT, $this->timeout );
+            curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 5 );
             curl_setopt( $ch, CURLOPT_USERAGENT, $this->user_agent );
             curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -135,10 +140,12 @@ class BWG_IGF_Instagram_API {
             $curl_error  = curl_error( $ch );
             curl_close( $ch );
 
-            if ( ! empty( $curl_error ) ) {
+            // Check for cURL errors or failed request.
+            if ( false === $body || ! empty( $curl_error ) ) {
+                $error_msg = ! empty( $curl_error ) ? $curl_error : __( 'Request failed', 'bwg-instagram-feed' );
                 return new WP_Error(
                     'request_failed',
-                    sprintf( __( 'Failed to fetch Instagram profile: %s', 'bwg-instagram-feed' ), $curl_error )
+                    sprintf( __( 'Failed to fetch Instagram profile: %s', 'bwg-instagram-feed' ), $error_msg )
                 );
             }
         } else {
@@ -321,6 +328,7 @@ class BWG_IGF_Instagram_API {
         curl_setopt( $ch, CURLOPT_URL, $api_url );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
         curl_setopt( $ch, CURLOPT_TIMEOUT, $this->timeout );
+        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 5 );
         curl_setopt( $ch, CURLOPT_USERAGENT, $this->user_agent );
         curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
             'Accept: application/json',
@@ -339,8 +347,13 @@ class BWG_IGF_Instagram_API {
         $curl_error  = curl_error( $ch );
         curl_close( $ch );
 
-        if ( ! empty( $curl_error ) ) {
-            return array();
+        // Check for cURL errors or failed request.
+        if ( false === $body || ! empty( $curl_error ) ) {
+            $error_msg = ! empty( $curl_error ) ? $curl_error : __( 'Request failed', 'bwg-instagram-feed' );
+            return new WP_Error(
+                'request_failed',
+                sprintf( __( 'Failed to fetch Instagram data: %s', 'bwg-instagram-feed' ), $error_msg )
+            );
         }
 
         $data = json_decode( $body, true );
