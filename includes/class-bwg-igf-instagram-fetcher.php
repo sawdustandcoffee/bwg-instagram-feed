@@ -176,23 +176,57 @@ class BWG_IGF_Instagram_Fetcher {
     private static function fetch_user_posts( $username ) {
         // Try to fetch from Instagram's public profile.
         $profile_url = sprintf( 'https://www.instagram.com/%s/', sanitize_text_field( $username ) );
+        $user_agent  = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-        $response = wp_remote_get( $profile_url, array(
-            'timeout'    => 15,
-            'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'headers'    => array(
-                'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language' => 'en-US,en;q=0.5',
-            ),
-        ) );
+        // Initialize variables.
+        $body        = '';
+        $status_code = 0;
 
-        if ( is_wp_error( $response ) ) {
-            error_log( 'BWG IGF: Failed to fetch Instagram profile for ' . $username . ': ' . $response->get_error_message() );
-            return self::generate_placeholder_data( $username );
+        // Use native cURL for better compatibility with Instagram's bot detection.
+        // WordPress wp_remote_get uses HTTP/1.0 which Instagram blocks.
+        if ( function_exists( 'curl_init' ) ) {
+            $ch = curl_init();
+            curl_setopt( $ch, CURLOPT_URL, $profile_url );
+            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+            curl_setopt( $ch, CURLOPT_TIMEOUT, 15 );
+            curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 5 );
+            curl_setopt( $ch, CURLOPT_USERAGENT, $user_agent );
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language: en-US,en;q=0.5',
+            ) );
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+            curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+
+            $body        = curl_exec( $ch );
+            $status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+            $curl_error  = curl_error( $ch );
+            curl_close( $ch );
+
+            if ( false === $body || ! empty( $curl_error ) ) {
+                $error_msg = ! empty( $curl_error ) ? $curl_error : 'Request failed';
+                error_log( 'BWG IGF: Failed to fetch Instagram profile for ' . $username . ': ' . $error_msg );
+                return self::generate_placeholder_data( $username );
+            }
+        } else {
+            // Fallback to wp_remote_get if cURL is not available.
+            $response = wp_remote_get( $profile_url, array(
+                'timeout'    => 15,
+                'user-agent' => $user_agent,
+                'headers'    => array(
+                    'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language' => 'en-US,en;q=0.5',
+                ),
+            ) );
+
+            if ( is_wp_error( $response ) ) {
+                error_log( 'BWG IGF: Failed to fetch Instagram profile for ' . $username . ': ' . $response->get_error_message() );
+                return self::generate_placeholder_data( $username );
+            }
+
+            $body        = wp_remote_retrieve_body( $response );
+            $status_code = wp_remote_retrieve_response_code( $response );
         }
-
-        $body = wp_remote_retrieve_body( $response );
-        $status_code = wp_remote_retrieve_response_code( $response );
 
         if ( 200 !== $status_code ) {
             error_log( 'BWG IGF: Instagram returned status ' . $status_code . ' for ' . $username );
