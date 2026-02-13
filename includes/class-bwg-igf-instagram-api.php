@@ -99,9 +99,20 @@ class BWG_IGF_Instagram_API {
                 return $api_posts;
             }
 
-            // Both methods failed - log and return the original error or the API error.
-            $final_error = is_wp_error( $api_posts ) ? $api_posts : $posts;
-            if ( is_wp_error( $final_error ) && class_exists( 'BWG_IGF_Logger' ) ) {
+            // Both methods failed - determine the appropriate error to return.
+            if ( is_wp_error( $api_posts ) ) {
+                $final_error = $api_posts;
+            } elseif ( is_wp_error( $posts ) ) {
+                $final_error = $posts;
+            } else {
+                // Both returned empty arrays - no posts found.
+                $final_error = new WP_Error(
+                    'no_posts',
+                    __( 'No posts found for this Instagram account.', 'bwg-instagram-feed' )
+                );
+            }
+
+            if ( class_exists( 'BWG_IGF_Logger' ) ) {
                 BWG_IGF_Logger::error(
                     sprintf(
                         /* translators: 1: Instagram username, 2: error message */
@@ -268,19 +279,9 @@ class BWG_IGF_Instagram_API {
             return new WP_Error( 'private_account', __( 'This Instagram account is private.', 'bwg-instagram-feed' ) );
         }
 
-        // Try to extract JSON data from the page
+        // Try to extract JSON data from the page.
+        // If extraction fails, return empty array - the caller will try the API endpoint.
         $posts = $this->extract_posts_from_html( $body, $count );
-
-        if ( empty( $posts ) ) {
-            // Instagram blocks most scraping attempts, so we'll use a reliable fallback
-            // Try the embed endpoint as an alternative
-            $posts = $this->fetch_from_embed_endpoint( $username, $count );
-
-            // If embed endpoint returns a WP_Error, propagate it
-            if ( is_wp_error( $posts ) ) {
-                return $posts;
-            }
-        }
 
         return $posts;
     }
