@@ -131,7 +131,9 @@ class BWG_IGF_Cache_Refresher {
 	public static function refresh_caches() {
 		// Step 1: Check rate limit status.
 		if ( self::is_rate_limited() ) {
-			error_log( 'BWG IGF Cache Refresher: Skipping refresh - rate limited' );
+			if ( class_exists( 'BWG_IGF_Logger' ) ) {
+				BWG_IGF_Logger::warning( __( 'Cache refresh skipped - rate limited', 'bwg-instagram-feed' ) );
+			}
 			return;
 		}
 
@@ -146,14 +148,27 @@ class BWG_IGF_Cache_Refresher {
 		// Step 3: Limit the number of feeds to refresh per run.
 		$feeds_to_refresh = array_slice( $feeds_to_refresh, 0, self::MAX_FEEDS_PER_RUN );
 
-		error_log( sprintf( 'BWG IGF Cache Refresher: Refreshing %d feeds', count( $feeds_to_refresh ) ) );
+		if ( class_exists( 'BWG_IGF_Logger' ) ) {
+			BWG_IGF_Logger::info(
+				sprintf(
+					/* translators: %d: number of feeds */
+					__( 'Background cache refresh started for %d feeds', 'bwg-instagram-feed' ),
+					count( $feeds_to_refresh )
+				)
+			);
+		}
 
 		// Step 4: Refresh feeds with staggered timing.
 		$refreshed_count = 0;
 		foreach ( $feeds_to_refresh as $feed ) {
 			// Check rate limit again before each feed (in case we hit it during refresh).
 			if ( self::is_rate_limited() ) {
-				error_log( 'BWG IGF Cache Refresher: Stopping - hit rate limit during refresh' );
+				if ( class_exists( 'BWG_IGF_Logger' ) ) {
+					BWG_IGF_Logger::warning(
+						__( 'Cache refresh stopped - hit rate limit during refresh', 'bwg-instagram-feed' ),
+						array( 'refreshed' => $refreshed_count )
+					);
+				}
 				break;
 			}
 
@@ -170,7 +185,16 @@ class BWG_IGF_Cache_Refresher {
 			}
 		}
 
-		error_log( sprintf( 'BWG IGF Cache Refresher: Successfully refreshed %d/%d feeds', $refreshed_count, count( $feeds_to_refresh ) ) );
+		if ( class_exists( 'BWG_IGF_Logger' ) ) {
+			BWG_IGF_Logger::info(
+				sprintf(
+					/* translators: 1: refreshed count, 2: total feeds */
+					__( 'Background cache refresh completed: %1$d/%2$d feeds refreshed', 'bwg-instagram-feed' ),
+					$refreshed_count,
+					count( $feeds_to_refresh )
+				)
+			);
+		}
 	}
 
 	/**
@@ -295,7 +319,20 @@ class BWG_IGF_Cache_Refresher {
 		$result = $api->fetch_connected_posts( $account, $feed->post_count );
 
 		if ( is_wp_error( $result ) ) {
-			error_log( 'BWG IGF Cache Refresher: Error fetching connected feed ' . $feed->id . ': ' . $result->get_error_message() );
+			if ( class_exists( 'BWG_IGF_Logger' ) ) {
+				BWG_IGF_Logger::error(
+					sprintf(
+						/* translators: %s: error message */
+						__( 'Failed to fetch connected feed: %s', 'bwg-instagram-feed' ),
+						$result->get_error_message()
+					),
+					array(
+						'feed_id'    => $feed->id,
+						'account_id' => $feed->connected_account_id,
+						'error_code' => $result->get_error_code(),
+					)
+				);
+			}
 			return array();
 		}
 

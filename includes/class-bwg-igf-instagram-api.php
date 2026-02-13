@@ -75,8 +75,21 @@ class BWG_IGF_Instagram_API {
         $posts = $this->fetch_from_profile_page( $username, $count );
 
         if ( is_wp_error( $posts ) ) {
-            // Log the error for debugging
-            error_log( sprintf( 'BWG Instagram Feed: Failed to fetch posts for @%s: %s', $username, $posts->get_error_message() ) );
+            // Log the error for debugging.
+            if ( class_exists( 'BWG_IGF_Logger' ) ) {
+                BWG_IGF_Logger::error(
+                    sprintf(
+                        /* translators: 1: Instagram username, 2: error message */
+                        __( 'Failed to fetch posts for @%1$s: %2$s', 'bwg-instagram-feed' ),
+                        $username,
+                        $posts->get_error_message()
+                    ),
+                    array(
+                        'username'   => $username,
+                        'error_code' => $posts->get_error_code(),
+                    )
+                );
+            }
             return $posts;
         }
 
@@ -927,6 +940,17 @@ class BWG_IGF_Instagram_API {
                 $backoff_state = BWG_IGF_API_Tracker::record_rate_limit( $track_account_id );
             }
 
+            // Log rate limit event.
+            if ( class_exists( 'BWG_IGF_Logger' ) ) {
+                BWG_IGF_Logger::warning(
+                    __( 'Instagram API rate limit reached (HTTP 429)', 'bwg-instagram-feed' ),
+                    array(
+                        'account_id'    => $track_account_id,
+                        'backoff_delay' => $backoff_state['current_delay'],
+                    )
+                );
+            }
+
             return new WP_Error(
                 'rate_limited',
                 sprintf(
@@ -981,6 +1005,22 @@ class BWG_IGF_Instagram_API {
                 $response,
                 'api_error_' . $error_code
             );
+
+            // Log API error event.
+            if ( class_exists( 'BWG_IGF_Logger' ) ) {
+                BWG_IGF_Logger::error(
+                    sprintf(
+                        /* translators: %s: error message */
+                        __( 'Instagram API error: %s', 'bwg-instagram-feed' ),
+                        $error_message
+                    ),
+                    array(
+                        'account_id'  => $track_account_id,
+                        'error_code'  => $error_code,
+                        'status_code' => $status_code,
+                    )
+                );
+            }
 
             return new WP_Error(
                 'api_error',

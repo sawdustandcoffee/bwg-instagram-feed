@@ -80,42 +80,36 @@ $infinite = isset( $layout_settings['infinite'] ) ? (bool) $layout_settings['inf
 $show_arrows = isset( $layout_settings['show_arrows'] ) ? (bool) $layout_settings['show_arrows'] : true;
 $show_dots = isset( $layout_settings['show_dots'] ) ? (bool) $layout_settings['show_dots'] : true;
 
-// Check if we have cached posts
-global $wpdb;
+// Check if we have cached posts - ALWAYS serve cached content if available.
+// The frontend should NEVER fail to show content if ANY cached data exists.
+// Freshness is handled by background WP Cron, not frontend requests.
 
-// Feature #23: Track cache status for stale data indicator
-$cache_row = $wpdb->get_row( $wpdb->prepare(
-    "SELECT cache_data, created_at, expires_at FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
-    $feed->id
-) );
+// Load the fetcher class for cache retrieval
+if ( ! class_exists( 'BWG_IGF_Instagram_Fetcher' ) ) {
+    require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-fetcher.php';
+}
 
-$cache_data = $cache_row ? $cache_row->cache_data : null;
-$cache_created_at = $cache_row ? $cache_row->created_at : null;
-$cache_expires_at = $cache_row ? $cache_row->expires_at : null;
-$is_using_stale_cache = false;
+// Get ANY cached data, regardless of expiration - always serve cached content
+$cache_result = BWG_IGF_Instagram_Fetcher::get_cached_posts_any( $feed->id );
+$cache_created_at = $cache_result['created_at'];
+$is_using_stale_cache = $cache_result['is_expired'];
 
 // Determine if we have cached posts
-$has_cache = ! empty( $cache_data );
-$posts = array();
+$has_cache = ! empty( $cache_result['posts'] );
+$posts = $has_cache ? $cache_result['posts'] : array();
 $no_cache_message = '';
 $rate_limit_warning = '';
-
-if ( $has_cache ) {
-    $posts = json_decode( $cache_data, true ) ?: array();
-}
 
 // Feature #58: Check if posts are placeholder data
 // Placeholder data should not appear on the frontend - show admin warning if detected
 $is_placeholder_data = false;
 if ( ! empty( $posts ) ) {
-    // Load the fetcher class to use placeholder detection
-    if ( ! class_exists( 'BWG_IGF_Instagram_Fetcher' ) ) {
-        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-fetcher.php';
-    }
     $is_placeholder_data = BWG_IGF_Instagram_Fetcher::is_placeholder_data( $posts );
 
-    // If placeholder data was found in cache, clear it and try to get real data
+    // If placeholder data was found in cache, clear it
+    // Background cron will fetch real data; frontend just shows nothing until then
     if ( $is_placeholder_data && $has_cache ) {
+        global $wpdb;
         error_log( 'BWG IGF: Placeholder data found in cache for feed #' . $feed->id . ' - clearing cache' );
         // Clear the cached placeholder data
         $wpdb->delete(
@@ -123,63 +117,54 @@ if ( ! empty( $posts ) ) {
             array( 'feed_id' => $feed->id ),
             array( '%d' )
         );
-        // Reset posts array - will trigger fresh fetch below
+        // Reset posts array - async load will fetch data
         $posts = array();
         $has_cache = false;
     }
 }
 
-// Also check for expired cache (useful for showing stale data during rate limiting)
-$expired_cache_data = null;
-$expired_cache_created_at = null;
-if ( ! $has_cache ) {
-    // Get any existing cache, even if expired
-    $expired_row = $wpdb->get_row( $wpdb->prepare(
-        "SELECT cache_data, created_at FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d ORDER BY created_at DESC LIMIT 1",
-        $feed->id
-    ) );
-    $expired_cache_data = $expired_row ? $expired_row->cache_data : null;
-    $expired_cache_created_at = $expired_row ? $expired_row->created_at : null;
-}
-
-// Determine if we need async loading (no cache but have usernames or connected account)
-// This shows a loading state while AJAX fetches the data
+// Determine if we need async loading - ONLY when no cache exists at all (first load ever).
+// If we have ANY cached data, always display it. Background cron handles freshness.
 $has_source = ! empty( $feed->instagram_usernames ) || ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) );
 $needs_async_load = empty( $posts ) && $has_source;
 
 // Feature #34: Check if connected account exists and is active for connected feeds.
-// If the account is disconnected/expired, show a helpful error instead of loading state.
+// Only show error messages if NO cache exists - otherwise we always display cached content.
 $connected_account_error = false;
 $connected_account_info = null;
 if ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
+    global $wpdb;
     $connected_account_info = $wpdb->get_row( $wpdb->prepare(
         "SELECT id, username, status, expires_at FROM {$wpdb->prefix}bwg_igf_accounts WHERE id = %d",
         $feed->connected_account_id
     ) );
 
-    if ( ! $connected_account_info ) {
-        // Account record doesn't exist (deleted)
-        $connected_account_error = 'deleted';
-        $no_cache_message = __( 'The Instagram account connected to this feed has been removed.', 'bwg-instagram-feed' );
-        $needs_async_load = false;
-    } elseif ( 'active' !== $connected_account_info->status ) {
-        // Account exists but is inactive/disconnected
-        $connected_account_error = 'inactive';
-        $no_cache_message = sprintf(
-            /* translators: %s: Instagram username */
-            __( 'The Instagram account @%s is no longer connected.', 'bwg-instagram-feed' ),
-            esc_html( $connected_account_info->username )
-        );
-        $needs_async_load = false;
-    } elseif ( ! empty( $connected_account_info->expires_at ) && strtotime( $connected_account_info->expires_at ) < time() ) {
-        // Token has expired
-        $connected_account_error = 'expired';
-        $no_cache_message = sprintf(
-            /* translators: %s: Instagram username */
-            __( 'The access token for @%s has expired.', 'bwg-instagram-feed' ),
-            esc_html( $connected_account_info->username )
-        );
-        $needs_async_load = false;
+    // Only set error messages if we have NO cached posts to display
+    if ( empty( $posts ) ) {
+        if ( ! $connected_account_info ) {
+            // Account record doesn't exist (deleted)
+            $connected_account_error = 'deleted';
+            $no_cache_message = __( 'The Instagram account connected to this feed has been removed.', 'bwg-instagram-feed' );
+            $needs_async_load = false;
+        } elseif ( 'active' !== $connected_account_info->status ) {
+            // Account exists but is inactive/disconnected
+            $connected_account_error = 'inactive';
+            $no_cache_message = sprintf(
+                /* translators: %s: Instagram username */
+                __( 'The Instagram account @%s is no longer connected.', 'bwg-instagram-feed' ),
+                esc_html( $connected_account_info->username )
+            );
+            $needs_async_load = false;
+        } elseif ( ! empty( $connected_account_info->expires_at ) && strtotime( $connected_account_info->expires_at ) < time() ) {
+            // Token has expired
+            $connected_account_error = 'expired';
+            $no_cache_message = sprintf(
+                /* translators: %s: Instagram username */
+                __( 'The access token for @%s has expired.', 'bwg-instagram-feed' ),
+                esc_html( $connected_account_info->username )
+            );
+            $needs_async_load = false;
+        }
     }
 }
 
@@ -199,94 +184,52 @@ if ( $needs_async_load && 'connected' === $feed->feed_type && ! empty( $feed->co
             $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
             $cache_key = 'feed_' . $feed->id . '_warmed_' . md5( wp_json_encode( $posts ) );
 
-            // Delete old cache entries for this feed.
-            $wpdb->delete(
-                $wpdb->prefix . 'bwg_igf_cache',
-                array( 'feed_id' => $feed->id ),
-                array( '%d' )
+            // Atomic cache upsert: check if cache exists, then update or insert.
+            // This prevents race conditions when concurrent requests try to write cache.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $existing_cache_id = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d LIMIT 1",
+                    $feed->id
+                )
             );
 
-            // Insert the warmed cache as feed cache.
-            $wpdb->insert(
-                $wpdb->prefix . 'bwg_igf_cache',
-                array(
-                    'feed_id'    => $feed->id,
-                    'cache_key'  => $cache_key,
-                    'cache_data' => wp_json_encode( $posts ),
-                    'created_at' => current_time( 'mysql' ),
-                    'expires_at' => $expires_at,
-                ),
-                array( '%d', '%s', '%s', '%s', '%s' )
-            );
-        }
-    }
-}
-
-// For private accounts, we need to try fetching synchronously to show the error
-// Otherwise, the async JS will just show loading indefinitely
-if ( $needs_async_load && ! empty( $feed->instagram_usernames ) ) {
-    // Load the Instagram API class if not already loaded.
-    if ( ! class_exists( 'BWG_IGF_Instagram_API' ) ) {
-        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
-    }
-
-    $instagram_api = new BWG_IGF_Instagram_API();
-    $usernames = json_decode( $feed->instagram_usernames, true );
-    if ( ! is_array( $usernames ) ) {
-        $usernames = array( $feed->instagram_usernames );
-    }
-
-    // Try to fetch posts for the first username to check for errors
-    if ( ! empty( $usernames[0] ) ) {
-        $fetched_posts = $instagram_api->fetch_public_posts( $usernames[0], 12 );
-
-        if ( is_wp_error( $fetched_posts ) ) {
-            // Store specific error message based on error type
-            $error_code = $fetched_posts->get_error_code();
-            $error_message = $fetched_posts->get_error_message();
-
-            // Check for private account error specifically
-            if ( 'private_account' === $error_code ) {
-                $no_cache_message = sprintf(
-                    /* translators: %s: Instagram username */
-                    __( 'This Instagram account (@%s) is private. Private accounts cannot be displayed without authentication.', 'bwg-instagram-feed' ),
-                    esc_html( $usernames[0] )
+            if ( $existing_cache_id ) {
+                // Update existing cache entry.
+                $wpdb->update(
+                    $wpdb->prefix . 'bwg_igf_cache',
+                    array(
+                        'cache_key'  => $cache_key,
+                        'cache_data' => wp_json_encode( $posts ),
+                        'created_at' => current_time( 'mysql' ),
+                        'expires_at' => $expires_at,
+                    ),
+                    array( 'feed_id' => $feed->id ),
+                    array( '%s', '%s', '%s', '%s' ),
+                    array( '%d' )
                 );
-                $needs_async_load = false; // Don't show loading, show error
-            } elseif ( 'user_not_found' === $error_code ) {
-                $no_cache_message = sprintf(
-                    /* translators: %s: Instagram username */
-                    __( 'Instagram user "@%s" was not found. Please check the username and try again.', 'bwg-instagram-feed' ),
-                    esc_html( $usernames[0] )
-                );
-                $needs_async_load = false;
             } else {
-                $no_cache_message = sprintf(
-                    /* translators: %s: Error message */
-                    __( 'Could not fetch Instagram posts: %s', 'bwg-instagram-feed' ),
-                    $error_message
+                // Insert new cache entry.
+                $wpdb->insert(
+                    $wpdb->prefix . 'bwg_igf_cache',
+                    array(
+                        'feed_id'    => $feed->id,
+                        'cache_key'  => $cache_key,
+                        'cache_data' => wp_json_encode( $posts ),
+                        'created_at' => current_time( 'mysql' ),
+                        'expires_at' => $expires_at,
+                    ),
+                    array( '%d', '%s', '%s', '%s', '%s' )
                 );
-                // Keep async load for other errors (might be temporary)
             }
-        } elseif ( is_array( $fetched_posts ) && ! empty( $fetched_posts ) ) {
-            // Successfully fetched posts, use them
-            $posts = $fetched_posts;
-            $needs_async_load = false;
-
-            // Cache the posts for future use
-            $wpdb->insert(
-                $wpdb->prefix . 'bwg_igf_cache',
-                array(
-                    'feed_id'    => $feed->id,
-                    'cache_data' => wp_json_encode( $posts ),
-                    'expires_at' => gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour' ) ),
-                    'created_at' => current_time( 'mysql' ),
-                ),
-                array( '%d', '%s', '%s', '%s' )
-            );
         }
     }
 }
+
+// NOTE: We NO LONGER make synchronous API calls on the frontend.
+// Frontend rendering should NEVER block on API calls.
+// The async AJAX handler will fetch data for first-load scenarios.
+// Background cron handles all refresh operations.
 
 // Check if there's a rate limit error stored for this feed
 $feed_status = $feed->status ?? 'active';
@@ -296,22 +239,15 @@ $is_rate_limited = ( 'error' === $feed_status &&
       stripos( $feed_error, 'limit' ) !== false ||
       stripos( $feed_error, 'temporarily' ) !== false ) );
 
-// If rate limited but we have cached/expired data, show the data with a warning
+// If rate limited, show warning to admins only (if we have posts to display)
+// Note: We already have all cached data (including expired) from get_cached_posts_any()
 if ( $is_rate_limited ) {
-    $rate_limit_warning = __( 'Instagram is temporarily limiting requests. Please wait a few minutes before refreshing. Showing cached posts below.', 'bwg-instagram-feed' );
-
-    // If no current cache but have expired cache, use expired cache
-    if ( empty( $posts ) && ! empty( $expired_cache_data ) ) {
-        $posts = json_decode( $expired_cache_data, true ) ?: array();
-        $is_using_stale_cache = true;
-        $cache_created_at = $expired_cache_created_at; // Use the expired cache timestamp
-        $rate_limit_warning = __( 'Instagram is temporarily limiting requests. Showing previously cached posts. Please wait a few minutes and try again.', 'bwg-instagram-feed' );
-    }
-
-    // Feature #17: If rate limited with NO cache at all, show a user-friendly error message
-    if ( empty( $posts ) && empty( $expired_cache_data ) ) {
+    if ( ! empty( $posts ) ) {
+        // We have cached posts to display - show admin-only rate limit warning
+        $rate_limit_warning = __( 'Instagram is temporarily limiting requests. Showing cached posts. Background refresh will update when limits reset.', 'bwg-instagram-feed' );
+    } else {
+        // Feature #17: If rate limited with NO cache at all, show a user-friendly error message
         $no_cache_message = __( 'Instagram is temporarily limiting requests. Please wait a few minutes and try again later. We apologize for the inconvenience.', 'bwg-instagram-feed' );
-        $rate_limit_warning = ''; // Don't show warning banner if we have no posts to show
     }
 
     // Don't show loading state if rate limited

@@ -1318,3 +1318,98 @@ a.bwg-igf-item:focus {
         right: 5px;
     }
 }
+
+/* ==========================================================================
+   Admin-Only Error Visibility Styles
+   These styles make admin-only notices clearly distinguishable from regular content.
+   The distinctive styling helps admins recognize that visitors won't see these messages.
+   ========================================================================== */
+
+/* Admin notice container - adds subtle admin-specific styling */
+.bwg-igf-admin-notice {
+    position: relative;
+    border: 2px solid #0073aa !important;
+    background: linear-gradient(135deg, #f0f6fc 0%, #e5f0fa 100%) !important;
+}
+
+/* Admin notice badge - clearly identifies admin-only content */
+.bwg-igf-admin-notice-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-block;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 12px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 115, 170, 0.3);
+    z-index: 1;
+}
+
+/* Admin notice hint text - explains visibility to admins */
+.bwg-igf-admin-notice-hint {
+    margin-top: 15px !important;
+    padding: 10px 15px;
+    background: rgba(0, 115, 170, 0.08);
+    border-radius: 6px;
+    font-size: 12px !important;
+    font-style: italic;
+    color: #0073aa !important;
+    max-width: none !important;
+}
+
+/* Admin notice styling for rate limit warning */
+.bwg-igf-admin-notice.bwg-igf-rate-limit-warning {
+    border-color: #0073aa !important;
+    background: linear-gradient(135deg, #f0f6fc 0%, #fff9e6 100%) !important;
+}
+
+.bwg-igf-admin-notice.bwg-igf-rate-limit-warning .bwg-igf-admin-notice-badge {
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+}
+
+.bwg-igf-admin-notice.bwg-igf-rate-limit-warning .bwg-igf-rate-limit-text {
+    padding-top: 10px;
+}
+
+/* Admin notice styling for empty state variations */
+.bwg-igf-empty-state.bwg-igf-admin-notice {
+    padding-top: 30px;
+}
+
+/* Maintain error type styling but with admin notice overlay */
+.bwg-igf-admin-notice.bwg-igf-private-account-warning {
+    border-color: #0073aa !important;
+}
+
+.bwg-igf-admin-notice.bwg-igf-user-not-found-warning {
+    border-color: #0073aa !important;
+}
+
+.bwg-igf-admin-notice.bwg-igf-rate-limit-error {
+    border-color: #0073aa !important;
+}
+
+.bwg-igf-admin-notice.bwg-igf-account-disconnected-warning {
+    border-color: #0073aa !important;
+}
+
+/* Responsive adjustments for admin notice badge */
+@media (max-width: 480px) {
+    .bwg-igf-admin-notice-badge {
+        font-size: 10px;
+        padding: 3px 10px;
+        top: -10px;
+    }
+
+    .bwg-igf-admin-notice-hint {
+        font-size: 11px !important;
+        padding: 8px 12px;
+    }
+}

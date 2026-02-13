@@ -58,6 +58,12 @@ class BWG_IGF_Admin_Ajax {
 
         // Simulate rate limit for testing (Feature #15 verification).
         add_action( 'wp_ajax_bwg_igf_simulate_rate_limit', array( $this, 'simulate_rate_limit' ) );
+
+        // Clear logs (Admin Logging Dashboard).
+        add_action( 'wp_ajax_bwg_igf_clear_logs', array( $this, 'clear_logs' ) );
+
+        // Get logs (Admin Logging Dashboard).
+        add_action( 'wp_ajax_bwg_igf_get_logs', array( $this, 'get_logs' ) );
     }
 
     /**
@@ -1248,6 +1254,67 @@ class BWG_IGF_Admin_Ajax {
         } else {
             wp_send_json_error( array( 'message' => __( 'Failed to simulate rate limit.', 'bwg-instagram-feed' ) ) );
         }
+    }
+
+    /**
+     * Clear all logs.
+     *
+     * Admin Logging Dashboard: AJAX handler for clearing all log entries.
+     */
+    public function clear_logs() {
+        $this->verify_request();
+
+        // Check if Logger class is available.
+        if ( ! class_exists( 'BWG_IGF_Logger' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Logger not available.', 'bwg-instagram-feed' ) ) );
+        }
+
+        $result = BWG_IGF_Logger::clear_all();
+
+        if ( false !== $result ) {
+            // Log that logs were cleared (this creates a single new entry).
+            BWG_IGF_Logger::info( __( 'All logs cleared by administrator.', 'bwg-instagram-feed' ) );
+
+            wp_send_json_success( array(
+                'message' => __( 'All logs cleared successfully!', 'bwg-instagram-feed' ),
+            ) );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Failed to clear logs.', 'bwg-instagram-feed' ) ) );
+        }
+    }
+
+    /**
+     * Get logs with filtering.
+     *
+     * Admin Logging Dashboard: AJAX handler for fetching logs with filters.
+     */
+    public function get_logs() {
+        $this->verify_request();
+
+        // Check if Logger class is available.
+        if ( ! class_exists( 'BWG_IGF_Logger' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Logger not available.', 'bwg-instagram-feed' ) ) );
+        }
+
+        // Get filter parameters from request.
+        $args = array(
+            'level'      => isset( $_POST['level'] ) ? sanitize_text_field( wp_unslash( $_POST['level'] ) ) : '',
+            'feed_id'    => isset( $_POST['feed_id'] ) ? absint( $_POST['feed_id'] ) : 0,
+            'account_id' => isset( $_POST['account_id'] ) ? absint( $_POST['account_id'] ) : 0,
+            'date_from'  => isset( $_POST['date_from'] ) ? sanitize_text_field( wp_unslash( $_POST['date_from'] ) ) : '',
+            'date_to'    => isset( $_POST['date_to'] ) ? sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) : '',
+            'search'     => isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '',
+            'per_page'   => isset( $_POST['per_page'] ) ? absint( $_POST['per_page'] ) : 50,
+            'page'       => isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1,
+        );
+
+        $result = BWG_IGF_Logger::get_logs( $args );
+
+        wp_send_json_success( array(
+            'logs'  => $result['logs'],
+            'total' => $result['total'],
+            'pages' => $result['pages'],
+        ) );
     }
 }
 

@@ -45,8 +45,13 @@ class BWG_IGF_Instagram_Fetcher {
                 if ( ! self::is_placeholder_data( $posts ) ) {
                     return $posts;
                 }
-                // Log that we're skipping cached placeholder data
-                error_log( 'BWG IGF: Skipping cached placeholder data for feed #' . $feed->id . ' - attempting fresh fetch' );
+                // Log that we're skipping cached placeholder data.
+                if ( class_exists( 'BWG_IGF_Logger' ) ) {
+                    BWG_IGF_Logger::warning(
+                        __( 'Skipping cached placeholder data - attempting fresh fetch', 'bwg-instagram-feed' ),
+                        array( 'feed_id' => $feed->id )
+                    );
+                }
             }
         }
 
@@ -63,7 +68,13 @@ class BWG_IGF_Instagram_Fetcher {
         if ( ! empty( $posts ) && ! self::is_placeholder_data( $posts ) ) {
             self::store_cache( $feed->id, $posts, $feed->cache_duration );
         } elseif ( ! empty( $posts ) && self::is_placeholder_data( $posts ) ) {
-            error_log( 'BWG IGF: NOT caching placeholder data for feed #' . $feed->id . ' - only real Instagram data is cached' );
+            // Log that placeholder data is not being cached.
+            if ( class_exists( 'BWG_IGF_Logger' ) ) {
+                BWG_IGF_Logger::warning(
+                    __( 'Not caching placeholder data - only real Instagram data is cached', 'bwg-instagram-feed' ),
+                    array( 'feed_id' => $feed->id )
+                );
+            }
         }
 
         return $posts;
@@ -83,14 +94,21 @@ class BWG_IGF_Instagram_Fetcher {
             return false;
         }
 
-        // Check first post for is_placeholder flag
+        // Check first post for is_placeholder flag (primary detection method).
         if ( isset( $posts[0]['is_placeholder'] ) && true === $posts[0]['is_placeholder'] ) {
             return true;
         }
 
-        // Also detect by checking for picsum.photos URLs (fallback for data without flag)
+        // Fallback detection for data without flag: check for placeholder image formats.
         if ( isset( $posts[0]['thumbnail'] ) ) {
             $thumbnail = $posts[0]['thumbnail'];
+
+            // Detect SVG data URI placeholders (current format).
+            if ( strpos( $thumbnail, 'data:image/svg+xml,' ) === 0 ) {
+                return true;
+            }
+
+            // Legacy detection for picsum.photos URLs (from older cached data).
             if ( strpos( $thumbnail, 'picsum.photos' ) !== false ) {
                 return true;
             }
@@ -321,6 +339,9 @@ class BWG_IGF_Instagram_Fetcher {
      * Feature #58: Placeholder data is now marked with 'is_placeholder' flag
      * to prevent caching and allow frontend to show admin warnings.
      *
+     * Uses inline SVG data URIs for placeholder images to avoid external dependencies
+     * and privacy concerns (no external requests to third-party services).
+     *
      * @param string $username The Instagram username.
      * @return array Array of placeholder post data.
      */
@@ -330,11 +351,13 @@ class BWG_IGF_Instagram_Fetcher {
         // Log that we're generating placeholder data
         error_log( 'BWG IGF: Generating placeholder data for @' . $username . ' - real Instagram data unavailable' );
 
-        // Generate 12 placeholder posts with varied, realistic content.
-        $image_seeds = array(
-            'nature', 'city', 'food', 'travel', 'fitness',
-            'art', 'tech', 'music', 'fashion', 'pets',
-            'beach', 'mountain',
+        // Generate inline SVG placeholder image (no external dependencies).
+        // This avoids requests to third-party services like picsum.photos.
+        $placeholder_svg = 'data:image/svg+xml,' . rawurlencode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">' .
+            '<rect fill="#f0f0f0" width="400" height="400"/>' .
+            '<text fill="#999" font-family="sans-serif" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">No Image</text>' .
+            '</svg>'
         );
 
         $captions = array(
@@ -356,18 +379,17 @@ class BWG_IGF_Instagram_Fetcher {
         $base_time = time() - ( 14 * DAY_IN_SECONDS );
 
         for ( $i = 0; $i < 12; $i++ ) {
-            $seed = $image_seeds[ $i % count( $image_seeds ) ];
             $post_time = $base_time + ( $i * 86400 ) + rand( 0, 43200 ); // Random time within each day.
 
             $posts[] = array(
-                'thumbnail'     => sprintf( 'https://picsum.photos/seed/%s_%s_%d/400/400', $username, $seed, $i ),
-                'full_image'    => sprintf( 'https://picsum.photos/seed/%s_%s_%d/1080/1080', $username, $seed, $i ),
-                'caption'       => sprintf( '@%s: %s', $username, $captions[ $i % count( $captions ) ] ),
-                'likes'         => rand( 100, 5000 ),
-                'comments'      => rand( 5, 200 ),
-                'link'          => sprintf( 'https://www.instagram.com/%s/', $username ),
-                'timestamp'     => $post_time,
-                'username'      => $username,
+                'thumbnail'      => $placeholder_svg,
+                'full_image'     => $placeholder_svg,
+                'caption'        => sprintf( '@%s: %s', $username, $captions[ $i % count( $captions ) ] ),
+                'likes'          => rand( 100, 5000 ),
+                'comments'       => rand( 5, 200 ),
+                'link'           => sprintf( 'https://www.instagram.com/%s/', $username ),
+                'timestamp'      => $post_time,
+                'username'       => $username,
                 'is_placeholder' => true, // Feature #58: Mark as placeholder data
             );
         }
@@ -442,6 +464,45 @@ class BWG_IGF_Instagram_Fetcher {
         }
 
         return null;
+    }
+
+    /**
+     * Get ANY cached posts for a feed, regardless of expiration.
+     *
+     * This method is used by the frontend to always serve cached content when available,
+     * even if the cache has expired. Freshness is handled by background cron jobs,
+     * not frontend requests. This ensures visitors always see content instead of errors.
+     *
+     * @param int $feed_id Feed ID.
+     * @return array{posts: array|null, is_expired: bool, created_at: string|null} Array with posts, expiration status, and creation time.
+     */
+    public static function get_cached_posts_any( $feed_id ) {
+        global $wpdb;
+
+        // Get the most recent cache entry regardless of expiration.
+        $cache_row = $wpdb->get_row( $wpdb->prepare(
+            "SELECT cache_data, created_at, expires_at FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d ORDER BY created_at DESC LIMIT 1",
+            $feed_id
+        ) );
+
+        if ( ! $cache_row || empty( $cache_row->cache_data ) ) {
+            return array(
+                'posts'      => null,
+                'is_expired' => false,
+                'created_at' => null,
+            );
+        }
+
+        $posts = json_decode( $cache_row->cache_data, true );
+
+        // Check if the cache is expired.
+        $is_expired = strtotime( $cache_row->expires_at ) < time();
+
+        return array(
+            'posts'      => $posts,
+            'is_expired' => $is_expired,
+            'created_at' => $cache_row->created_at,
+        );
     }
 
     /**

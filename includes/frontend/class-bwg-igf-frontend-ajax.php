@@ -38,6 +38,9 @@ class BWG_IGF_Frontend_Ajax {
      *
      * This is called when a feed doesn't have cached data and needs to
      * fetch fresh data from Instagram asynchronously.
+     *
+     * Key principle: ALWAYS return cached data if available, even if expired.
+     * Only return error if NO cache exists at all.
      */
     public function load_feed() {
         // Verify nonce for security (using the frontend nonce).
@@ -53,10 +56,10 @@ class BWG_IGF_Frontend_Ajax {
             wp_send_json_error( array( 'message' => __( 'Invalid feed ID.', 'bwg-instagram-feed' ) ) );
         }
 
-        // Get the feed data.
+        // Get the feed data - include 'error' status feeds as they may have cached content.
         $feed = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d AND status = 'active'",
+                "SELECT * FROM {$wpdb->prefix}bwg_igf_feeds WHERE id = %d AND status IN ('active', 'error')",
                 $feed_id
             )
         );
@@ -65,25 +68,39 @@ class BWG_IGF_Frontend_Ajax {
             wp_send_json_error( array( 'message' => __( 'Feed not found or inactive.', 'bwg-instagram-feed' ) ) );
         }
 
-        // Check if we have cached data first.
-        $cache_data = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1",
-                $feed_id
-            )
-        );
-
-        if ( $cache_data ) {
-            // Return cached data.
-            $posts = json_decode( $cache_data, true ) ?: array();
-            $this->send_feed_response( $feed, $posts );
-            return;
+        // Load the fetcher class for cache retrieval.
+        if ( ! class_exists( 'BWG_IGF_Instagram_Fetcher' ) ) {
+            require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-fetcher.php';
         }
 
-        // No cache - fetch from Instagram.
+        // Get ANY cached data, regardless of expiration - always serve cached content.
+        $cache_result = BWG_IGF_Instagram_Fetcher::get_cached_posts_any( $feed_id );
+        $cached_posts = isset( $cache_result['posts'] ) && is_array( $cache_result['posts'] )
+            ? $cache_result['posts']
+            : array();
+        $cache_is_expired = isset( $cache_result['is_expired'] ) ? $cache_result['is_expired'] : true;
+
+        // If we have valid (non-expired) cache, return it immediately.
+        if ( ! empty( $cached_posts ) && ! $cache_is_expired ) {
+            // Check for placeholder data - don't serve placeholders.
+            if ( ! BWG_IGF_Instagram_Fetcher::is_placeholder_data( $cached_posts ) ) {
+                $this->send_feed_response( $feed, $cached_posts );
+                return;
+            }
+        }
+
+        // Try to fetch fresh data from Instagram.
         $posts = $this->fetch_instagram_data( $feed );
 
         if ( is_wp_error( $posts ) ) {
+            // Fetch failed - but if we have ANY cached data (even expired), return it.
+            if ( ! empty( $cached_posts ) && ! BWG_IGF_Instagram_Fetcher::is_placeholder_data( $cached_posts ) ) {
+                // Return cached data with a flag indicating it's stale.
+                $this->send_feed_response( $feed, $cached_posts, true );
+                return;
+            }
+
+            // No cache at all - return error.
             $error_code = $posts->get_error_code();
             $error_message = $posts->get_error_message();
 
@@ -106,31 +123,50 @@ class BWG_IGF_Frontend_Ajax {
             ) );
         }
 
-        // Cache the fetched posts.
-        if ( ! empty( $posts ) ) {
+        // Cache the fetched posts (only if they're real data, not placeholders).
+        if ( ! empty( $posts ) && ! BWG_IGF_Instagram_Fetcher::is_placeholder_data( $posts ) ) {
             $cache_duration = absint( $feed->cache_duration ) ?: 3600;
             $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
             $cache_key = 'feed_' . $feed_id . '_' . md5( wp_json_encode( $posts ) );
 
-            // Delete old cache entries for this feed.
-            $wpdb->delete(
-                $wpdb->prefix . 'bwg_igf_cache',
-                array( 'feed_id' => $feed_id ),
-                array( '%d' )
+            // Atomic cache upsert: check if cache exists, then update or insert.
+            // This prevents race conditions when concurrent requests try to write cache.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $existing_cache_id = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d LIMIT 1",
+                    $feed_id
+                )
             );
 
-            // Insert new cache entry.
-            $wpdb->insert(
-                $wpdb->prefix . 'bwg_igf_cache',
-                array(
-                    'feed_id'    => $feed_id,
-                    'cache_key'  => $cache_key,
-                    'cache_data' => wp_json_encode( $posts ),
-                    'created_at' => current_time( 'mysql' ),
-                    'expires_at' => $expires_at,
-                ),
-                array( '%d', '%s', '%s', '%s', '%s' )
-            );
+            if ( $existing_cache_id ) {
+                // Update existing cache entry.
+                $wpdb->update(
+                    $wpdb->prefix . 'bwg_igf_cache',
+                    array(
+                        'cache_key'  => $cache_key,
+                        'cache_data' => wp_json_encode( $posts ),
+                        'created_at' => current_time( 'mysql' ),
+                        'expires_at' => $expires_at,
+                    ),
+                    array( 'feed_id' => $feed_id ),
+                    array( '%s', '%s', '%s', '%s' ),
+                    array( '%d' )
+                );
+            } else {
+                // Insert new cache entry.
+                $wpdb->insert(
+                    $wpdb->prefix . 'bwg_igf_cache',
+                    array(
+                        'feed_id'    => $feed_id,
+                        'cache_key'  => $cache_key,
+                        'cache_data' => wp_json_encode( $posts ),
+                        'created_at' => current_time( 'mysql' ),
+                        'expires_at' => $expires_at,
+                    ),
+                    array( '%d', '%s', '%s', '%s', '%s' )
+                );
+            }
         }
 
         $this->send_feed_response( $feed, $posts );
@@ -139,10 +175,11 @@ class BWG_IGF_Frontend_Ajax {
     /**
      * Send the feed response with posts data.
      *
-     * @param object $feed Feed database row.
-     * @param array  $posts Array of post data.
+     * @param object $feed     Feed database row.
+     * @param array  $posts    Array of post data.
+     * @param bool   $is_stale Optional. Whether the data is from expired cache. Default false.
      */
-    private function send_feed_response( $feed, $posts ) {
+    private function send_feed_response( $feed, $posts, $is_stale = false ) {
         // Parse settings.
         $display_settings = json_decode( $feed->display_settings, true ) ?: array();
         $layout_settings = json_decode( $feed->layout_settings, true ) ?: array();
@@ -155,7 +192,7 @@ class BWG_IGF_Frontend_Ajax {
         // Get usernames for follow button.
         $usernames = json_decode( $feed->instagram_usernames, true );
         if ( ! is_array( $usernames ) ) {
-            $usernames = array_map( 'trim', explode( ',', $feed->instagram_usernames ) );
+            $usernames = array_map( 'trim', explode( ',', $feed->instagram_usernames ?: '' ) );
         }
         $first_username = ! empty( $usernames ) ? $usernames[0] : '';
 
@@ -167,6 +204,7 @@ class BWG_IGF_Frontend_Ajax {
             'styling_settings' => $styling_settings,
             'layout_type'      => $feed->layout_type,
             'first_username'   => $first_username,
+            'is_stale'         => $is_stale, // Indicates data is from expired cache.
         ) );
     }
 

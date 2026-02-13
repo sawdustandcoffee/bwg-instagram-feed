@@ -103,6 +103,11 @@ final class BWG_Instagram_Feed {
         BWG_IGF_Cache_Refresher::init();
         BWG_IGF_Cache_Refresher::schedule();
 
+        // Initialize Logger (creates table and schedules cleanup).
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-logger.php';
+        BWG_IGF_Logger::create_table();
+        BWG_IGF_Logger::schedule_cleanup();
+
         flush_rewrite_rules();
     }
 
@@ -121,6 +126,10 @@ final class BWG_Instagram_Feed {
         // Unschedule cache refresh cron job (Feature #25).
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-cache-refresher.php';
         BWG_IGF_Cache_Refresher::unschedule();
+
+        // Unschedule Logger cleanup cron job.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-logger.php';
+        BWG_IGF_Logger::unschedule_cleanup();
 
         flush_rewrite_rules();
     }
@@ -178,6 +187,10 @@ final class BWG_Instagram_Feed {
 
         // Load Image Proxy REST API for bypassing CORS on Instagram images.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-image-proxy.php';
+
+        // Load Logger for admin logging dashboard.
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-logger.php';
+        BWG_IGF_Logger::init();
     }
 
     /**
@@ -329,6 +342,15 @@ final class BWG_Instagram_Feed {
 
         add_submenu_page(
             'bwg-igf',
+            __( 'Logs', 'bwg-instagram-feed' ),
+            __( 'Logs', 'bwg-instagram-feed' ),
+            'manage_options',
+            'bwg-igf-logs',
+            array( $this, 'render_logs_page' )
+        );
+
+        add_submenu_page(
+            'bwg-igf',
             __( 'Settings', 'bwg-instagram-feed' ),
             __( 'Settings', 'bwg-instagram-feed' ),
             'manage_options',
@@ -409,6 +431,7 @@ final class BWG_Instagram_Feed {
                 'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
                 'nonce'        => wp_create_nonce( 'bwg_igf_frontend_nonce' ),
                 'proxyBaseUrl' => rest_url( BWG_IGF_Image_Proxy::API_NAMESPACE . BWG_IGF_Image_Proxy::API_ROUTE ),
+                'isAdmin'      => current_user_can( 'manage_options' ),
             )
         );
     }
@@ -432,6 +455,13 @@ final class BWG_Instagram_Feed {
      */
     public function render_accounts_page() {
         include BWG_IGF_PLUGIN_DIR . 'templates/admin/accounts.php';
+    }
+
+    /**
+     * Render logs page.
+     */
+    public function render_logs_page() {
+        include BWG_IGF_PLUGIN_DIR . 'templates/admin/logs.php';
     }
 
     /**
