@@ -67,6 +67,9 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.37 =
+* Added an option to enter your Instagram App ID and App Secret on the Settings page instead of editing wp-config.php. The App Secret is stored encrypted at rest and is never shown again in the admin. Defining the wp-config.php constants still works and takes precedence over the saved values.
+
 = 1.3.36 =
 * Migrated the Instagram connection to the Instagram API with Instagram Login (Meta retired the Instagram Basic Display API on 2024-12-04). Connect now uses the business-login OAuth flow and the instagram_business_basic scope. Requires a Business or Creator account.
 * Updated the account connection screen and documentation link for the new flow.
@@ -110,6 +113,9 @@ Reliability, rate limiting, caching, and display improvements delivered across t
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.3.37 =
+You can now enter your Instagram App ID and Secret on the Settings page instead of editing wp-config.php.
 
 = 1.3.36 =
 Important: Instagram connections now use the Instagram API with Instagram Login. The old Instagram Basic Display API was retired by Meta and can no longer connect. Reconnect using a Business or Creator account.

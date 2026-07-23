@@ -286,8 +286,14 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
                         <li><?php esc_html_e( 'Copy the Instagram App ID and Instagram App Secret from the Instagram product settings (not the top-level Meta App ID / App Secret).', 'bwg-instagram-feed' ); ?></li>
                     </ol>
 
-                    <h4><?php esc_html_e( 'Step 2: Add Credentials to WordPress', 'bwg-instagram-feed' ); ?></h4>
-                    <p><?php esc_html_e( 'Add the following lines to your wp-config.php file (before the line that says "That\'s all, stop editing!"):', 'bwg-instagram-feed' ); ?></p>
+                    <h4><?php esc_html_e( 'Step 2: Add Credentials in Settings', 'bwg-instagram-feed' ); ?></h4>
+                    <p style="color: #826200;"><?php esc_html_e( 'The easiest way to add your credentials is on the plugin Settings page. Open the "Instagram App Credentials" section, paste in your Instagram App ID and Instagram App Secret, and save. The App Secret is stored encrypted in the database.', 'bwg-instagram-feed' ); ?></p>
+                    <p>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=bwg-igf-settings' ) ); ?>" class="button button-secondary">
+                            <?php esc_html_e( 'Go to Settings', 'bwg-instagram-feed' ); ?>
+                        </a>
+                    </p>
+                    <p style="color: #826200;"><em><?php esc_html_e( 'Optional (advanced): instead of the Settings page, you can define these constants in wp-config.php. When defined, they override the values saved in Settings:', 'bwg-instagram-feed' ); ?></em></p>
                     <pre style="background: #23282d; color: #fff; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 13px;">
 <span style="color: #9cdcfe;">// BWG Instagram Feed - API Credentials</span>
 <span style="color: #dcdcaa;">define</span>( <span style="color: #ce9178;">'BWG_IGF_INSTAGRAM_APP_ID'</span>, <span style="color: #ce9178;">'your_app_id_here'</span> );
@@ -297,7 +303,7 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
                     </button>
 
                     <h4><?php esc_html_e( 'Step 3: Refresh This Page', 'bwg-instagram-feed' ); ?></h4>
-                    <p><?php esc_html_e( 'After adding your credentials to wp-config.php, refresh this page. The "Connect Instagram Account" button will then work.', 'bwg-instagram-feed' ); ?></p>
+                    <p><?php esc_html_e( 'After saving your credentials in Settings (or adding them to wp-config.php), refresh this page. The "Connect Instagram Account" button will then work.', 'bwg-instagram-feed' ); ?></p>
                 </div>
 
                 <p style="margin-bottom: 0;">
