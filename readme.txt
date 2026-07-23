@@ -67,6 +67,22 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.36 =
+* Migrated the Instagram connection to the Instagram API with Instagram Login (Meta retired the Instagram Basic Display API on 2024-12-04). Connect now uses the business-login OAuth flow and the instagram_business_basic scope. Requires a Business or Creator account.
+* Updated the account connection screen and documentation link for the new flow.
+
+= 1.3.8 - 1.3.35 =
+Reliability, rate limiting, caching, and display improvements delivered across this series of releases:
+* Feed reliability: native cURL requests to bypass Instagram bot detection, with an automatic API fallback when the profile page is blocked.
+* Rate-limit handling: parses Instagram rate-limit headers, exponential backoff on rate-limit detection, admin dashboard status, remaining-quota display, and warnings when approaching limits.
+* Caching: smart background cache refresh via WP Cron, cache warming on account connection, optional stale-data indicator, and automatic cache extension during rate-limit periods.
+* Video posts: play-icon overlay on the frontend feed and admin preview, video playback in the lightbox, and capture of video media type and URL.
+* Slider/carousel: seamless infinite loop, configurable transition duration, and responsive column/row settings for mobile and tablet.
+* Lightbox: faster open performance and repositioned "View on Instagram" link.
+* Connected accounts: store app credentials securely in code, one-click Connect button, account health/status indicators, and clearer errors for disconnected or problematic accounts.
+* Admin & security: admin logging dashboard, improved input handling and security hardening, current-version display, and a link to GitHub releases.
+* Updates: Plugin Update Checker integration for GitHub-based updates, multisite update-notice fix, and a Parsedown autoloader-conflict fix.
+
 = 1.3.7 =
 * Added auto-generated changelog to GitHub releases
 * Improved Plugin Update Checker integration
@@ -95,8 +111,8 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Upgrade Notice ==
 
-= 1.3.7 =
-This update improves the auto-update system with better changelog generation.
+= 1.3.36 =
+Important: Instagram connections now use the Instagram API with Instagram Login. The old Instagram Basic Display API was retired by Meta and can no longer connect. Reconnect using a Business or Creator account.
 
 == Credits ==
 
