@@ -245,7 +245,7 @@ final class BWG_Instagram_Feed {
             access_token text NOT NULL,
             token_type varchar(50),
             expires_at datetime,
-            account_type enum('basic','business','creator') NOT NULL DEFAULT 'basic',
+            account_type enum('basic','business','creator') NOT NULL DEFAULT 'business',
             profile_picture_url text,
             connected_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             last_refreshed datetime,
