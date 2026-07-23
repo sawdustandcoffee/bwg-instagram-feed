@@ -88,10 +88,10 @@ class BWG_IGF_Instagram_Credentials {
 	public static function get_oauth_url() {
 		$app_id = self::get_app_id();
 		$redirect_uri = self::get_redirect_uri();
-		$scope = 'user_profile,user_media';
+		$scope = implode( ',', self::get_scopes() );
 
 		return sprintf(
-			'https://api.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&response_type=code',
+			'https://www.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&response_type=code',
 			rawurlencode( $app_id ),
 			rawurlencode( $redirect_uri ),
 			rawurlencode( $scope )
@@ -105,8 +105,7 @@ class BWG_IGF_Instagram_Credentials {
 	 */
 	public static function get_scopes() {
 		return array(
-			'user_profile', // Access basic profile info (username, account type)
-			'user_media',   // Access user's media (posts)
+			'instagram_business_basic', // Read-only access to profile info and media (Instagram API with Instagram Login)
 		);
 	}
 

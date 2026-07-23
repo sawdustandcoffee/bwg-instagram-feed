@@ -92,11 +92,18 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
 
                 if ( isset( $user_data['username'] ) ) {
                     $username = $user_data['username'];
-                    $account_type = isset( $user_data['account_type'] ) ? strtolower( $user_data['account_type'] ) : 'basic';
+                    $account_type = isset( $user_data['account_type'] ) ? strtolower( $user_data['account_type'] ) : 'business';
 
                     // Normalize account type to match our ENUM.
+                    // Instagram Login can return MEDIA_CREATOR for creator accounts; map it to 'creator'.
+                    if ( 'media_creator' === $account_type ) {
+                        $account_type = 'creator';
+                    }
+
+                    // Personal/basic accounts are no longer supported under Instagram Login,
+                    // so fall back to 'business' rather than 'basic' for unrecognized values.
                     if ( ! in_array( $account_type, array( 'basic', 'business', 'creator' ), true ) ) {
-                        $account_type = 'basic';
+                        $account_type = 'business';
                     }
 
                     // Step 4: Encrypt and save the token.
@@ -264,18 +271,19 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
 
                 <div style="background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin: 15px 0;">
                     <h4 style="margin-top: 0;"><?php esc_html_e( 'Step 1: Create a Meta Developer App', 'bwg-instagram-feed' ); ?></h4>
+                    <p style="color: #826200; margin-top: 0;"><?php esc_html_e( 'Note: The Instagram account you connect must be a Business or Creator account. Personal accounts are no longer supported.', 'bwg-instagram-feed' ); ?></p>
                     <ol style="margin-left: 20px;">
                         <li><?php echo wp_kses_post( __( 'Go to <a href="https://developers.facebook.com/" target="_blank" rel="noopener noreferrer">Meta for Developers</a> and log in with your Facebook account.', 'bwg-instagram-feed' ) ); ?></li>
-                        <li><?php esc_html_e( 'Click "My Apps" → "Create App" → Choose "Consumer" or "Business" type.', 'bwg-instagram-feed' ); ?></li>
-                        <li><?php esc_html_e( 'Add the "Instagram Basic Display" product to your app.', 'bwg-instagram-feed' ); ?></li>
-                        <li><?php esc_html_e( 'In Instagram Basic Display settings, add this as a Valid OAuth Redirect URI:', 'bwg-instagram-feed' ); ?>
+                        <li><?php esc_html_e( 'Click "My Apps" → "Create App" → choose the "Business" app type.', 'bwg-instagram-feed' ); ?></li>
+                        <li><?php esc_html_e( 'Add the "Instagram" product to your app, then choose "API setup with Instagram login" (use case: "Manage messaging and content on Instagram").', 'bwg-instagram-feed' ); ?></li>
+                        <li><?php esc_html_e( 'Under "Business login settings", add this as an OAuth Redirect URI:', 'bwg-instagram-feed' ); ?>
                             <br>
                             <code style="background: #f0f0f0; padding: 5px 10px; display: inline-block; margin: 5px 0; word-break: break-all;"><?php echo esc_html( BWG_IGF_Instagram_Credentials::get_redirect_uri() ); ?></code>
                             <button type="button" class="button button-small" onclick="navigator.clipboard.writeText('<?php echo esc_js( BWG_IGF_Instagram_Credentials::get_redirect_uri() ); ?>'); this.innerText='Copied!';">
                                 <?php esc_html_e( 'Copy', 'bwg-instagram-feed' ); ?>
                             </button>
                         </li>
-                        <li><?php esc_html_e( 'Copy your Instagram App ID and Instagram App Secret from the app settings.', 'bwg-instagram-feed' ); ?></li>
+                        <li><?php esc_html_e( 'Copy the Instagram App ID and Instagram App Secret from the Instagram product settings (not the top-level Meta App ID / App Secret).', 'bwg-instagram-feed' ); ?></li>
                     </ol>
 
                     <h4><?php esc_html_e( 'Step 2: Add Credentials to WordPress', 'bwg-instagram-feed' ); ?></h4>
@@ -294,7 +302,7 @@ if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
 
                 <p style="margin-bottom: 0;">
                     <span class="dashicons dashicons-editor-help"></span>
-                    <?php echo wp_kses_post( __( 'Need help? Check out the <a href="https://developers.facebook.com/docs/instagram-basic-display-api/getting-started" target="_blank" rel="noopener noreferrer">Instagram Basic Display API documentation</a>.', 'bwg-instagram-feed' ) ); ?>
+                    <?php echo wp_kses_post( __( 'Need help? Check out the <a href="https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login" target="_blank" rel="noopener noreferrer">Instagram API with Instagram Login documentation</a>.', 'bwg-instagram-feed' ) ); ?>
                 </p>
             </div>
 
