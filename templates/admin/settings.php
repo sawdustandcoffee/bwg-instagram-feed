@@ -199,6 +199,19 @@ $show_stale_indicator = get_option( 'bwg_igf_show_stale_data_indicator', 0 );
                     </td>
                 </tr>
                 <?php endif; ?>
+                <tr>
+                    <th scope="row"><?php esc_html_e( 'OAuth Redirect URI', 'bwg-instagram-feed' ); ?></th>
+                    <td>
+                        <?php $bwg_redirect_uri = BWG_IGF_Instagram_Credentials::get_redirect_uri(); ?>
+                        <input type="text" class="regular-text code" readonly value="<?php echo esc_url( $bwg_redirect_uri ); ?>" onclick="this.select();" style="max-width: 520px; background: #f6f7f7;">
+                        <button type="button" class="button button-small" onclick="navigator.clipboard.writeText('<?php echo esc_js( $bwg_redirect_uri ); ?>'); this.innerText='Copied!';">
+                            <?php esc_html_e( 'Copy', 'bwg-instagram-feed' ); ?>
+                        </button>
+                        <p class="description">
+                            <?php esc_html_e( 'Add this exact URL to your Meta app under Instagram → API setup with Instagram login → Business login settings → OAuth redirect URIs. It must match character-for-character, including https and the query string. This is the actual value the plugin sends — if it shows the wrong scheme or domain, fix your WordPress Site Address under Settings → General.', 'bwg-instagram-feed' ); ?>
+                        </p>
+                    </td>
+                </tr>
             </table>
         </div>
 

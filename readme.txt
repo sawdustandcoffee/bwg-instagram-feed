@@ -67,6 +67,9 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.39 =
+* Settings page now shows the OAuth Redirect URI (callback URL) next to the Instagram App credentials, with a copy button, so you can register the exact value on your Meta app. Helps resolve "Invalid redirect_uri" errors.
+
 = 1.3.38 =
 * Removed leftover test/mock code that could make the plugin appear to work when it was not. Feeds that cannot reach Instagram now show an honest empty state instead of fabricated placeholder posts, and the account connection flow no longer has a test-mode prompt or simulated data.
 * Fixed the Connect button so it correctly starts the real Instagram Login OAuth flow.
@@ -117,6 +120,9 @@ Reliability, rate limiting, caching, and display improvements delivered across t
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.3.39 =
+Adds the OAuth Redirect URI to the Settings page so you can copy the exact callback URL to register on your Meta app.
 
 = 1.3.38 =
 Removes leftover test/mock data. Feeds that cannot reach Instagram now show an empty state instead of fake placeholder images.
