@@ -14,16 +14,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 $oauth_message = '';
 $oauth_error = '';
 
-// Check for simulated OAuth success (for testing).
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Test parameter
-if ( isset( $_GET['oauth_simulated'] ) && '1' === $_GET['oauth_simulated'] ) {
-    $simulated_success = get_transient( 'bwg_igf_oauth_success' );
-    if ( $simulated_success ) {
-        $oauth_message = $simulated_success;
-        delete_transient( 'bwg_igf_oauth_success' );
-    }
-}
-
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth callback comes from Instagram, can't use nonce
 if ( isset( $_GET['oauth_callback'] ) && '1' === $_GET['oauth_callback'] ) {
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- OAuth callback comes from Instagram

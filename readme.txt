@@ -67,6 +67,10 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.38 =
+* Removed leftover test/mock code that could make the plugin appear to work when it was not. Feeds that cannot reach Instagram now show an honest empty state instead of fabricated placeholder posts, and the account connection flow no longer has a test-mode prompt or simulated data.
+* Fixed the Connect button so it correctly starts the real Instagram Login OAuth flow.
+
 = 1.3.37 =
 * Added an option to enter your Instagram App ID and App Secret on the Settings page instead of editing wp-config.php. The App Secret is stored encrypted at rest and is never shown again in the admin. Defining the wp-config.php constants still works and takes precedence over the saved values.
 
@@ -113,6 +117,9 @@ Reliability, rate limiting, caching, and display improvements delivered across t
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.3.38 =
+Removes leftover test/mock data. Feeds that cannot reach Instagram now show an empty state instead of fake placeholder images.
 
 = 1.3.37 =
 You can now enter your Instagram App ID and Secret on the Settings page instead of editing wp-config.php.

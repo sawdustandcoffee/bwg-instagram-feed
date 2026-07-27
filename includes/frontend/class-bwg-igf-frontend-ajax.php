@@ -82,11 +82,8 @@ class BWG_IGF_Frontend_Ajax {
 
         // If we have valid (non-expired) cache, return it immediately.
         if ( ! empty( $cached_posts ) && ! $cache_is_expired ) {
-            // Check for placeholder data - don't serve placeholders.
-            if ( ! BWG_IGF_Instagram_Fetcher::is_placeholder_data( $cached_posts ) ) {
-                $this->send_feed_response( $feed, $cached_posts );
-                return;
-            }
+            $this->send_feed_response( $feed, $cached_posts );
+            return;
         }
 
         // Try to fetch fresh data from Instagram.
@@ -94,7 +91,7 @@ class BWG_IGF_Frontend_Ajax {
 
         if ( is_wp_error( $posts ) ) {
             // Fetch failed - but if we have ANY cached data (even expired), return it.
-            if ( ! empty( $cached_posts ) && ! BWG_IGF_Instagram_Fetcher::is_placeholder_data( $cached_posts ) ) {
+            if ( ! empty( $cached_posts ) ) {
                 // Return cached data with a flag indicating it's stale.
                 $this->send_feed_response( $feed, $cached_posts, true );
                 return;
@@ -123,8 +120,8 @@ class BWG_IGF_Frontend_Ajax {
             ) );
         }
 
-        // Cache the fetched posts (only if they're real data, not placeholders).
-        if ( ! empty( $posts ) && ! BWG_IGF_Instagram_Fetcher::is_placeholder_data( $posts ) ) {
+        // Cache the fetched posts (only when real posts were returned).
+        if ( ! empty( $posts ) ) {
             $cache_duration = absint( $feed->cache_duration ) ?: 3600;
             $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
             $cache_key = 'feed_' . $feed_id . '_' . md5( wp_json_encode( $posts ) );

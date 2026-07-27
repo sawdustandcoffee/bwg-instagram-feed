@@ -73,11 +73,6 @@ class BWG_IGF_Image_Proxy {
         'scontent-lga3-2.cdninstagram.com',
         'instagram.fath1-1.fna.fbcdn.net',
         'instagram.fath1-2.fna.fbcdn.net',
-        // Picsum.photos for placeholder images
-        'picsum.photos',
-        'fastly.picsum.photos',
-        // Placehold.co for test mode images
-        'placehold.co',
     );
 
     /**

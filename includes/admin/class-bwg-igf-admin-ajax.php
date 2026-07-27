@@ -44,9 +44,6 @@ class BWG_IGF_Admin_Ajax {
         // Clear all cache.
         add_action( 'wp_ajax_bwg_igf_clear_all_cache', array( $this, 'clear_all_cache' ) );
 
-        // Connect Instagram account.
-        add_action( 'wp_ajax_bwg_igf_connect_account', array( $this, 'connect_account' ) );
-
         // Disconnect Instagram account.
         add_action( 'wp_ajax_bwg_igf_disconnect_account', array( $this, 'disconnect_account' ) );
 
@@ -55,9 +52,6 @@ class BWG_IGF_Admin_Ajax {
 
         // Check for GitHub updates.
         add_action( 'wp_ajax_bwg_igf_check_github_updates', array( $this, 'check_github_updates' ) );
-
-        // Simulate rate limit for testing (Feature #15 verification).
-        add_action( 'wp_ajax_bwg_igf_simulate_rate_limit', array( $this, 'simulate_rate_limit' ) );
 
         // Clear logs (Admin Logging Dashboard).
         add_action( 'wp_ajax_bwg_igf_clear_logs', array( $this, 'clear_logs' ) );
@@ -924,117 +918,6 @@ class BWG_IGF_Admin_Ajax {
     }
 
     /**
-     * Connect Instagram account.
-     *
-     * In a real implementation, this would be called after the OAuth callback
-     * with the access token from Instagram. For testing, we simulate this process.
-     */
-    public function connect_account() {
-        $this->verify_request();
-
-        global $wpdb;
-
-        // Get the access token from the request.
-        // In production, this comes from Instagram OAuth callback.
-        $access_token = isset( $_POST['access_token'] ) ? sanitize_text_field( wp_unslash( $_POST['access_token'] ) ) : '';
-        $instagram_user_id = isset( $_POST['instagram_user_id'] ) ? absint( $_POST['instagram_user_id'] ) : 0;
-        $username = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
-        $account_type = isset( $_POST['account_type'] ) ? sanitize_text_field( wp_unslash( $_POST['account_type'] ) ) : 'basic';
-
-        // Validate required fields.
-        if ( empty( $access_token ) ) {
-            wp_send_json_error( array( 'message' => __( 'Access token is required.', 'bwg-instagram-feed' ) ) );
-        }
-
-        if ( empty( $instagram_user_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Instagram user ID is required.', 'bwg-instagram-feed' ) ) );
-        }
-
-        if ( empty( $username ) ) {
-            wp_send_json_error( array( 'message' => __( 'Username is required.', 'bwg-instagram-feed' ) ) );
-        }
-
-        // Check if encryption is available.
-        if ( ! BWG_IGF_Encryption::is_encryption_available() ) {
-            // Log warning but continue with fallback.
-            error_log( 'BWG Instagram Feed: OpenSSL encryption not available. Using fallback encoding.' );
-        }
-
-        // Encrypt the access token before storing.
-        $encrypted_token = BWG_IGF_Encryption::encrypt( $access_token );
-
-        if ( false === $encrypted_token ) {
-            wp_send_json_error( array( 'message' => __( 'Failed to encrypt access token.', 'bwg-instagram-feed' ) ) );
-        }
-
-        // Calculate expiration (Instagram Basic Display API tokens expire in 60 days).
-        $expires_at = gmdate( 'Y-m-d H:i:s', time() + ( 60 * DAY_IN_SECONDS ) );
-
-        // Check if this Instagram account is already connected.
-        $existing = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT id FROM {$wpdb->prefix}bwg_igf_accounts WHERE instagram_user_id = %d",
-                $instagram_user_id
-            )
-        );
-
-        if ( $existing ) {
-            // Update existing account.
-            $result = $wpdb->update(
-                $wpdb->prefix . 'bwg_igf_accounts',
-                array(
-                    'username'       => $username,
-                    'access_token'   => $encrypted_token,
-                    'token_type'     => 'bearer',
-                    'expires_at'     => $expires_at,
-                    'account_type'   => $account_type,
-                    'last_refreshed' => current_time( 'mysql' ),
-                    'status'         => 'active',
-                ),
-                array( 'instagram_user_id' => $instagram_user_id ),
-                array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' ),
-                array( '%d' )
-            );
-
-            if ( false === $result ) {
-                wp_send_json_error( array( 'message' => __( 'Failed to update account.', 'bwg-instagram-feed' ) ) );
-            }
-
-            wp_send_json_success( array(
-                'message'    => __( 'Instagram account reconnected successfully!', 'bwg-instagram-feed' ),
-                'account_id' => $existing->id,
-            ) );
-        } else {
-            // Insert new account.
-            $result = $wpdb->insert(
-                $wpdb->prefix . 'bwg_igf_accounts',
-                array(
-                    'instagram_user_id' => $instagram_user_id,
-                    'username'          => $username,
-                    'access_token'      => $encrypted_token,
-                    'token_type'        => 'bearer',
-                    'expires_at'        => $expires_at,
-                    'account_type'      => $account_type,
-                    'connected_at'      => current_time( 'mysql' ),
-                    'status'            => 'active',
-                ),
-                array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
-            );
-
-            if ( false === $result ) {
-                wp_send_json_error( array( 'message' => __( 'Failed to connect account.', 'bwg-instagram-feed' ) ) );
-            }
-
-            $new_account_id = $wpdb->insert_id;
-
-            wp_send_json_success( array(
-                'message'    => __( 'Instagram account connected successfully!', 'bwg-instagram-feed' ),
-                'account_id' => $new_account_id,
-            ) );
-        }
-    }
-
-    /**
      * Disconnect Instagram account.
      */
     public function disconnect_account() {
@@ -1163,97 +1046,6 @@ class BWG_IGF_Admin_Ajax {
                 )
                 : __( 'You are running the latest version.', 'bwg-instagram-feed' ),
         ) );
-    }
-
-    /**
-     * Simulate rate limit for testing Feature #15.
-     *
-     * This AJAX handler inserts API call records with low remaining quota
-     * to trigger the "approaching rate limits" warning banner.
-     */
-    public function simulate_rate_limit() {
-        $this->verify_request();
-
-        global $wpdb;
-
-        // Get the first active account.
-        $account = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT id, username FROM {$wpdb->prefix}bwg_igf_accounts WHERE status = %s LIMIT 1",
-                'active'
-            )
-        );
-
-        if ( ! $account ) {
-            wp_send_json_error( array( 'message' => __( 'No active accounts found. Please connect an Instagram account first.', 'bwg-instagram-feed' ) ) );
-        }
-
-        // Ensure API tracker is available.
-        if ( ! class_exists( 'BWG_IGF_API_Tracker' ) ) {
-            wp_send_json_error( array( 'message' => __( 'API tracker not available.', 'bwg-instagram-feed' ) ) );
-        }
-
-        // Ensure table exists.
-        if ( ! BWG_IGF_API_Tracker::table_exists() ) {
-            BWG_IGF_API_Tracker::create_table();
-        }
-
-        // Get the simulation type from request.
-        $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : 'warning';
-
-        // Clear existing test data for this account.
-        $api_table = BWG_IGF_API_Tracker::get_table_name();
-        $wpdb->query(
-            $wpdb->prepare(
-                "DELETE FROM $api_table WHERE account_id = %d",
-                $account->id
-            )
-        );
-
-        // Set remaining based on type.
-        if ( 'limited' === $type ) {
-            // Simulate rate limited (429 response).
-            $result = BWG_IGF_API_Tracker::log_call(
-                $account->id,
-                'graph.instagram.com/me/media',
-                429,
-                0,
-                gmdate( 'Y-m-d H:i:s', time() + 3600 ),
-                'rate_limited'
-            );
-            $message = sprintf(
-                /* translators: %s: Instagram username */
-                __( 'Simulated rate limit (HTTP 429) for account @%s. Refresh the page to see the error banner.', 'bwg-instagram-feed' ),
-                $account->username
-            );
-        } else {
-            // Simulate approaching limits (25 calls remaining out of ~200).
-            $remaining = 25;
-            $result = BWG_IGF_API_Tracker::log_call(
-                $account->id,
-                'graph.instagram.com/me/media',
-                200,
-                $remaining,
-                gmdate( 'Y-m-d H:i:s', time() + 3600 ),
-                null
-            );
-            $message = sprintf(
-                /* translators: 1: Instagram username, 2: remaining API calls */
-                __( 'Simulated approaching rate limit for account @%1$s (%2$d calls remaining). Refresh the page to see the warning banner.', 'bwg-instagram-feed' ),
-                $account->username,
-                $remaining
-            );
-        }
-
-        if ( $result ) {
-            wp_send_json_success( array(
-                'message'  => $message,
-                'account'  => '@' . $account->username,
-                'type'     => $type,
-            ) );
-        } else {
-            wp_send_json_error( array( 'message' => __( 'Failed to simulate rate limit.', 'bwg-instagram-feed' ) ) );
-        }
     }
 
     /**

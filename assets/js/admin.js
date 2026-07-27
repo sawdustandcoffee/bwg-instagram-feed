@@ -60,7 +60,7 @@
             // Validate username
             $(document).on('blur', '#bwg-igf-username', this.handleValidateUsername);
 
-            // Connect Instagram account (test mode)
+            // Connect Instagram account (starts real server-side OAuth flow)
             $(document).on('click', '.bwg-igf-connect-account', this.handleConnectAccount);
 
             // Disconnect Instagram account
@@ -1361,62 +1361,19 @@
         },
 
         handleConnectAccount: function(e) {
-            // Check if this button has a real OAuth URL (from data attribute)
+            // The Connect button carries the real Instagram OAuth authorize URL in its
+            // data-oauth-url attribute (and href). When present, let the browser navigate
+            // to Instagram normally so the real server-side OAuth callback can run.
             var $button = $(this);
             var oauthUrl = $button.data('oauth-url');
 
-            // If we have a real OAuth URL, let the browser navigate to it naturally
-            // (don't prevent default - the href will handle the navigation)
-            if (oauthUrl && oauthUrl.indexOf('api.instagram.com') !== -1) {
-                // Real OAuth flow - allow the link to work normally
-                // The button's href already points to the OAuth URL
+            if (typeof oauthUrl === 'string' && oauthUrl.indexOf('https://') === 0) {
+                // Real OAuth flow - allow the link to work normally.
                 return true;
             }
 
-            // Fallback: Test mode for when OAuth is not properly configured
-            // This allows testing the flow without real Instagram credentials
+            // No real OAuth URL means the button is not configured/gated; do nothing.
             e.preventDefault();
-
-            // For testing purposes, we'll prompt for test data
-            var username = prompt('Enter Instagram username (for testing):');
-            if (!username) {
-                return;
-            }
-
-            // Generate test data
-            var testData = {
-                username: username,
-                instagram_user_id: Math.floor(Math.random() * 9000000000) + 1000000000,
-                access_token: 'IGQVJWZADJLazNHUm1jM2' + BWGIGFAdmin.generateRandomString(100),
-                account_type: 'basic'
-            };
-
-            $.ajax({
-                url: bwgIgfAdmin.ajaxUrl,
-                method: 'POST',
-                data: {
-                    action: 'bwg_igf_connect_account',
-                    nonce: bwgIgfAdmin.nonce,
-                    username: testData.username,
-                    instagram_user_id: testData.instagram_user_id,
-                    access_token: testData.access_token,
-                    account_type: testData.account_type
-                },
-                success: function(response) {
-                    if (response.success) {
-                        BWGIGFAdmin.showNotice('success', response.data.message);
-                        // Reload page to see new account
-                        setTimeout(function() {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        BWGIGFAdmin.showNotice('error', response.data.message || bwgIgfAdmin.i18n.error);
-                    }
-                },
-                error: function() {
-                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
-                }
-            });
         },
 
         handleDisconnectAccount: function(e) {
@@ -1539,15 +1496,6 @@
                     BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
                 }
             });
-        },
-
-        generateRandomString: function(length) {
-            var result = '';
-            var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            for (var i = 0; i < length; i++) {
-                result += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            return result;
         }
     };
 

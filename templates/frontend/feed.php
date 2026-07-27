@@ -100,29 +100,6 @@ $posts = $has_cache ? $cache_result['posts'] : array();
 $no_cache_message = '';
 $rate_limit_warning = '';
 
-// Feature #58: Check if posts are placeholder data
-// Placeholder data should not appear on the frontend - show admin warning if detected
-$is_placeholder_data = false;
-if ( ! empty( $posts ) ) {
-    $is_placeholder_data = BWG_IGF_Instagram_Fetcher::is_placeholder_data( $posts );
-
-    // If placeholder data was found in cache, clear it
-    // Background cron will fetch real data; frontend just shows nothing until then
-    if ( $is_placeholder_data && $has_cache ) {
-        global $wpdb;
-        error_log( 'BWG IGF: Placeholder data found in cache for feed #' . $feed->id . ' - clearing cache' );
-        // Clear the cached placeholder data
-        $wpdb->delete(
-            $wpdb->prefix . 'bwg_igf_cache',
-            array( 'feed_id' => $feed->id ),
-            array( '%d' )
-        );
-        // Reset posts array - async load will fetch data
-        $posts = array();
-        $has_cache = false;
-    }
-}
-
 // Determine if we need async loading - ONLY when no cache exists at all (first load ever).
 // If we have ANY cached data, always display it. Background cron handles freshness.
 $has_source = ! empty( $feed->instagram_usernames ) || ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) );
@@ -507,26 +484,6 @@ $feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
             <div class="bwg-igf-rate-limit-text">
                 <strong><?php esc_html_e( 'Rate Limit Reached', 'bwg-instagram-feed' ); ?></strong>
                 <p><?php echo esc_html( $rate_limit_warning ); ?></p>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <?php
-    // Feature #58: Show admin-only warning when placeholder data is being displayed
-    // This can happen if real Instagram data couldn't be fetched (rate limit, parsing errors, etc.)
-    if ( $is_placeholder_data && current_user_can( 'manage_options' ) ) : ?>
-        <!-- Feature #58: Placeholder Data Warning (Admin Only) -->
-        <div class="bwg-igf-placeholder-warning" role="alert" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 12px;">
-            <div class="bwg-igf-placeholder-icon" style="flex-shrink: 0; color: #856404;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                </svg>
-            </div>
-            <div class="bwg-igf-placeholder-text" style="color: #856404;">
-                <strong style="display: block; margin-bottom: 4px;"><?php esc_html_e( 'Placeholder Images Detected', 'bwg-instagram-feed' ); ?></strong>
-                <p style="margin: 0; font-size: 13px; line-height: 1.4;">
-                    <?php esc_html_e( 'This feed is showing placeholder images instead of real Instagram posts. This usually happens when Instagram temporarily blocks requests. Real posts will appear automatically when the connection is restored. This message is only visible to administrators.', 'bwg-instagram-feed' ); ?>
-                </p>
             </div>
         </div>
     <?php endif; ?>

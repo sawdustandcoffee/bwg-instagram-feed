@@ -22,8 +22,9 @@ class BWG_IGF_Instagram_Fetcher {
     /**
      * Fetch posts for a feed and cache them.
      *
-     * Feature #58: Placeholder data is NOT cached to prevent showing fake images on frontend.
-     * Only real Instagram data gets cached with the full duration.
+     * Returns valid cached posts when available; otherwise fetches fresh data
+     * and caches it only when real posts were returned. Empty results are never
+     * cached so a later request can retry the fetch.
      *
      * @param object $feed The feed object from database.
      * @return array Array of post data.
@@ -40,18 +41,7 @@ class BWG_IGF_Instagram_Fetcher {
         if ( $cache_data ) {
             $posts = json_decode( $cache_data, true );
             if ( ! empty( $posts ) ) {
-                // Feature #58: Check if cached data is placeholder data (from previous versions)
-                // If it is, skip the cache and try to fetch fresh data
-                if ( ! self::is_placeholder_data( $posts ) ) {
-                    return $posts;
-                }
-                // Log that we're skipping cached placeholder data.
-                if ( class_exists( 'BWG_IGF_Logger' ) ) {
-                    BWG_IGF_Logger::warning(
-                        __( 'Skipping cached placeholder data - attempting fresh fetch', 'bwg-instagram-feed' ),
-                        array( 'feed_id' => $feed->id )
-                    );
-                }
+                return $posts;
             }
         }
 
@@ -63,58 +53,13 @@ class BWG_IGF_Instagram_Fetcher {
             $posts = self::fetch_public_feed( $feed );
         }
 
-        // Feature #58: Only cache if we got REAL posts (not placeholder data).
-        // Placeholder data should NEVER be cached to avoid showing fake images on frontend.
-        if ( ! empty( $posts ) && ! self::is_placeholder_data( $posts ) ) {
+        // Only cache real posts. Empty results (fetch failed) are never cached so
+        // the next request can retry instead of serving an empty feed from cache.
+        if ( ! empty( $posts ) ) {
             self::store_cache( $feed->id, $posts, $feed->cache_duration );
-        } elseif ( ! empty( $posts ) && self::is_placeholder_data( $posts ) ) {
-            // Log that placeholder data is not being cached.
-            if ( class_exists( 'BWG_IGF_Logger' ) ) {
-                BWG_IGF_Logger::warning(
-                    __( 'Not caching placeholder data - only real Instagram data is cached', 'bwg-instagram-feed' ),
-                    array( 'feed_id' => $feed->id )
-                );
-            }
         }
 
         return $posts;
-    }
-
-    /**
-     * Check if posts array contains placeholder data.
-     *
-     * Feature #58: Detects placeholder data to prevent caching and allow
-     * frontend to show admin-only warnings.
-     *
-     * @param array $posts Array of post data.
-     * @return bool True if any post is placeholder data.
-     */
-    public static function is_placeholder_data( $posts ) {
-        if ( empty( $posts ) || ! is_array( $posts ) ) {
-            return false;
-        }
-
-        // Check first post for is_placeholder flag (primary detection method).
-        if ( isset( $posts[0]['is_placeholder'] ) && true === $posts[0]['is_placeholder'] ) {
-            return true;
-        }
-
-        // Fallback detection for data without flag: check for placeholder image formats.
-        if ( isset( $posts[0]['thumbnail'] ) ) {
-            $thumbnail = $posts[0]['thumbnail'];
-
-            // Detect SVG data URI placeholders (current format).
-            if ( strpos( $thumbnail, 'data:image/svg+xml,' ) === 0 ) {
-                return true;
-            }
-
-            // Legacy detection for picsum.photos URLs (from older cached data).
-            if ( strpos( $thumbnail, 'picsum.photos' ) !== false ) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -166,12 +111,12 @@ class BWG_IGF_Instagram_Fetcher {
     /**
      * Fetch posts for a single Instagram user.
      *
-     * Uses multiple methods to try to fetch public Instagram data:
-     * 1. Instagram's web profile endpoint
-     * 2. Fallback to simulated data if Instagram blocks the request
+     * Fetches public Instagram data from Instagram's web profile endpoint.
+     * If the request fails, is blocked, or cannot be parsed, this returns an
+     * empty array so the feed fails honestly rather than showing fabricated posts.
      *
      * @param string $username Instagram username.
-     * @return array Array of post data.
+     * @return array Array of post data (empty on failure).
      */
     private static function fetch_user_posts( $username ) {
         // Try to fetch from Instagram's public profile.
@@ -206,7 +151,7 @@ class BWG_IGF_Instagram_Fetcher {
             if ( false === $body || ! empty( $curl_error ) ) {
                 $error_msg = ! empty( $curl_error ) ? $curl_error : 'Request failed';
                 error_log( 'BWG IGF: Failed to fetch Instagram profile for ' . $username . ': ' . $error_msg );
-                return self::generate_placeholder_data( $username );
+                return array();
             }
         } else {
             // Fallback to wp_remote_get if cURL is not available.
@@ -221,7 +166,7 @@ class BWG_IGF_Instagram_Fetcher {
 
             if ( is_wp_error( $response ) ) {
                 error_log( 'BWG IGF: Failed to fetch Instagram profile for ' . $username . ': ' . $response->get_error_message() );
-                return self::generate_placeholder_data( $username );
+                return array();
             }
 
             $body        = wp_remote_retrieve_body( $response );
@@ -230,15 +175,16 @@ class BWG_IGF_Instagram_Fetcher {
 
         if ( 200 !== $status_code ) {
             error_log( 'BWG IGF: Instagram returned status ' . $status_code . ' for ' . $username );
-            return self::generate_placeholder_data( $username );
+            return array();
         }
 
         // Try to extract post data from the HTML.
         $posts = self::parse_instagram_html( $body, $username );
 
         if ( empty( $posts ) ) {
-            // If parsing failed, use placeholder data with the actual username.
-            return self::generate_placeholder_data( $username );
+            // Parsing failed - fail honestly with no posts rather than fabricating data.
+            error_log( 'BWG IGF: Unable to parse Instagram posts for ' . $username );
+            return array();
         }
 
         return $posts;
@@ -362,73 +308,6 @@ class BWG_IGF_Instagram_Fetcher {
             'timestamp'  => $timestamp,
             'username'   => $username,
         );
-    }
-
-    /**
-     * Generate placeholder data for an Instagram user.
-     *
-     * This is used when we cannot fetch real data from Instagram.
-     * The placeholder data includes the actual username and realistic-looking content.
-     *
-     * Feature #58: Placeholder data is now marked with 'is_placeholder' flag
-     * to prevent caching and allow frontend to show admin warnings.
-     *
-     * Uses inline SVG data URIs for placeholder images to avoid external dependencies
-     * and privacy concerns (no external requests to third-party services).
-     *
-     * @param string $username The Instagram username.
-     * @return array Array of placeholder post data.
-     */
-    private static function generate_placeholder_data( $username ) {
-        $posts = array();
-
-        // Log that we're generating placeholder data
-        error_log( 'BWG IGF: Generating placeholder data for @' . $username . ' - real Instagram data unavailable' );
-
-        // Generate inline SVG placeholder image (no external dependencies).
-        // This avoids requests to third-party services like picsum.photos.
-        $placeholder_svg = 'data:image/svg+xml,' . rawurlencode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">' .
-            '<rect fill="#f0f0f0" width="400" height="400"/>' .
-            '<text fill="#999" font-family="sans-serif" font-size="24" x="50%" y="50%" text-anchor="middle" dy=".3em">No Image</text>' .
-            '</svg>'
-        );
-
-        $captions = array(
-            "Beautiful day! \xF0\x9F\x8C\x9F #instagram #photooftheday",
-            "Living my best life \xE2\x9C\xA8 #lifestyle #blessed",
-            "Adventure awaits! \xF0\x9F\x8C\x8D #travel #explore",
-            "Good vibes only \xE2\x98\x80\xEF\xB8\x8F #positivity #happiness",
-            "Making memories \xF0\x9F\x93\xB8 #moments #life",
-            "Stay inspired \xF0\x9F\x92\xAB #motivation #goals",
-            "Simple pleasures \xF0\x9F\x8C\xB8 #simplicity #joy",
-            "Finding beauty everywhere \xF0\x9F\x8C\xBA #beauty #nature",
-            "New beginnings \xF0\x9F\x8C\xB1 #fresh #start",
-            "Grateful for today \xF0\x9F\x99\x8F #gratitude #thankful",
-            "Chase your dreams \xF0\x9F\x92\xAD #dreams #ambition",
-            "Weekend mode on \xF0\x9F\x8E\x89 #weekend #fun",
-        );
-
-        // Base timestamp (posts from the last 2 weeks).
-        $base_time = time() - ( 14 * DAY_IN_SECONDS );
-
-        for ( $i = 0; $i < 12; $i++ ) {
-            $post_time = $base_time + ( $i * 86400 ) + rand( 0, 43200 ); // Random time within each day.
-
-            $posts[] = array(
-                'thumbnail'      => $placeholder_svg,
-                'full_image'     => $placeholder_svg,
-                'caption'        => sprintf( '@%s: %s', $username, $captions[ $i % count( $captions ) ] ),
-                'likes'          => rand( 100, 5000 ),
-                'comments'       => rand( 5, 200 ),
-                'link'           => sprintf( 'https://www.instagram.com/%s/', $username ),
-                'timestamp'      => $post_time,
-                'username'       => $username,
-                'is_placeholder' => true, // Feature #58: Mark as placeholder data
-            );
-        }
-
-        return $posts;
     }
 
     /**
