@@ -852,7 +852,7 @@
             var activeIndex = this.infinite ? this.realIndex : this.currentIndex;
 
             this.dots.forEach(function(dot, index) {
-                dot.classList.toggle('active', index === activeIndex);
+                dot.classList.toggle('bwg-igf-is-active', index === activeIndex);
             });
         },
 
@@ -993,7 +993,7 @@
 
             // Keyboard navigation and focus trapping
             document.addEventListener('keydown', function(e) {
-                if (!self.popup.classList.contains('active')) return;
+                if (!self.popup.classList.contains('bwg-igf-is-active')) return;
 
                 switch (e.key) {
                     case 'Escape':
@@ -1045,7 +1045,7 @@
             var self = this;
             this.currentIndex = index;
             this.updateContent();
-            this.popup.classList.add('active');
+            this.popup.classList.add('bwg-igf-is-active');
             document.body.style.overflow = 'hidden';
 
             // Focus management - store the trigger element
@@ -1073,7 +1073,7 @@
                 popupVideo.pause();
             }
 
-            this.popup.classList.remove('active');
+            this.popup.classList.remove('bwg-igf-is-active');
             document.body.style.overflow = '';
 
             // Restore focus
@@ -1168,7 +1168,7 @@
             }, { passive: true });
 
             this.popup.addEventListener('touchend', function() {
-                if (!self.popup.classList.contains('active')) {
+                if (!self.popup.classList.contains('bwg-igf-is-active')) {
                     return;
                 }
 

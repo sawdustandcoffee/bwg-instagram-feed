@@ -927,6 +927,27 @@ class BWG_IGF_Admin_Ajax {
                 wp_send_json_error( array( 'message' => __( 'Failed to update feed.', 'bwg-instagram-feed' ) ) );
             }
 
+            // If the post count now exceeds what the cache holds, the cache can't satisfy
+            // the setting - drop it so the next load fetches the larger set.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $cached_data = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT cache_data FROM {$wpdb->prefix}bwg_igf_cache WHERE feed_id = %d LIMIT 1",
+                    $feed_id
+                )
+            );
+
+            if ( $cached_data ) {
+                $cached_posts = json_decode( $cached_data, true );
+                if ( is_array( $cached_posts ) && count( $cached_posts ) < $post_count ) {
+                    $wpdb->delete(
+                        $wpdb->prefix . 'bwg_igf_cache',
+                        array( 'feed_id' => $feed_id ),
+                        array( '%d' )
+                    );
+                }
+            }
+
             // Feature #150: Include validation warnings in success response.
             $success_message = __( 'Feed updated successfully!', 'bwg-instagram-feed' );
             if ( ! empty( $validation_warnings ) ) {

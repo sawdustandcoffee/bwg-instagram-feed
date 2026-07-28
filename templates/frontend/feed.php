@@ -349,6 +349,13 @@ if ( ! empty( $posts ) ) {
     }
 }
 
+// Enforce the feed's post count. Cached data may hold more posts than the current
+// setting (e.g. the count was lowered after the cache was written), so slice here
+// rather than relying on whatever the cache happens to contain.
+if ( ! empty( $posts ) ) {
+    $posts = array_slice( $posts, 0, absint( $feed->post_count ) ?: 9 );
+}
+
 // Custom styles
 $custom_styles = array(
     '--bwg-igf-gap: ' . $gap . 'px',
@@ -846,7 +853,7 @@ $feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
             <?php if ( ! empty( $layout_settings['show_dots'] ) ) : ?>
                 <div class="bwg-igf-slider-dots">
                     <?php for ( $i = 0; $i < count( $posts ); $i++ ) : ?>
-                        <button class="bwg-igf-slider-dot<?php echo 0 === $i ? ' active' : ''; ?>"></button>
+                        <button class="bwg-igf-slider-dot<?php echo 0 === $i ? ' bwg-igf-is-active' : ''; ?>"></button>
                     <?php endfor; ?>
                 </div>
             <?php endif; ?>
