@@ -165,14 +165,46 @@ class BWG_IGF_Instagram_Credentials {
 	/**
 	 * Get the OAuth redirect URI.
 	 *
+	 * Instagram's "Instagram API with Instagram Login" flow rejects any
+	 * redirect_uri that contains a query string ("Invalid Request: Invalid
+	 * redirect_uri"). We therefore use a clean REST endpoint. Under pretty
+	 * permalinks this resolves to https://site/wp-json/bwg-igf/v1/instagram-oauth
+	 * (no query string). This value is the single source of truth: it is used
+	 * both when building the authorize URL and during the token exchange, and
+	 * the two MUST be byte-identical.
+	 *
+	 * NOTE: If the site uses Plain permalinks, rest_url() falls back to a
+	 * ?rest_route= query string, which Instagram will reject. The admin UI warns
+	 * about this; see get_redirect_uri_has_query_string().
+	 *
 	 * @return string The OAuth callback URL.
 	 */
 	public static function get_redirect_uri() {
-		return admin_url( 'admin.php?page=bwg-igf-accounts&oauth_callback=1' );
+		return rest_url( 'bwg-igf/v1/instagram-oauth' );
+	}
+
+	/**
+	 * Whether the current redirect URI contains a query string.
+	 *
+	 * Instagram rejects redirect URIs with a query string. This happens when the
+	 * site is on Plain permalinks and rest_url() produces a ?rest_route= URL. The
+	 * admin UI uses this to warn the administrator to enable pretty permalinks.
+	 *
+	 * @return bool True if the redirect URI contains a "?" (query string present).
+	 */
+	public static function redirect_uri_has_query_string() {
+		return false !== strpos( self::get_redirect_uri(), '?' );
 	}
 
 	/**
 	 * Get the OAuth authorization URL.
+	 *
+	 * Generates a single-use CSRF state token, binds it to the current admin
+	 * user in a short-lived transient, and appends it to the authorize URL. The
+	 * REST callback validates this state before performing the token exchange.
+	 *
+	 * This is only ever called while rendering the Connect button on the admin
+	 * accounts page, so get_current_user_id() is valid here.
 	 *
 	 * @return string The full Instagram OAuth authorization URL.
 	 */
@@ -181,11 +213,19 @@ class BWG_IGF_Instagram_Credentials {
 		$redirect_uri = self::get_redirect_uri();
 		$scope = implode( ',', self::get_scopes() );
 
+		// CSRF protection: generate a random state token and bind it to the
+		// current user for 10 minutes. The REST callback (permission_callback
+		// __return_true, since Instagram redirects the browser unauthenticated
+		// at the HTTP level) verifies this token before doing anything.
+		$state = wp_generate_password( 32, false );
+		set_transient( 'bwg_igf_oauth_state_' . $state, get_current_user_id(), 10 * MINUTE_IN_SECONDS );
+
 		return sprintf(
-			'https://www.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&response_type=code',
+			'https://www.instagram.com/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&response_type=code&state=%s',
 			rawurlencode( $app_id ),
 			rawurlencode( $redirect_uri ),
-			rawurlencode( $scope )
+			rawurlencode( $scope ),
+			rawurlencode( $state )
 		);
 	}
 

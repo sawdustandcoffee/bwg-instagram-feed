@@ -208,8 +208,21 @@ $show_stale_indicator = get_option( 'bwg_igf_show_stale_data_indicator', 0 );
                             <?php esc_html_e( 'Copy', 'bwg-instagram-feed' ); ?>
                         </button>
                         <p class="description">
-                            <?php esc_html_e( 'Add this exact URL to your Meta app under Instagram → API setup with Instagram login → Business login settings → OAuth redirect URIs. It must match character-for-character, including https and the query string. This is the actual value the plugin sends — if it shows the wrong scheme or domain, fix your WordPress Site Address under Settings → General.', 'bwg-instagram-feed' ); ?>
+                            <?php esc_html_e( 'Add this exact URL to your Meta app under Instagram → API setup with Instagram login → Business login settings → OAuth redirect URIs. It must match character-for-character, including https. This is the actual value the plugin sends — if it shows the wrong scheme or domain, fix your WordPress Site Address under Settings → General.', 'bwg-instagram-feed' ); ?>
                         </p>
+                        <?php if ( BWG_IGF_Instagram_Credentials::redirect_uri_has_query_string() ) : ?>
+                            <?php // Plain permalinks make rest_url() emit a ?rest_route= query string, which Instagram rejects. ?>
+                            <p class="description" style="color: #d63638;">
+                                <span class="dashicons dashicons-warning" style="color: #d63638;"></span>
+                                <?php
+                                printf(
+                                    /* translators: %s: link to the Permalinks settings screen */
+                                    esc_html__( 'This redirect URI contains a query string because your site uses Plain permalinks, and Instagram will reject it. Enable pretty permalinks under %s (any option other than "Plain") for Instagram login to work.', 'bwg-instagram-feed' ),
+                                    '<a href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Settings → Permalinks', 'bwg-instagram-feed' ) . '</a>'
+                                );
+                                ?>
+                            </p>
+                        <?php endif; ?>
                     </td>
                 </tr>
             </table>

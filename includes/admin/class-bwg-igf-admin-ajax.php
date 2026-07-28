@@ -58,6 +58,385 @@ class BWG_IGF_Admin_Ajax {
 
         // Get logs (Admin Logging Dashboard).
         add_action( 'wp_ajax_bwg_igf_get_logs', array( $this, 'get_logs' ) );
+
+        // Instagram OAuth callback (clean, query-string-free REST endpoint).
+        // Instagram rejects redirect URIs containing a query string, so the
+        // OAuth callback lives at /wp-json/bwg-igf/v1/instagram-oauth instead of
+        // the old admin.php?...&oauth_callback=1 URL.
+        add_action( 'rest_api_init', array( $this, 'register_oauth_route' ) );
+    }
+
+    /**
+     * Register the Instagram OAuth callback REST route.
+     *
+     * Instagram redirects the user's browser here after authorization. The
+     * request is unauthenticated at the HTTP level (no WordPress cookies are
+     * guaranteed), so permission_callback is __return_true; CSRF protection is
+     * provided by the single-use "state" token created in
+     * BWG_IGF_Instagram_Credentials::get_oauth_url() and verified here.
+     *
+     * @return void
+     */
+    public function register_oauth_route() {
+        register_rest_route(
+            'bwg-igf/v1',
+            '/instagram-oauth',
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( $this, 'handle_oauth_callback' ),
+                'permission_callback' => '__return_true',
+            )
+        );
+    }
+
+    /**
+     * Handle the Instagram OAuth callback.
+     *
+     * Validates the CSRF state token, performs the 3-step token exchange
+     * (short-lived token, long-lived token, user info), encrypts and stores the
+     * account, warms the post cache, then stashes a result message in a
+     * short-lived transient and redirects the admin back to the Accounts page.
+     *
+     * @param WP_REST_Request $request The incoming REST request.
+     * @return void This method always ends in a redirect + exit.
+     */
+    public function handle_oauth_callback( $request ) {
+        // Sanitize incoming parameters. code/state come from Instagram via the
+        // browser query string.
+        $code  = sanitize_text_field( wp_unslash( (string) $request->get_param( 'code' ) ) );
+        $state = sanitize_text_field( wp_unslash( (string) $request->get_param( 'state' ) ) );
+        $oauth_error_param = sanitize_text_field( wp_unslash( (string) $request->get_param( 'error' ) ) );
+        $error_reason      = sanitize_text_field( wp_unslash( (string) $request->get_param( 'error_reason' ) ) );
+        $error_desc        = sanitize_text_field( wp_unslash( (string) $request->get_param( 'error_description' ) ) );
+
+        // Step 0: Validate the CSRF state token. Without a valid, current state
+        // we cannot trust the request and have no user to attribute it to, so
+        // reject before doing anything else. Redirect to the plain Accounts page
+        // (no user transient available in this failure mode).
+        if ( empty( $state ) ) {
+            $this->redirect_to_accounts_after_oauth();
+        }
+
+        $state_key = 'bwg_igf_oauth_state_' . $state;
+        $user_id   = get_transient( $state_key );
+
+        // Single-use: delete the transient regardless of outcome so a captured
+        // state value cannot be replayed.
+        delete_transient( $state_key );
+
+        if ( false === $user_id || '' === $user_id ) {
+            // Unknown/expired state - reject. No trusted user to key a result to.
+            $this->redirect_to_accounts_after_oauth();
+        }
+
+        $user_id = (int) $user_id;
+
+        // Confirm the bound user still has permission to connect accounts.
+        if ( ! user_can( $user_id, 'manage_options' ) ) {
+            $this->store_oauth_result(
+                $user_id,
+                'error',
+                __( 'You do not have permission to connect an Instagram account.', 'bwg-instagram-feed' )
+            );
+            $this->redirect_to_accounts_after_oauth();
+        }
+
+        // Handle an explicit authorization error / user denial from Instagram.
+        if ( '' !== $oauth_error_param || empty( $code ) ) {
+            if ( 'user_denied' === $error_reason ) {
+                $message = __( 'You denied the authorization request. No account was connected.', 'bwg-instagram-feed' );
+            } elseif ( '' !== $error_desc || '' !== $error_reason ) {
+                $message = sprintf(
+                    /* translators: %s: Error description */
+                    __( 'Authorization failed: %s', 'bwg-instagram-feed' ),
+                    $error_desc ? $error_desc : $error_reason
+                );
+            } else {
+                $message = __( 'Authorization failed: no authorization code was returned by Instagram.', 'bwg-instagram-feed' );
+            }
+
+            $this->store_oauth_result( $user_id, 'error', $message );
+            $this->redirect_to_accounts_after_oauth();
+        }
+
+        // Perform the token exchange and account storage.
+        $result = $this->exchange_code_and_store_account( $code );
+
+        $this->store_oauth_result( $user_id, $result['type'], $result['message'] );
+        $this->redirect_to_accounts_after_oauth();
+    }
+
+    /**
+     * Exchange an authorization code for tokens and persist the account.
+     *
+     * Ports the 3-step token exchange previously performed inline in
+     * templates/admin/accounts.php: short-lived token, long-lived token, user
+     * info; then encrypts the token, upserts the account row, and warms the
+     * post cache.
+     *
+     * IMPORTANT: the redirect_uri used here MUST be byte-identical to the one
+     * sent to the authorize endpoint. Both come from
+     * BWG_IGF_Instagram_Credentials::get_redirect_uri().
+     *
+     * @param string $code The authorization code from Instagram.
+     * @return array{type:string,message:string} Result type ('success'|'error') and message.
+     */
+    private function exchange_code_and_store_account( $code ) {
+        global $wpdb;
+
+        $app_id       = BWG_IGF_Instagram_Credentials::get_app_id();
+        $app_secret   = BWG_IGF_Instagram_Credentials::get_app_secret();
+        $redirect_uri = BWG_IGF_Instagram_Credentials::get_redirect_uri();
+
+        // Step 1: Exchange code for short-lived access token.
+        $token_url = 'https://api.instagram.com/oauth/access_token';
+        $response  = wp_remote_post(
+            $token_url,
+            array(
+                'body' => array(
+                    'client_id'     => $app_id,
+                    'client_secret' => $app_secret,
+                    'grant_type'    => 'authorization_code',
+                    'redirect_uri'  => $redirect_uri,
+                    'code'          => $code,
+                ),
+            )
+        );
+
+        if ( is_wp_error( $response ) ) {
+            return array(
+                'type'    => 'error',
+                'message' => sprintf(
+                    /* translators: %s: Error message */
+                    __( 'Failed to connect to Instagram: %s', 'bwg-instagram-feed' ),
+                    $response->get_error_message()
+                ),
+            );
+        }
+
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+
+        if ( isset( $data['error_message'] ) ) {
+            return array(
+                'type'    => 'error',
+                'message' => sprintf(
+                    /* translators: %s: Error message */
+                    __( 'Instagram error: %s', 'bwg-instagram-feed' ),
+                    $data['error_message']
+                ),
+            );
+        }
+
+        if ( ! isset( $data['access_token'], $data['user_id'] ) ) {
+            return array(
+                'type'    => 'error',
+                'message' => __( 'Failed to obtain access token from Instagram.', 'bwg-instagram-feed' ),
+            );
+        }
+
+        $short_lived_token = $data['access_token'];
+        $instagram_user_id = $data['user_id'];
+
+        // Step 2: Exchange for long-lived access token.
+        $long_token_url = sprintf(
+            'https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=%s&access_token=%s',
+            rawurlencode( $app_secret ),
+            rawurlencode( $short_lived_token )
+        );
+
+        $long_response = wp_remote_get( $long_token_url );
+        $long_body     = wp_remote_retrieve_body( $long_response );
+        $long_data     = json_decode( $long_body, true );
+
+        $access_token = isset( $long_data['access_token'] ) ? $long_data['access_token'] : $short_lived_token;
+        $expires_in   = isset( $long_data['expires_in'] ) ? intval( $long_data['expires_in'] ) : ( 60 * DAY_IN_SECONDS );
+
+        // Step 3: Get user info.
+        $user_url = sprintf(
+            'https://graph.instagram.com/me?fields=id,username,account_type&access_token=%s',
+            rawurlencode( $access_token )
+        );
+
+        $user_response = wp_remote_get( $user_url );
+        $user_body     = wp_remote_retrieve_body( $user_response );
+        $user_data     = json_decode( $user_body, true );
+
+        if ( ! isset( $user_data['username'] ) ) {
+            // Surface Instagram's own error text when present, to aid debugging.
+            $ig_error = '';
+            if ( isset( $user_data['error']['message'] ) ) {
+                $ig_error = (string) $user_data['error']['message'];
+            } elseif ( isset( $user_data['error_message'] ) ) {
+                $ig_error = (string) $user_data['error_message'];
+            }
+            return array(
+                'type'    => 'error',
+                'message' => '' !== $ig_error
+                    ? sprintf(
+                        /* translators: %s: Error message from Instagram */
+                        __( 'Failed to retrieve Instagram user information: %s', 'bwg-instagram-feed' ),
+                        $ig_error
+                    )
+                    : __( 'Failed to retrieve Instagram user information.', 'bwg-instagram-feed' ),
+            );
+        }
+
+        $username     = $user_data['username'];
+        $account_type = isset( $user_data['account_type'] ) ? strtolower( $user_data['account_type'] ) : 'business';
+
+        // Normalize account type to match our ENUM.
+        // Instagram Login can return MEDIA_CREATOR for creator accounts; map it to 'creator'.
+        if ( 'media_creator' === $account_type ) {
+            $account_type = 'creator';
+        }
+
+        // Personal/basic accounts are no longer supported under Instagram Login,
+        // so fall back to 'business' rather than 'basic' for unrecognized values.
+        if ( ! in_array( $account_type, array( 'basic', 'business', 'creator' ), true ) ) {
+            $account_type = 'business';
+        }
+
+        // Step 4: Encrypt and save the token.
+        // Defensive load: this runs in a REST request, so don't assume the
+        // encryption class was already required elsewhere in the bootstrap.
+        if ( ! class_exists( 'BWG_IGF_Encryption' ) ) {
+            require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-encryption.php';
+        }
+        $encrypted_token = BWG_IGF_Encryption::encrypt( $access_token );
+        $expires_at      = gmdate( 'Y-m-d H:i:s', time() + $expires_in );
+
+        // Check if account exists.
+        $existing = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}bwg_igf_accounts WHERE instagram_user_id = %d",
+                $instagram_user_id
+            )
+        );
+
+        if ( $existing ) {
+            // Update existing account.
+            $wpdb->update(
+                $wpdb->prefix . 'bwg_igf_accounts',
+                array(
+                    'username'       => $username,
+                    'access_token'   => $encrypted_token,
+                    'token_type'     => 'bearer',
+                    'expires_at'     => $expires_at,
+                    'account_type'   => $account_type,
+                    'last_refreshed' => current_time( 'mysql' ),
+                    'status'         => 'active',
+                ),
+                array( 'instagram_user_id' => $instagram_user_id ),
+                array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' ),
+                array( '%d' )
+            );
+            $account_id = $existing->id;
+            $message    = sprintf(
+                /* translators: %s: Instagram username */
+                __( 'Instagram account @%s reconnected successfully!', 'bwg-instagram-feed' ),
+                $username
+            );
+        } else {
+            // Insert new account.
+            $wpdb->insert(
+                $wpdb->prefix . 'bwg_igf_accounts',
+                array(
+                    'instagram_user_id' => $instagram_user_id,
+                    'username'          => $username,
+                    'access_token'      => $encrypted_token,
+                    'token_type'        => 'bearer',
+                    'expires_at'        => $expires_at,
+                    'account_type'      => $account_type,
+                    'connected_at'      => current_time( 'mysql' ),
+                    'status'            => 'active',
+                ),
+                array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
+            );
+            $account_id = $wpdb->insert_id;
+            $message    = sprintf(
+                /* translators: %s: Instagram username */
+                __( 'Instagram account @%s connected successfully!', 'bwg-instagram-feed' ),
+                $username
+            );
+        }
+
+        // Feature #24: Cache warming on account connection.
+        // Immediately fetch and cache posts after connecting an account.
+        // This ensures feeds using this account display immediately without additional API calls.
+        if ( $account_id > 0 && ! empty( $access_token ) ) {
+            // Load the Instagram API class.
+            if ( ! class_exists( 'BWG_IGF_Instagram_API' ) ) {
+                require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
+            }
+
+            $instagram_api = new BWG_IGF_Instagram_API();
+            $instagram_api->set_current_account_id( $account_id );
+
+            // Fetch initial posts (12 posts for cache warming).
+            $warmed_posts = $instagram_api->fetch_connected_posts( $access_token, 12, $account_id );
+
+            if ( ! is_wp_error( $warmed_posts ) && ! empty( $warmed_posts ) ) {
+                // Store the warmed cache in a transient keyed by account ID.
+                // This cache will be used when creating feeds with this account.
+                // Cache duration: 1 hour (3600 seconds).
+                set_transient(
+                    'bwg_igf_account_cache_' . $account_id,
+                    array(
+                        'posts'      => $warmed_posts,
+                        'fetched_at' => time(),
+                        'username'   => $username,
+                    ),
+                    3600
+                );
+
+                // Update success message to indicate posts were fetched.
+                $message = sprintf(
+                    /* translators: 1: Instagram username, 2: Number of posts fetched */
+                    __( 'Instagram account @%1$s connected successfully! %2$d posts cached and ready to display.', 'bwg-instagram-feed' ),
+                    $username,
+                    count( $warmed_posts )
+                );
+            }
+        }
+
+        return array(
+            'type'    => 'success',
+            'message' => $message,
+        );
+    }
+
+    /**
+     * Store the OAuth result message for later display on the Accounts page.
+     *
+     * The REST callback runs in a separate request from the admin page render,
+     * so the outcome is stashed in a short-lived transient keyed to the user and
+     * read (and deleted) when the Accounts page renders after the redirect.
+     *
+     * @param int    $user_id The WordPress user ID the result belongs to.
+     * @param string $type    Result type: 'success' or 'error'.
+     * @param string $message The human-readable message to display.
+     * @return void
+     */
+    private function store_oauth_result( $user_id, $type, $message ) {
+        set_transient(
+            'bwg_igf_oauth_result_' . $user_id,
+            array(
+                'type'    => ( 'success' === $type ) ? 'success' : 'error',
+                'message' => $message,
+            ),
+            60
+        );
+    }
+
+    /**
+     * Redirect back to the admin Accounts page and terminate the request.
+     *
+     * @return void
+     */
+    private function redirect_to_accounts_after_oauth() {
+        wp_safe_redirect( admin_url( 'admin.php?page=bwg-igf-accounts' ) );
+        exit;
     }
 
     /**

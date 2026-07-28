@@ -67,6 +67,9 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.40 =
+* Fixed "Invalid redirect_uri" when connecting an Instagram account. Instagram rejects OAuth redirect URLs that contain a query string, so the callback now uses a clean REST URL (/wp-json/bwg-igf/v1/instagram-oauth) with CSRF protection. IMPORTANT: after updating, copy the new OAuth Redirect URI from the Settings page and register it in your Meta app. Requires pretty permalinks (Settings → Permalinks set to anything other than "Plain").
+
 = 1.3.39 =
 * Settings page now shows the OAuth Redirect URI (callback URL) next to the Instagram App credentials, with a copy button, so you can register the exact value on your Meta app. Helps resolve "Invalid redirect_uri" errors.
 
@@ -120,6 +123,9 @@ Reliability, rate limiting, caching, and display improvements delivered across t
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.3.40 =
+Fixes the Instagram connection ("Invalid redirect_uri"). After updating, copy the new OAuth Redirect URI from the Settings page and register it in your Meta app. Requires pretty permalinks (not "Plain").
 
 = 1.3.39 =
 Adds the OAuth Redirect URI to the Settings page so you can copy the exact callback URL to register on your Meta app.
