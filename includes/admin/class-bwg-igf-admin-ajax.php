@@ -64,6 +64,10 @@ class BWG_IGF_Admin_Ajax {
         // OAuth callback lives at /wp-json/bwg-igf/v1/instagram-oauth instead of
         // the old admin.php?...&oauth_callback=1 URL.
         add_action( 'rest_api_init', array( $this, 'register_oauth_route' ) );
+
+        // Instagram Webhooks receiver. Lets the site owner complete Meta's
+        // "Configure webhooks" step (GET verification handshake + POST events).
+        add_action( 'rest_api_init', array( $this, 'register_webhook_route' ) );
     }
 
     /**
@@ -87,6 +91,122 @@ class BWG_IGF_Admin_Ajax {
                 'permission_callback' => '__return_true',
             )
         );
+    }
+
+    /**
+     * Register the Instagram Webhooks REST route.
+     *
+     * Meta calls this endpoint in two ways:
+     *   - GET: a one-off verification handshake sent when the site owner clicks
+     *     "Verify and save" in the app's "Configure webhooks" step. It carries
+     *     hub.mode / hub.verify_token / hub.challenge and expects the raw
+     *     challenge echoed back.
+     *   - POST: live event notifications after the subscription is active.
+     *
+     * Both are unauthenticated at the HTTP level (no WordPress cookies), so
+     * permission_callback is __return_true. The GET handshake is authenticated by
+     * the shared verify token; the POST body is authenticated by the
+     * X-Hub-Signature-256 HMAC when present.
+     *
+     * @return void
+     */
+    public function register_webhook_route() {
+        register_rest_route(
+            'bwg-igf/v1',
+            '/instagram-webhook',
+            array(
+                array(
+                    'methods'             => 'GET',
+                    'callback'            => array( $this, 'handle_webhook_verification' ),
+                    'permission_callback' => '__return_true',
+                ),
+                array(
+                    'methods'             => 'POST',
+                    'callback'            => array( $this, 'handle_webhook_event' ),
+                    'permission_callback' => '__return_true',
+                ),
+            )
+        );
+    }
+
+    /**
+     * Handle Meta's webhook verification handshake (GET).
+     *
+     * Meta sends hub.mode, hub.verify_token and hub.challenge as query params.
+     * PHP turns the dots in those names into underscores, and WordPress's REST
+     * layer exposes them the same way, so we read the underscore form first and
+     * fall back to the dotted form defensively.
+     *
+     * On a valid subscribe request (mode === 'subscribe' AND the supplied token
+     * matches our stored, non-empty verify token) Meta requires the challenge to
+     * be echoed back VERBATIM as plain text. We therefore emit it directly with a
+     * text/plain header and exit, rather than returning a WP_REST_Response that
+     * would JSON-encode (and thus quote) the value. Any other case returns 403.
+     *
+     * @param WP_REST_Request $request The incoming REST request.
+     * @return WP_REST_Response Only returned on failure; success ends in exit.
+     */
+    public function handle_webhook_verification( $request ) {
+        // Read params. Query-string dots become underscores in PHP; fall back to
+        // the dotted form in case a client sends it literally.
+        $mode      = (string) ( $request->get_param( 'hub_mode' ) ?? $request->get_param( 'hub.mode' ) );
+        $token     = (string) ( $request->get_param( 'hub_verify_token' ) ?? $request->get_param( 'hub.verify_token' ) );
+        $challenge = (string) ( $request->get_param( 'hub_challenge' ) ?? $request->get_param( 'hub.challenge' ) );
+
+        $stored_token = (string) get_option( 'bwg_igf_webhook_verify_token', '' );
+
+        // Only echo the challenge when the mode is correct AND the token matches a
+        // configured (non-empty) verify token. hash_equals avoids timing leaks.
+        if ( 'subscribe' === $mode && '' !== $stored_token && hash_equals( $stored_token, $token ) ) {
+            // The challenge is an alphanumeric token from Meta; sanitize before echo.
+            $challenge = sanitize_text_field( $challenge );
+
+            // Echo the RAW challenge as text/plain. Do NOT return a WP_REST_Response
+            // here: the REST server would JSON-encode the body and wrap the value in
+            // quotes, which fails Meta's verification (it expects the bare value).
+            header( 'Content-Type: text/plain; charset=utf-8' );
+            echo $challenge; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta requires the raw challenge, already sanitized above.
+            exit;
+        }
+
+        // Anything else: reject without echoing the challenge.
+        return new WP_REST_Response( array( 'success' => false ), 403 );
+    }
+
+    /**
+     * Handle incoming Instagram webhook events (POST).
+     *
+     * This is intentionally minimal: its job is to acknowledge Meta's deliveries
+     * so the subscription does not error, not to process events. When Meta signs
+     * the payload with X-Hub-Signature-256 we verify the HMAC against the app
+     * secret and reject mismatches; unsigned probes are still acknowledged.
+     *
+     * @param WP_REST_Request $request The incoming REST request.
+     * @return WP_REST_Response 200 on acknowledge, 403 on signature mismatch.
+     */
+    public function handle_webhook_event( $request ) {
+        $raw_body  = $request->get_body();
+        $signature = (string) $request->get_header( 'x_hub_signature_256' );
+
+        // Only verify when Meta actually signed the request. Meta sometimes sends
+        // unsigned probes, which we still acknowledge with a 200.
+        if ( '' !== $signature ) {
+            // Defensive load: this runs in a REST request; don't assume the
+            // credentials class was already required elsewhere in the bootstrap.
+            if ( ! class_exists( 'BWG_IGF_Instagram_Credentials' ) ) {
+                require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-credentials.php';
+            }
+
+            $app_secret = BWG_IGF_Instagram_Credentials::get_app_secret();
+            $expected   = 'sha256=' . hash_hmac( 'sha256', $raw_body, $app_secret );
+
+            if ( ! hash_equals( $expected, $signature ) ) {
+                return new WP_REST_Response( array( 'success' => false ), 403 );
+            }
+        }
+
+        // Acknowledge. We deliberately do no heavy processing here.
+        return new WP_REST_Response( array( 'success' => true ), 200 );
     }
 
     /**

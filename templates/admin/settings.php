@@ -18,6 +18,13 @@ if ( isset( $_POST['bwg_igf_save_settings'] ) && check_admin_referer( 'bwg_igf_s
     update_option( 'bwg_igf_delete_data_on_uninstall', isset( $_POST['delete_data_on_uninstall'] ) ? 1 : 0 );
     update_option( 'bwg_igf_show_stale_data_indicator', isset( $_POST['show_stale_data_indicator'] ) ? 1 : 0 );
 
+    // Instagram Webhooks verify token (optional). Only administrators may change
+    // it. This value just proves the callback endpoint is ours, so it is stored
+    // in plaintext and may be displayed.
+    if ( current_user_can( 'manage_options' ) ) {
+        update_option( 'bwg_igf_webhook_verify_token', sanitize_text_field( wp_unslash( $_POST['webhook_verify_token'] ?? '' ) ) );
+    }
+
     // Instagram App credentials. Only administrators may change these. The App
     // Secret is stored encrypted at rest and is never written back to the page.
     // Skip entirely when wp-config constants are in use: the fields are disabled
@@ -60,6 +67,17 @@ if ( isset( $_POST['bwg_igf_save_settings'] ) && check_admin_referer( 'bwg_igf_s
 $default_cache = get_option( 'bwg_igf_default_cache_duration', 3600 );
 $delete_data = get_option( 'bwg_igf_delete_data_on_uninstall', 0 );
 $show_stale_indicator = get_option( 'bwg_igf_show_stale_data_indicator', 0 );
+
+// Instagram Webhooks: the Callback URL is our REST endpoint, and the Verify
+// Token is a value we define and paste into Meta. Generate and persist a
+// default token on first view so there is always a value ready to copy. Only
+// administrators can trigger this default save.
+$webhook_verify_token = (string) get_option( 'bwg_igf_webhook_verify_token', '' );
+if ( '' === $webhook_verify_token && current_user_can( 'manage_options' ) ) {
+    $webhook_verify_token = wp_generate_password( 24, false );
+    update_option( 'bwg_igf_webhook_verify_token', $webhook_verify_token );
+}
+$webhook_callback_url = rest_url( 'bwg-igf/v1/instagram-webhook' );
 ?>
 <div class="wrap">
     <div class="bwg-igf-header">
@@ -223,6 +241,55 @@ $show_stale_indicator = get_option( 'bwg_igf_show_stale_data_indicator', 0 );
                                 ?>
                             </p>
                         <?php endif; ?>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="bwg-igf-widget" style="margin-top: 20px;">
+            <h2><?php esc_html_e( 'Instagram Webhooks (optional)', 'bwg-instagram-feed' ); ?></h2>
+            <p class="description">
+                <?php esc_html_e( 'These values are only needed to complete the "Configure webhooks" step in your Meta app. Displaying the feed does not require webhooks — you can ignore this section unless Meta is asking you for a Callback URL and Verify Token.', 'bwg-instagram-feed' ); ?>
+            </p>
+
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php esc_html_e( 'Callback URL', 'bwg-instagram-feed' ); ?></th>
+                    <td>
+                        <input type="text" class="regular-text code" readonly value="<?php echo esc_url( $webhook_callback_url ); ?>" onclick="this.select();" style="max-width: 520px; background: #f6f7f7;">
+                        <button type="button" class="button button-small" onclick="navigator.clipboard.writeText('<?php echo esc_js( $webhook_callback_url ); ?>'); this.innerText='Copied!';">
+                            <?php esc_html_e( 'Copy', 'bwg-instagram-feed' ); ?>
+                        </button>
+                        <p class="description">
+                            <?php esc_html_e( 'Paste this into your Meta app under Instagram → Configure webhooks → Callback URL.', 'bwg-instagram-feed' ); ?>
+                        </p>
+                        <?php if ( false !== strpos( $webhook_callback_url, '?' ) ) : ?>
+                            <?php // Plain permalinks make rest_url() emit a ?rest_route= query string; warn as we do for the OAuth redirect URI. ?>
+                            <p class="description" style="color: #d63638;">
+                                <span class="dashicons dashicons-warning" style="color: #d63638;"></span>
+                                <?php
+                                printf(
+                                    /* translators: %s: link to the Permalinks settings screen */
+                                    esc_html__( 'This Callback URL contains a query string because your site uses Plain permalinks. Enable pretty permalinks under %s (any option other than "Plain") for a clean URL.', 'bwg-instagram-feed' ),
+                                    '<a href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Settings → Permalinks', 'bwg-instagram-feed' ) . '</a>'
+                                );
+                                ?>
+                            </p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="webhook_verify_token"><?php esc_html_e( 'Verify Token', 'bwg-instagram-feed' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="text" name="webhook_verify_token" id="webhook_verify_token" class="regular-text code" value="<?php echo esc_attr( $webhook_verify_token ); ?>" autocomplete="off" style="max-width: 520px;">
+                        <button type="button" class="button button-small" onclick="navigator.clipboard.writeText(document.getElementById('webhook_verify_token').value); this.innerText='Copied!';">
+                            <?php esc_html_e( 'Copy', 'bwg-instagram-feed' ); ?>
+                        </button>
+                        <p class="description">
+                            <?php esc_html_e( 'Paste this same value into your Meta app under Instagram → Configure webhooks → Verify Token, then click "Verify and save". A default has been generated for you; you can change it and save.', 'bwg-instagram-feed' ); ?>
+                        </p>
                     </td>
                 </tr>
             </table>
