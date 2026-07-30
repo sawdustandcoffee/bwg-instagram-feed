@@ -29,7 +29,7 @@
          */
         initAsyncLoading: function() {
             var self = this;
-            var feedsNeedingLoad = document.querySelectorAll('.bwg-igf-feed[data-needs-load="true"]');
+            var feedsNeedingLoad = document.querySelectorAll('.bwg-igf-feed[data-bwgigf-needs-load="true"]');
 
             feedsNeedingLoad.forEach(function(feed) {
                 self.loadFeedAsync(feed);
@@ -42,7 +42,7 @@
          */
         loadFeedAsync: function(feed) {
             var self = this;
-            var feedId = feed.dataset.feedId;
+            var feedId = feed.dataset.bwgigfFeedId;
 
             // Check if we have the necessary data
             if (!feedId || typeof bwgIgfFrontend === 'undefined') {
@@ -92,11 +92,11 @@
             var self = this;
             var posts = data.posts;
             var displaySettings = data.display_settings || {};
-            var layoutType = data.layout_type || feed.dataset.layoutType || 'grid';
-            var hoverEffect = feed.dataset.hoverEffect || 'none';
-            var showLikes = feed.dataset.showLikes === 'true';
-            var showComments = feed.dataset.showComments === 'true';
-            var showFollow = feed.dataset.showFollow === 'true';
+            var layoutType = data.layout_type || feed.dataset.bwgigfLayoutType || 'grid';
+            var hoverEffect = feed.dataset.bwgigfHoverEffect || 'none';
+            var showLikes = feed.dataset.bwgigfShowLikes === 'true';
+            var showComments = feed.dataset.bwgigfShowComments === 'true';
+            var showFollow = feed.dataset.bwgigfShowFollow === 'true';
 
             // Remove loading state
             var loadingEl = feed.querySelector('.bwg-igf-loading');
@@ -161,11 +161,11 @@
                 var fullImageUrl = self.getProxyUrl(post.full_image || '');
 
                 html += '<div class="' + itemClass + '"';
-                html += ' data-full-image="' + self.escapeAttr(fullImageUrl) + '"';
-                html += ' data-caption="' + self.escapeAttr(post.caption || '') + '"';
-                html += ' data-likes="' + (post.likes || 0) + '"';
-                html += ' data-comments="' + (post.comments || 0) + '"';
-                html += ' data-link="' + self.escapeAttr(post.link || '') + '"';
+                html += ' data-bwgigf-full-image="' + self.escapeAttr(fullImageUrl) + '"';
+                html += ' data-bwgigf-caption="' + self.escapeAttr(post.caption || '') + '"';
+                html += ' data-bwgigf-likes="' + (post.likes || 0) + '"';
+                html += ' data-bwgigf-comments="' + (post.comments || 0) + '"';
+                html += ' data-bwgigf-link="' + self.escapeAttr(post.link || '') + '"';
                 html += '>';
                 html += '<img src="' + self.escapeAttr(thumbnailUrl) + '"';
                 html += ' alt="' + self.escapeAttr(post.caption || 'Instagram post') + '"';
@@ -196,14 +196,14 @@
             feed.innerHTML = html;
 
             // Update needs-load attribute
-            feed.dataset.needsLoad = 'false';
+            feed.dataset.bwgigfNeedsLoad = 'false';
 
             // Re-initialize components for this feed
             if (layoutType === 'slider') {
                 new BWGIGFSlider(feed);
             }
 
-            if (feed.dataset.popup === 'true') {
+            if (feed.dataset.bwgigfPopup === 'true') {
                 new BWGIGFPopup(feed);
             }
 
@@ -239,7 +239,7 @@
             }
 
             // Admin-only error display with distinctive styling
-            var errorHtml = '<div class="bwg-igf-empty-state bwg-igf-admin-notice" data-admin-only="true">';
+            var errorHtml = '<div class="bwg-igf-empty-state bwg-igf-admin-notice" data-bwgigf-admin-only="true">';
             errorHtml += '<span class="bwg-igf-admin-notice-badge">Admin Notice</span>';
             errorHtml += '<div class="bwg-igf-empty-state-icon">';
             errorHtml += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">';
@@ -270,7 +270,7 @@
             }
 
             // Admin-only empty state display
-            var emptyHtml = '<div class="bwg-igf-empty-state bwg-igf-admin-notice" data-admin-only="true">';
+            var emptyHtml = '<div class="bwg-igf-empty-state bwg-igf-admin-notice" data-bwgigf-admin-only="true">';
             emptyHtml += '<span class="bwg-igf-admin-notice-badge">Admin Notice</span>';
             emptyHtml += '<div class="bwg-igf-empty-state-icon">';
             emptyHtml += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">';
@@ -487,7 +487,7 @@
         },
 
         initPopups: function() {
-            var feeds = document.querySelectorAll('.bwg-igf-feed[data-popup="true"]');
+            var feeds = document.querySelectorAll('.bwg-igf-feed[data-bwgigf-popup="true"]');
 
             feeds.forEach(function(feed) {
                 new BWGIGFPopup(feed);
@@ -527,13 +527,13 @@
 
         this.currentIndex = 0;
         // Store the original configured value
-        this.configuredSlidesToShow = parseInt(element.dataset.slidesToShow) || 3;
+        this.configuredSlidesToShow = parseInt(element.dataset.bwgigfSlidesToShow) || 3;
         // Calculate responsive slidesToShow based on viewport
         this.slidesToShow = this.getResponsiveSlidesToShow();
-        this.autoplay = element.dataset.autoplay === 'true';
-        this.autoplaySpeed = parseInt(element.dataset.autoplaySpeed) || 3000;
-        this.transitionDuration = parseInt(element.dataset.transitionDuration) || 600;
-        this.infinite = element.dataset.infinite === 'true';
+        this.autoplay = element.dataset.bwgigfAutoplay === 'true';
+        this.autoplaySpeed = parseInt(element.dataset.bwgigfAutoplaySpeed) || 3000;
+        this.transitionDuration = parseInt(element.dataset.bwgigfTransitionDuration) || 600;
+        this.infinite = element.dataset.bwgigfInfinite === 'true';
 
         this.init();
     }
@@ -618,8 +618,8 @@
             var configured = this.configuredSlidesToShow;
 
             // Get custom responsive settings from data attributes (Feature #52)
-            var mobileColumns = parseInt(this.element.dataset.mobileColumns) || 1;
-            var tabletColumns = parseInt(this.element.dataset.tabletColumns) || 2;
+            var mobileColumns = parseInt(this.element.dataset.bwgigfMobileColumns) || 1;
+            var tabletColumns = parseInt(this.element.dataset.bwgigfTabletColumns) || 2;
 
             if (viewportWidth < 768) {
                 // Mobile: use custom mobile columns setting
@@ -1090,7 +1090,7 @@
             var videoSource = popupVideo.querySelector('source');
 
             // Check if this is a video post (Feature #48)
-            var isVideo = item.dataset.mediaType === 'video' && item.dataset.videoUrl;
+            var isVideo = item.dataset.bwgigfMediaType === 'video' && item.dataset.bwgigfVideoUrl;
 
             if (isVideo) {
                 // Show video, hide image
@@ -1103,7 +1103,7 @@
                 }
 
                 // Set video source and load
-                videoSource.src = item.dataset.videoUrl;
+                videoSource.src = item.dataset.bwgigfVideoUrl;
                 popupVideo.load();
 
                 // Try to autoplay with muted audio (required by browsers)
@@ -1127,17 +1127,17 @@
                     popupVideo.pause();
                 }
 
-                popupImage.src = item.dataset.fullImage || img.src;
+                popupImage.src = item.dataset.bwgigfFullImage || img.src;
                 popupImage.alt = img.alt || '';
             }
 
             // Update caption, stats, and link (same for both image and video)
-            this.popup.querySelector('.bwg-igf-popup-caption').textContent = item.dataset.caption || '';
+            this.popup.querySelector('.bwg-igf-popup-caption').textContent = item.dataset.bwgigfCaption || '';
             this.popup.querySelector('.bwg-igf-popup-stats').innerHTML = [
-                item.dataset.likes ? '<span>❤️ ' + item.dataset.likes + '</span>' : '',
-                item.dataset.comments ? '<span>💬 ' + item.dataset.comments + '</span>' : ''
+                item.dataset.bwgigfLikes ? '<span>❤️ ' + item.dataset.bwgigfLikes + '</span>' : '',
+                item.dataset.bwgigfComments ? '<span>💬 ' + item.dataset.bwgigfComments + '</span>' : ''
             ].join(' ');
-            this.popup.querySelector('.bwg-igf-popup-link').href = item.dataset.link || '#';
+            this.popup.querySelector('.bwg-igf-popup-link').href = item.dataset.bwgigfLink || '#';
         },
 
         next: function() {

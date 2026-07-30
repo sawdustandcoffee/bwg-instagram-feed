@@ -427,7 +427,7 @@ if ( ! empty( $custom_css ) ) :
 
 <?php
 // Output responsive CSS for Feature #52
-$feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
+$feed_selector = '.bwg-igf-feed[data-bwgigf-feed-id="' . esc_attr( $feed->id ) . '"]';
 ?>
 <style type="text/css" id="bwg-igf-responsive-css-<?php echo esc_attr( $feed->id ); ?>">
 /* Tablet breakpoint (768px - 1024px) */
@@ -456,25 +456,25 @@ $feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
 </style>
 <div
     class="<?php echo esc_attr( implode( ' ', $feed_classes ) ); ?><?php echo $needs_async_load ? ' bwg-igf-loading-feed' : ''; ?>"
-    data-feed-id="<?php echo esc_attr( $feed->id ); ?>"
-    data-popup="<?php echo $popup_enabled ? 'true' : 'false'; ?>"
-    data-needs-load="<?php echo $needs_async_load ? 'true' : 'false'; ?>"
-    data-layout-type="<?php echo esc_attr( $feed->layout_type ); ?>"
-    data-columns="<?php echo esc_attr( $columns ); ?>"
-    data-hover-effect="<?php echo esc_attr( $hover_effect ); ?>"
-    data-show-likes="<?php echo ! empty( $display_settings['show_likes'] ) ? 'true' : 'false'; ?>"
-    data-show-comments="<?php echo ! empty( $display_settings['show_comments'] ) ? 'true' : 'false'; ?>"
-    data-show-follow="<?php echo ! empty( $display_settings['show_follow_button'] ) ? 'true' : 'false'; ?>"
-    data-mobile-columns="<?php echo esc_attr( $mobile_columns ); ?>"
-    data-mobile-rows="<?php echo esc_attr( $mobile_rows ); ?>"
-    data-tablet-columns="<?php echo esc_attr( $tablet_columns ); ?>"
-    data-tablet-rows="<?php echo esc_attr( $tablet_rows ); ?>"
+    data-bwgigf-feed-id="<?php echo esc_attr( $feed->id ); ?>"
+    data-bwgigf-popup="<?php echo $popup_enabled ? 'true' : 'false'; ?>"
+    data-bwgigf-needs-load="<?php echo $needs_async_load ? 'true' : 'false'; ?>"
+    data-bwgigf-layout-type="<?php echo esc_attr( $feed->layout_type ); ?>"
+    data-bwgigf-columns="<?php echo esc_attr( $columns ); ?>"
+    data-bwgigf-hover-effect="<?php echo esc_attr( $hover_effect ); ?>"
+    data-bwgigf-show-likes="<?php echo ! empty( $display_settings['show_likes'] ) ? 'true' : 'false'; ?>"
+    data-bwgigf-show-comments="<?php echo ! empty( $display_settings['show_comments'] ) ? 'true' : 'false'; ?>"
+    data-bwgigf-show-follow="<?php echo ! empty( $display_settings['show_follow_button'] ) ? 'true' : 'false'; ?>"
+    data-bwgigf-mobile-columns="<?php echo esc_attr( $mobile_columns ); ?>"
+    data-bwgigf-mobile-rows="<?php echo esc_attr( $mobile_rows ); ?>"
+    data-bwgigf-tablet-columns="<?php echo esc_attr( $tablet_columns ); ?>"
+    data-bwgigf-tablet-rows="<?php echo esc_attr( $tablet_rows ); ?>"
     <?php if ( 'slider' === $feed->layout_type ) : ?>
-    data-slides-to-show="<?php echo esc_attr( $slides_to_show ); ?>"
-    data-autoplay="<?php echo $autoplay ? 'true' : 'false'; ?>"
-    data-autoplay-speed="<?php echo esc_attr( $autoplay_speed ); ?>"
-    data-transition-duration="<?php echo esc_attr( $transition_duration ); ?>"
-    data-infinite="<?php echo $infinite ? 'true' : 'false'; ?>"
+    data-bwgigf-slides-to-show="<?php echo esc_attr( $slides_to_show ); ?>"
+    data-bwgigf-autoplay="<?php echo $autoplay ? 'true' : 'false'; ?>"
+    data-bwgigf-autoplay-speed="<?php echo esc_attr( $autoplay_speed ); ?>"
+    data-bwgigf-transition-duration="<?php echo esc_attr( $transition_duration ); ?>"
+    data-bwgigf-infinite="<?php echo $infinite ? 'true' : 'false'; ?>"
     <?php endif; ?>
     style="<?php echo esc_attr( implode( '; ', $custom_styles ) ); ?>"
 >
@@ -789,14 +789,14 @@ $feed_selector = '.bwg-igf-feed[data-feed-id="' . esc_attr( $feed->id ) . '"]';
                 target="_blank"
                 rel="noopener noreferrer"
                 <?php endif; ?>
-                data-full-image="<?php echo esc_url( $full_image_url ); ?>"
-                data-caption="<?php echo esc_attr( $post['caption'] ?? '' ); ?>"
-                data-likes="<?php echo esc_attr( $post['likes'] ?? 0 ); ?>"
-                data-comments="<?php echo esc_attr( $post['comments'] ?? 0 ); ?>"
-                data-link="<?php echo esc_url( $post['link'] ?? '' ); ?>"
+                data-bwgigf-full-image="<?php echo esc_url( $full_image_url ); ?>"
+                data-bwgigf-caption="<?php echo esc_attr( $post['caption'] ?? '' ); ?>"
+                data-bwgigf-likes="<?php echo esc_attr( $post['likes'] ?? 0 ); ?>"
+                data-bwgigf-comments="<?php echo esc_attr( $post['comments'] ?? 0 ); ?>"
+                data-bwgigf-link="<?php echo esc_url( $post['link'] ?? '' ); ?>"
                 <?php if ( $is_video && ! empty( $video_url ) ) : ?>
-                data-video-url="<?php echo esc_url( $video_url ); ?>"
-                data-media-type="video"
+                data-bwgigf-video-url="<?php echo esc_url( $video_url ); ?>"
+                data-bwgigf-media-type="video"
                 <?php endif; ?>
             >
                 <img
