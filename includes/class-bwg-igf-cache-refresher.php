@@ -153,11 +153,19 @@ class BWG_IGF_Cache_Refresher {
 		$feeds_to_refresh = array_slice( $feeds_to_refresh, 0, self::MAX_FEEDS_PER_RUN );
 
 		if ( class_exists( 'BWG_IGF_Logger' ) ) {
+			// Name the feeds. A bare count cannot distinguish "the other feed was
+			// refreshed on a different run" from "the other feed is never picked up".
+			$feed_labels = array();
+			foreach ( $feeds_to_refresh as $queued_feed ) {
+				$feed_labels[] = sprintf( '%s (#%d)', $queued_feed->name, $queued_feed->id );
+			}
+
 			BWG_IGF_Logger::info(
 				sprintf(
-					/* translators: %d: number of feeds */
-					__( 'Background cache refresh started for %d feeds', 'bwg-instagram-feed' ),
-					count( $feeds_to_refresh )
+					/* translators: 1: number of feeds, 2: comma-separated feed names */
+					__( 'Background cache refresh started for %1$d feeds: %2$s', 'bwg-instagram-feed' ),
+					count( $feeds_to_refresh ),
+					implode( ', ', $feed_labels )
 				)
 			);
 		}
@@ -240,8 +248,14 @@ class BWG_IGF_Cache_Refresher {
 	 * Get feeds that need their cache refreshed.
 	 *
 	 * Returns feeds where:
-	 * - Feed status is 'active'
+	 * - Feed status is 'active' or 'error'
 	 * - Cache is expiring within REFRESH_BUFFER seconds (or already expired)
+	 *
+	 * 'error' feeds are included deliberately. That status is set by a failed
+	 * manual refresh and cleared only by a successful one, so excluding it meant
+	 * a single transient failure removed a feed from background refresh
+	 * permanently. A successful refresh here clears the status. 'inactive' stays
+	 * excluded - that one is a deliberate choice by the site owner.
 	 *
 	 * @return array Array of feed objects.
 	 */
@@ -265,10 +279,9 @@ class BWG_IGF_Cache_Refresher {
 					FROM {$cache_table}
 					GROUP BY feed_id
 				) c ON f.id = c.feed_id
-				WHERE f.status = %s
+				WHERE f.status IN ('active', 'error')
 				AND (c.latest_expiry IS NULL OR c.latest_expiry <= %s)
 				ORDER BY c.latest_expiry ASC",
-				'active',
 				$threshold_time
 			)
 		);
@@ -308,7 +321,55 @@ class BWG_IGF_Cache_Refresher {
 		if ( ! empty( $posts ) ) {
 			$account_id = ! empty( $feed->connected_account_id ) ? $feed->connected_account_id : 0;
 			BWG_IGF_Instagram_Fetcher::store_cache( $feed->id, $posts, $feed->cache_duration, $account_id );
+
+			// A successful background refresh clears a previous error state.
+			// Without this, a feed set to 'error' by a failed manual refresh stays
+			// there until someone re-saves it by hand.
+			if ( 'active' !== $feed->status ) {
+				global $wpdb;
+				$wpdb->update(
+					$wpdb->prefix . 'bwg_igf_feeds',
+					array(
+						'status'        => 'active',
+						'error_message' => null,
+					),
+					array( 'id' => $feed->id ),
+					array( '%s', '%s' ),
+					array( '%d' )
+				);
+
+				if ( class_exists( 'BWG_IGF_Logger' ) ) {
+					BWG_IGF_Logger::info(
+						__( 'Feed recovered - background refresh succeeded, error status cleared', 'bwg-instagram-feed' ),
+						array( 'feed_id' => $feed->id )
+					);
+				}
+			}
+
+			if ( class_exists( 'BWG_IGF_Logger' ) ) {
+				BWG_IGF_Logger::info(
+					sprintf(
+						/* translators: 1: feed name, 2: number of posts */
+						__( 'Refreshed feed "%1$s" (%2$d posts)', 'bwg-instagram-feed' ),
+						$feed->name,
+						count( $posts )
+					),
+					array( 'feed_id' => $feed->id )
+				);
+			}
+
 			return true;
+		}
+
+		if ( class_exists( 'BWG_IGF_Logger' ) ) {
+			BWG_IGF_Logger::warning(
+				sprintf(
+					/* translators: %s: feed name */
+					__( 'Feed "%s" returned no posts - cache left unchanged', 'bwg-instagram-feed' ),
+					$feed->name
+				),
+				array( 'feed_id' => $feed->id )
+			);
 		}
 
 		return false;
