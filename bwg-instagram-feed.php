@@ -171,6 +171,12 @@ final class BWG_Instagram_Feed {
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-cache-refresher.php';
         BWG_IGF_Cache_Refresher::init();
 
+        // Re-assert the schedule on load. It is registered on activation, but a
+        // cron array reset or a migration can drop the event, and nothing would
+        // ever put it back - leaving the handler waiting on an event that never
+        // fires. schedule() is a no-op when the event already exists.
+        BWG_IGF_Cache_Refresher::schedule();
+
         // Load Instagram API service.
         require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-api.php';
 

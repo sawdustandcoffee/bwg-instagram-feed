@@ -761,17 +761,29 @@ class BWG_IGF_API_Tracker {
     public static function is_any_account_rate_limited() {
         global $wpdb;
 
-        // Check for any backoff transients.
+        // Check for any backoff transients that are still in effect.
+        //
+        // WordPress only deletes an expired transient when something reads it by
+        // key, and nothing reads these by key here. Counting rows alone would
+        // therefore treat a long-dead backoff as active forever, permanently
+        // skipping every cache refresh. Read each one through get_transient() so
+        // expired entries are evaluated (and garbage collected) properly.
         $transient_prefix = '_transient_bwg_igf_backoff_';
-        $has_backoff = $wpdb->get_var(
+        $backoff_options  = $wpdb->get_col(
             $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+                "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
                 $wpdb->esc_like( $transient_prefix ) . '%'
             )
         );
 
-        if ( intval( $has_backoff ) > 0 ) {
-            return true;
+        if ( ! empty( $backoff_options ) ) {
+            foreach ( $backoff_options as $option_name ) {
+                $transient_key = substr( $option_name, strlen( '_transient_' ) );
+
+                if ( false !== get_transient( $transient_key ) ) {
+                    return true;
+                }
+            }
         }
 
         // Also check the API calls table for recent rate limit errors.

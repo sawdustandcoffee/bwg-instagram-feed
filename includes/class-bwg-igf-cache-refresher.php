@@ -141,7 +141,11 @@ class BWG_IGF_Cache_Refresher {
 		$feeds_to_refresh = self::get_feeds_needing_refresh();
 
 		if ( empty( $feeds_to_refresh ) ) {
-			// No feeds need refresh - nothing to do.
+			// Nothing to do - but say so, otherwise "cron ran and found nothing"
+			// and "cron never ran at all" are indistinguishable in the log.
+			if ( class_exists( 'BWG_IGF_Logger' ) ) {
+				BWG_IGF_Logger::info( __( 'Background cache refresh ran - no feeds needed refreshing', 'bwg-instagram-feed' ) );
+			}
 			return;
 		}
 
@@ -172,8 +176,28 @@ class BWG_IGF_Cache_Refresher {
 				break;
 			}
 
-			// Refresh this feed's cache.
-			$success = self::refresh_feed_cache( $feed );
+			// Refresh this feed's cache. A fatal in one feed used to kill the
+			// whole cron run before anything was logged, which is how a broken
+			// refresh went unnoticed indefinitely - catch it, log it, keep going.
+			try {
+				$success = self::refresh_feed_cache( $feed );
+			} catch ( \Throwable $e ) {
+				$success = false;
+
+				if ( class_exists( 'BWG_IGF_Logger' ) ) {
+					BWG_IGF_Logger::error(
+						sprintf(
+							/* translators: %s: error message */
+							__( 'Cache refresh failed with an unexpected error: %s', 'bwg-instagram-feed' ),
+							$e->getMessage()
+						),
+						array(
+							'feed_id' => $feed->id,
+							'file'    => $e->getFile() . ':' . $e->getLine(),
+						)
+					);
+				}
+			}
 
 			if ( $success ) {
 				$refreshed_count++;
@@ -311,12 +335,48 @@ class BWG_IGF_Cache_Refresher {
 		);
 
 		if ( ! $account ) {
+			if ( class_exists( 'BWG_IGF_Logger' ) ) {
+				BWG_IGF_Logger::error(
+					__( 'Cache refresh skipped: the feed\'s connected account is missing or not active.', 'bwg-instagram-feed' ),
+					array(
+						'feed_id'    => $feed->id,
+						'account_id' => $feed->connected_account_id,
+					)
+				);
+			}
 			return array();
 		}
 
-		// Use the Instagram API to fetch posts.
 		$api = new BWG_IGF_Instagram_API();
-		$result = $api->fetch_connected_posts( $account, $feed->post_count );
+
+		// fetch_connected_posts() expects a decrypted access token, not the
+		// account row. maybe_refresh_token() decrypts the stored token and
+		// renews it when it is close to expiring, matching how the frontend
+		// and admin paths call this API.
+		$access_token = $api->maybe_refresh_token( $feed->connected_account_id );
+
+		if ( is_wp_error( $access_token ) ) {
+			if ( class_exists( 'BWG_IGF_Logger' ) ) {
+				BWG_IGF_Logger::error(
+					sprintf(
+						/* translators: %s: error message */
+						__( 'Cache refresh could not obtain an access token: %s', 'bwg-instagram-feed' ),
+						$access_token->get_error_message()
+					),
+					array(
+						'feed_id'    => $feed->id,
+						'account_id' => $feed->connected_account_id,
+						'error_code' => $access_token->get_error_code(),
+					)
+				);
+			}
+			return array();
+		}
+
+		// Passing the account ID lets the API tracker attribute this call and
+		// apply rate-limit backoff; without it the call is tracked against no
+		// account and the backoff check is skipped entirely.
+		$result = $api->fetch_connected_posts( $access_token, $feed->post_count, $feed->connected_account_id );
 
 		if ( is_wp_error( $result ) ) {
 			if ( class_exists( 'BWG_IGF_Logger' ) ) {

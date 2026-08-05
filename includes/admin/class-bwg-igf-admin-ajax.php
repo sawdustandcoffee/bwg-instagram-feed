@@ -1236,8 +1236,12 @@ class BWG_IGF_Admin_Ajax {
             ) );
         }
 
-        // Store in cache
+        // Store in cache. Never cache past the expiry baked into the signed
+        // image URLs, or the images go dead while the cache still looks valid.
         $cache_duration = absint( $feed->cache_duration ) ?: 3600;
+        if ( class_exists( 'BWG_IGF_Instagram_Fetcher' ) ) {
+            $cache_duration = BWG_IGF_Instagram_Fetcher::cap_duration_to_signature_expiry( $cache_duration, $posts );
+        }
         $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
 
         $wpdb->insert(
