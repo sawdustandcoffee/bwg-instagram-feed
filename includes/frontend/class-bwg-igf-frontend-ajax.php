@@ -80,8 +80,13 @@ class BWG_IGF_Frontend_Ajax {
             : array();
         $cache_is_expired = isset( $cache_result['is_expired'] ) ? $cache_result['is_expired'] : true;
 
+        // Cache whose signed image URLs have expired renders as a grid of
+        // placeholders, so treat it as needing a refetch even if it is
+        // nominally unexpired. It is still kept as the fallback below.
+        $cache_is_unusable = ! empty( $cache_result['is_unusable'] );
+
         // If we have valid (non-expired) cache, return it immediately.
-        if ( ! empty( $cached_posts ) && ! $cache_is_expired ) {
+        if ( ! empty( $cached_posts ) && ! $cache_is_expired && ! $cache_is_unusable ) {
             $this->send_feed_response( $feed, $cached_posts );
             return;
         }
@@ -123,6 +128,8 @@ class BWG_IGF_Frontend_Ajax {
         // Cache the fetched posts (only when real posts were returned).
         if ( ! empty( $posts ) ) {
             $cache_duration = absint( $feed->cache_duration ) ?: 3600;
+            // Never cache past the expiry baked into the signed image URLs.
+            $cache_duration = BWG_IGF_Instagram_Fetcher::cap_duration_to_signature_expiry( $cache_duration, $posts );
             $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
             $cache_key = 'feed_' . $feed_id . '_' . md5( wp_json_encode( $posts ) );
 

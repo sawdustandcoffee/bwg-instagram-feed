@@ -58,6 +58,24 @@ class BWG_IGF_Image_Proxy {
     const CRON_HOOK = 'bwg_igf_proxy_cache_cleanup';
 
     /**
+     * Minimum seconds between identical failure log entries.
+     *
+     * A single page render requests every thumbnail at once, so an outage would
+     * otherwise write one log row per image per page view. Failures are deduped
+     * by type for this window.
+     *
+     * @var int
+     */
+    const LOG_THROTTLE = 300;
+
+    /**
+     * Minimum seconds between signature-expiry cache invalidation sweeps.
+     *
+     * @var int
+     */
+    const INVALIDATE_THROTTLE = 300;
+
+    /**
      * Allowed Instagram CDN domains.
      *
      * @var array
@@ -255,12 +273,16 @@ class BWG_IGF_Image_Proxy {
             curl_close( $ch );
 
             if ( ! empty( $curl_error ) ) {
-                error_log( 'BWG IGF Image Proxy: cURL error - ' . $curl_error );
+                self::log_failure(
+                    'curl',
+                    'cURL error - ' . $curl_error,
+                    array( 'url' => $decoded_url )
+                );
                 return self::return_placeholder_image();
             }
 
             if ( 200 !== $status_code ) {
-                error_log( 'BWG IGF Image Proxy: Image returned status ' . $status_code . ' for URL: ' . $decoded_url );
+                self::handle_fetch_failure( $status_code, $decoded_url );
                 return self::return_placeholder_image();
             }
 
@@ -268,7 +290,11 @@ class BWG_IGF_Image_Proxy {
             $body        = substr( $response, $header_size );
 
             if ( empty( $body ) ) {
-                error_log( 'BWG IGF Image Proxy: Empty response body for URL: ' . $decoded_url );
+                self::log_failure(
+                    'empty_body',
+                    'Empty response body for URL: ' . $decoded_url,
+                    array( 'url' => $decoded_url )
+                );
                 return self::return_placeholder_image();
             }
 
@@ -294,21 +320,29 @@ class BWG_IGF_Image_Proxy {
             );
 
             if ( is_wp_error( $response ) ) {
-                error_log( 'BWG IGF Image Proxy: Failed to fetch image - ' . $response->get_error_message() );
+                self::log_failure(
+                    'transport',
+                    'Failed to fetch image - ' . $response->get_error_message(),
+                    array( 'url' => $decoded_url )
+                );
                 return self::return_placeholder_image();
             }
 
             $status_code = wp_remote_retrieve_response_code( $response );
 
             if ( 200 !== $status_code ) {
-                error_log( 'BWG IGF Image Proxy: Image returned status ' . $status_code . ' for URL: ' . $decoded_url );
+                self::handle_fetch_failure( $status_code, $decoded_url );
                 return self::return_placeholder_image();
             }
 
             $body = wp_remote_retrieve_body( $response );
 
             if ( empty( $body ) ) {
-                error_log( 'BWG IGF Image Proxy: Empty response body for URL: ' . $decoded_url );
+                self::log_failure(
+                    'empty_body',
+                    'Empty response body for URL: ' . $decoded_url,
+                    array( 'url' => $decoded_url )
+                );
                 return self::return_placeholder_image();
             }
 
@@ -322,7 +356,14 @@ class BWG_IGF_Image_Proxy {
 
         // Validate it's actually an image
         if ( ! self::is_valid_image_type( $content_type ) ) {
-            error_log( 'BWG IGF Image Proxy: Invalid content type: ' . $content_type );
+            self::log_failure(
+                'content_type',
+                'Invalid content type: ' . $content_type,
+                array(
+                    'url'          => $decoded_url,
+                    'content_type' => $content_type,
+                )
+            );
             return self::return_placeholder_image();
         }
 
@@ -800,6 +841,180 @@ class BWG_IGF_Image_Proxy {
         }
 
         return false;
+    }
+
+    /**
+     * Get the expiry timestamp encoded in an Instagram CDN URL.
+     *
+     * Instagram/fbcdn media URLs are signed and carry their own expiry in the
+     * `oe` query parameter as a hex Unix timestamp. That expiry is independent
+     * of the plugin's own cache duration and of access token validity: once it
+     * passes, the CDN returns 403 no matter how healthy everything else is.
+     *
+     * @param string $url The Instagram CDN URL.
+     * @return int|false Unix timestamp of expiry, or false if not present/parseable.
+     */
+    public static function get_url_expiry( $url ) {
+        if ( empty( $url ) || ! is_string( $url ) ) {
+            return false;
+        }
+
+        $query = wp_parse_url( $url, PHP_URL_QUERY );
+        if ( empty( $query ) ) {
+            return false;
+        }
+
+        parse_str( $query, $params );
+
+        if ( empty( $params['oe'] ) || ! is_string( $params['oe'] ) ) {
+            return false;
+        }
+
+        $hex = trim( $params['oe'] );
+
+        // Must be a plain hex string; anything else is not an expiry we understand.
+        if ( ! preg_match( '/^[0-9A-Fa-f]{1,16}$/', $hex ) ) {
+            return false;
+        }
+
+        $timestamp = hexdec( $hex );
+
+        // Sanity check: reject values outside a plausible range so a malformed or
+        // repurposed parameter can never expire caches early or defer them forever.
+        // 1451606400 = 2016-01-01, 4102444800 = 2100-01-01.
+        if ( $timestamp < 1451606400 || $timestamp > 4102444800 ) {
+            return false;
+        }
+
+        return (int) $timestamp;
+    }
+
+    /**
+     * Check whether an Instagram CDN URL's signature has already expired.
+     *
+     * URLs with no parseable expiry are treated as not expired, so unknown URL
+     * formats keep working rather than being purged aggressively.
+     *
+     * @param string $url    The Instagram CDN URL.
+     * @param int    $buffer Optional. Seconds of headroom to require. Default 0.
+     * @return bool True if the signature is expired (or expires within $buffer).
+     */
+    public static function is_url_expired( $url, $buffer = 0 ) {
+        $expiry = self::get_url_expiry( $url );
+
+        if ( false === $expiry ) {
+            return false;
+        }
+
+        return $expiry <= ( time() + (int) $buffer );
+    }
+
+    /**
+     * Record an image proxy failure.
+     *
+     * Writes to the plugin's own log table so failures are visible in wp-admin,
+     * and keeps the error_log line for server-level debugging. Throttled by
+     * failure type to avoid flooding either sink during an outage.
+     *
+     * @param string $type    Short failure type slug, used as the throttle key.
+     * @param string $message Human readable message.
+     * @param array  $context Optional. Additional context for the log entry.
+     */
+    private static function log_failure( $type, $message, $context = array() ) {
+        error_log( 'BWG IGF Image Proxy: ' . $message );
+
+        $throttle_key = 'bwg_igf_proxy_log_' . $type;
+
+        if ( get_transient( $throttle_key ) ) {
+            return;
+        }
+
+        set_transient( $throttle_key, 1, self::LOG_THROTTLE );
+
+        if ( class_exists( 'BWG_IGF_Logger' ) ) {
+            BWG_IGF_Logger::error( 'Image proxy: ' . $message, $context );
+        }
+    }
+
+    /**
+     * Handle a non-200 response from the Instagram CDN.
+     *
+     * Distinguishes the common failure modes so the log says what actually went
+     * wrong, and triggers cache invalidation when the cause is an expired
+     * signature rather than something transient.
+     *
+     * @param int    $status_code HTTP status returned by the CDN.
+     * @param string $url         The Instagram CDN URL that was requested.
+     */
+    private static function handle_fetch_failure( $status_code, $url ) {
+        $status_code = (int) $status_code;
+        $expiry      = self::get_url_expiry( $url );
+        $is_expired  = ( false !== $expiry && $expiry <= time() );
+
+        $context = array(
+            'url'    => $url,
+            'status' => $status_code,
+        );
+
+        if ( false !== $expiry ) {
+            $context['url_expires_at'] = gmdate( 'Y-m-d H:i:s', $expiry ) . ' UTC';
+        }
+
+        if ( 403 === $status_code && $is_expired ) {
+            self::log_failure(
+                'expired_signature',
+                sprintf(
+                    'Instagram CDN returned 403 - the signed media URL expired on %s UTC. The feed cache is being refreshed.',
+                    gmdate( 'Y-m-d H:i:s', $expiry )
+                ),
+                $context
+            );
+
+            self::handle_expired_signature();
+            return;
+        }
+
+        if ( 429 === $status_code ) {
+            self::log_failure(
+                'rate_limited',
+                'Instagram CDN returned 429 (rate limited) for URL: ' . $url,
+                $context
+            );
+            return;
+        }
+
+        self::log_failure(
+            'status_' . $status_code,
+            'Image returned status ' . $status_code . ' for URL: ' . $url,
+            $context
+        );
+    }
+
+    /**
+     * Handle a 403 from the Instagram CDN.
+     *
+     * A 403 on a signed media URL almost always means the signature expired
+     * while the feed cache kept serving it. Expire any cache rows holding dead
+     * URLs so the next render refetches instead of serving broken images
+     * indefinitely. Throttled so a page full of failures triggers one sweep.
+     */
+    private static function handle_expired_signature() {
+        if ( get_transient( 'bwg_igf_proxy_invalidate_lock' ) ) {
+            return;
+        }
+
+        set_transient( 'bwg_igf_proxy_invalidate_lock', 1, self::INVALIDATE_THROTTLE );
+
+        if ( ! class_exists( 'BWG_IGF_Instagram_Fetcher' ) ) {
+            $fetcher = BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-instagram-fetcher.php';
+            if ( file_exists( $fetcher ) ) {
+                require_once $fetcher;
+            }
+        }
+
+        if ( class_exists( 'BWG_IGF_Instagram_Fetcher' ) ) {
+            BWG_IGF_Instagram_Fetcher::invalidate_expired_signature_caches();
+        }
     }
 
     /**

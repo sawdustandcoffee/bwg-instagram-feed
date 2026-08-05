@@ -94,8 +94,29 @@ $cache_result = BWG_IGF_Instagram_Fetcher::get_cached_posts_any( $feed->id );
 $cache_created_at = $cache_result['created_at'];
 $is_using_stale_cache = $cache_result['is_expired'];
 
+// Stale cache is fine to serve; unusable cache is not. Cache becomes unusable
+// when its signed Instagram image URLs have expired (every image would render
+// as the proxy's "Image unavailable" placeholder) or when the background
+// refresh has been stalled long enough that the content is no longer credible.
+// Treating it as absent hands off to the async loader below, which refetches
+// and falls back to this same cached data if the refetch fails.
+$cache_is_unusable = ! empty( $cache_result['is_unusable'] );
+
+// Guard against a refetch on every page view. If a refresh was already
+// attempted recently and the cache is still unusable, the refetch is not
+// helping - serve what we have rather than hitting the API for each visitor.
+if ( $cache_is_unusable ) {
+    $refetch_cooldown_key = 'bwg_igf_refetch_cooldown_' . $feed->id;
+
+    if ( get_transient( $refetch_cooldown_key ) ) {
+        $cache_is_unusable = false;
+    } else {
+        set_transient( $refetch_cooldown_key, 1, 15 * MINUTE_IN_SECONDS );
+    }
+}
+
 // Determine if we have cached posts
-$has_cache = ! empty( $cache_result['posts'] );
+$has_cache = ! empty( $cache_result['posts'] ) && ! $cache_is_unusable;
 $posts = $has_cache ? $cache_result['posts'] : array();
 $no_cache_message = '';
 $rate_limit_warning = '';
@@ -149,7 +170,14 @@ if ( 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) 
 // When an account is connected, posts are pre-fetched and stored in a transient.
 if ( $needs_async_load && 'connected' === $feed->feed_type && ! empty( $feed->connected_account_id ) ) {
     $warmed_cache = get_transient( 'bwg_igf_account_cache_' . $feed->connected_account_id );
-    if ( ! empty( $warmed_cache ) && ! empty( $warmed_cache['posts'] ) ) {
+
+    // Warmed cache is written at connect time and can sit unused long enough for
+    // its signed image URLs to expire - don't promote dead URLs into the feed cache.
+    $warmed_usable = ! empty( $warmed_cache )
+        && ! empty( $warmed_cache['posts'] )
+        && ! BWG_IGF_Instagram_Fetcher::posts_have_expired_images( $warmed_cache['posts'] );
+
+    if ( $warmed_usable ) {
         // Use warmed cache data.
         $post_count = absint( $feed->post_count ) ?: 9;
         $posts = array_slice( $warmed_cache['posts'], 0, $post_count );
@@ -158,6 +186,7 @@ if ( $needs_async_load && 'connected' === $feed->feed_type && ! empty( $feed->co
         // Store the warmed cache data in the feed cache for future use.
         if ( ! empty( $posts ) ) {
             $cache_duration = absint( $feed->cache_duration ) ?: 3600;
+            $cache_duration = BWG_IGF_Instagram_Fetcher::cap_duration_to_signature_expiry( $cache_duration, $posts );
             $expires_at = gmdate( 'Y-m-d H:i:s', time() + $cache_duration );
             $cache_key = 'feed_' . $feed->id . '_warmed_' . md5( wp_json_encode( $posts ) );
 

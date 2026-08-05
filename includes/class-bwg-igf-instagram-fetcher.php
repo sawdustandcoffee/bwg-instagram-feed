@@ -20,6 +20,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BWG_IGF_Instagram_Fetcher {
 
     /**
+     * Seconds of headroom to leave before a signed media URL expires.
+     *
+     * Cache entries are never allowed to outlive the images they reference by
+     * more than this margin, so the background refresh fires while the URLs are
+     * still fetchable rather than after they have already gone dead.
+     *
+     * @var int
+     */
+    const SIGNATURE_EXPIRY_BUFFER = 600;
+
+    /**
+     * Minimum cache duration in seconds.
+     *
+     * Floor applied after capping to signature expiry, so a batch of
+     * already-expiring URLs cannot drive the cache duration to zero and cause a
+     * refetch on every request.
+     *
+     * @var int
+     */
+    const MIN_CACHE_DURATION = 300;
+
+    /**
+     * Maximum age in seconds that expired cache may still be served.
+     *
+     * The frontend deliberately serves stale cache so visitors always see
+     * content, but without an upper bound a stalled background refresh means
+     * dead content is served forever. Beyond this age the feed re-fetches
+     * instead.
+     *
+     * @var int
+     */
+    const MAX_STALE_CACHE_AGE = 86400;
+
+    /**
      * Fetch posts for a feed and cache them.
      *
      * Returns valid cached posts when available; otherwise fetches fresh data
@@ -311,6 +345,159 @@ class BWG_IGF_Instagram_Fetcher {
     }
 
     /**
+     * Get the earliest signature expiry across a set of posts.
+     *
+     * Instagram media URLs are individually signed and expire at slightly
+     * different times. The cache is only as good as its shortest-lived image,
+     * so the earliest expiry is the one that matters.
+     *
+     * @param array $posts Array of post data.
+     * @return int|false Earliest Unix expiry timestamp, or false if none found.
+     */
+    public static function get_posts_signature_expiry( $posts ) {
+        if ( empty( $posts ) || ! is_array( $posts ) ) {
+            return false;
+        }
+
+        if ( ! class_exists( 'BWG_IGF_Image_Proxy' ) ) {
+            return false;
+        }
+
+        $earliest = false;
+
+        foreach ( $posts as $post ) {
+            if ( ! is_array( $post ) ) {
+                continue;
+            }
+
+            foreach ( array( 'thumbnail', 'full_image', 'video_url' ) as $field ) {
+                if ( empty( $post[ $field ] ) ) {
+                    continue;
+                }
+
+                $expiry = BWG_IGF_Image_Proxy::get_url_expiry( $post[ $field ] );
+
+                if ( false === $expiry ) {
+                    continue;
+                }
+
+                if ( false === $earliest || $expiry < $earliest ) {
+                    $earliest = $expiry;
+                }
+            }
+        }
+
+        return $earliest;
+    }
+
+    /**
+     * Cap a cache duration so the entry expires before its images do.
+     *
+     * Posts whose URLs carry no parseable expiry keep the requested duration.
+     *
+     * @param int   $duration Requested cache duration in seconds.
+     * @param array $posts    Array of post data.
+     * @return int The effective duration in seconds.
+     */
+    public static function cap_duration_to_signature_expiry( $duration, $posts ) {
+        $duration = intval( $duration );
+        $earliest = self::get_posts_signature_expiry( $posts );
+
+        if ( false === $earliest ) {
+            return $duration;
+        }
+
+        $safe_duration = $earliest - self::SIGNATURE_EXPIRY_BUFFER - time();
+
+        if ( $safe_duration >= $duration ) {
+            return $duration;
+        }
+
+        return max( self::MIN_CACHE_DURATION, $safe_duration );
+    }
+
+    /**
+     * Check whether a cached post set has dead image URLs.
+     *
+     * @param array $posts Array of post data.
+     * @return bool True if the signed image URLs have already expired.
+     */
+    public static function posts_have_expired_images( $posts ) {
+        $earliest = self::get_posts_signature_expiry( $posts );
+
+        if ( false === $earliest ) {
+            return false;
+        }
+
+        return $earliest <= time();
+    }
+
+    /**
+     * Expire cache rows whose image URLs have already gone dead.
+     *
+     * Called when the image proxy sees a 403 from the CDN. Rather than deleting
+     * the rows - which would leave the frontend with nothing to show if a
+     * refetch fails - their expiry is backdated so the next render treats them
+     * as stale and refreshes.
+     *
+     * @return int Number of cache rows invalidated.
+     */
+    public static function invalidate_expired_signature_caches() {
+        global $wpdb;
+
+        // Row count tracks the number of feeds, so scanning all of them is cheap.
+        // Expiry is compared in PHP rather than SQL to match how the rest of this
+        // class reads expires_at, avoiding a timezone mismatch with the stored value.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cache maintenance.
+        $rows = $wpdb->get_results(
+            "SELECT id, feed_id, cache_data, expires_at FROM {$wpdb->prefix}bwg_igf_cache"
+        );
+
+        if ( empty( $rows ) ) {
+            return 0;
+        }
+
+        $invalidated = 0;
+        $backdated   = gmdate( 'Y-m-d H:i:s', time() - 1 );
+
+        foreach ( $rows as $row ) {
+            // Already stale - nothing to invalidate, and re-logging would be noise.
+            if ( strtotime( $row->expires_at ) < time() ) {
+                continue;
+            }
+
+            $posts = json_decode( $row->cache_data, true );
+
+            if ( empty( $posts ) || ! is_array( $posts ) ) {
+                continue;
+            }
+
+            if ( ! self::posts_have_expired_images( $posts ) ) {
+                continue;
+            }
+
+            $wpdb->update(
+                $wpdb->prefix . 'bwg_igf_cache',
+                array( 'expires_at' => $backdated ),
+                array( 'id' => $row->id ),
+                array( '%s' ),
+                array( '%d' )
+            );
+
+            $invalidated++;
+
+            if ( class_exists( 'BWG_IGF_Logger' ) ) {
+                BWG_IGF_Logger::warning(
+                    'Feed cache invalidated: its Instagram image URLs had expired.',
+                    array( 'feed_id' => $row->feed_id )
+                );
+            }
+        }
+
+        return $invalidated;
+    }
+
+    /**
      * Store posts in the cache table.
      *
      * @param int   $feed_id Feed ID.
@@ -335,6 +522,11 @@ class BWG_IGF_Instagram_Fetcher {
         } else {
             $effective_duration = $cache_duration;
         }
+
+        // Never cache past the point where the signed image URLs stop working.
+        // This also overrides the rate-limit extension above: holding a feed for
+        // 24h is pointless if its images die in 2h.
+        $effective_duration = self::cap_duration_to_signature_expiry( $effective_duration, $posts );
 
         // Calculate expiration time.
         $expires_at = gmdate( 'Y-m-d H:i:s', time() + $effective_duration );
@@ -387,7 +579,7 @@ class BWG_IGF_Instagram_Fetcher {
      * not frontend requests. This ensures visitors always see content instead of errors.
      *
      * @param int $feed_id Feed ID.
-     * @return array{posts: array|null, is_expired: bool, created_at: string|null} Array with posts, expiration status, and creation time.
+     * @return array{posts: array|null, is_expired: bool, created_at: string|null, images_expired: bool, is_unusable: bool} Cache state.
      */
     public static function get_cached_posts_any( $feed_id ) {
         global $wpdb;
@@ -400,9 +592,11 @@ class BWG_IGF_Instagram_Fetcher {
 
         if ( ! $cache_row || empty( $cache_row->cache_data ) ) {
             return array(
-                'posts'      => null,
-                'is_expired' => false,
-                'created_at' => null,
+                'posts'          => null,
+                'is_expired'     => false,
+                'created_at'     => null,
+                'images_expired' => false,
+                'is_unusable'    => false,
             );
         }
 
@@ -411,10 +605,25 @@ class BWG_IGF_Instagram_Fetcher {
         // Check if the cache is expired.
         $is_expired = strtotime( $cache_row->expires_at ) < time();
 
+        // Serving stale content is fine; serving content whose images have gone
+        // dead is not - the visitor sees a grid of placeholders. Flag that case
+        // so callers can refetch instead.
+        $images_expired = self::posts_have_expired_images( $posts );
+
+        // Backstop for feeds whose URLs carry no parseable expiry: refuse to
+        // serve indefinitely if the background refresh has clearly stalled.
+        // Measured from expires_at, which is stored in UTC like time(), rather
+        // than created_at, which is written in site-local time.
+        $expires_ts  = strtotime( $cache_row->expires_at );
+        $too_old     = ( $expires_ts && ( time() - $expires_ts ) > self::MAX_STALE_CACHE_AGE );
+        $is_unusable = $images_expired || ( $is_expired && $too_old );
+
         return array(
-            'posts'      => $posts,
-            'is_expired' => $is_expired,
-            'created_at' => $cache_row->created_at,
+            'posts'          => $posts,
+            'is_expired'     => $is_expired,
+            'created_at'     => $cache_row->created_at,
+            'images_expired' => $images_expired,
+            'is_unusable'    => $is_unusable,
         );
     }
 
