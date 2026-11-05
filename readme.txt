@@ -67,6 +67,9 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.49 =
+* New: Import connected accounts from Smash Balloon Instagram Feed. When that plugin's data is present on the site, the Accounts page lists its connected accounts and lets you import the ones connected through Instagram Login without authorizing again. Each token is verified with Instagram before it is saved, then stored encrypted with this plugin's key. Accounts connected through Facebook Login cannot be reused and are flagged for a normal reconnect.
+
 = 1.3.46 =
 * Background refresh logs now name each feed (with its ID) and record every feed's outcome, including feeds that return no posts, so a feed that was skipped is distinguishable from one refreshed on another run.
 * Feeds left in an "error" status by a failed manual refresh are now included in background refresh, and the status is cleared on the next successful refresh. Previously a single transient failure removed a feed from background refresh permanently.

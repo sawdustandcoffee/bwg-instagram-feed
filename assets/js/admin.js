@@ -69,6 +69,9 @@
             // Verify token encryption
             $(document).on('click', '.bwg-igf-verify-encryption', this.handleVerifyEncryption);
 
+            // Import accounts from Smash Balloon
+            $(document).on('click', '#bwg-igf-sbi-import-btn', this.handleSmashBalloonImport);
+
             // Clear validation errors on input (Feature #88)
             $(document).on('input', '.bwg-igf-field-error', this.handleClearValidationOnInput);
 
@@ -1406,6 +1409,48 @@
                 },
                 error: function() {
                     BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+                }
+            });
+        },
+
+        handleSmashBalloonImport: function(e) {
+            e.preventDefault();
+
+            var $button = $(this);
+            var sourceIds = $('.bwg-igf-sbi-source:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            if (!sourceIds.length) {
+                BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.sbiSelectOne);
+                return;
+            }
+
+            $button.prop('disabled', true).text(bwgIgfAdmin.i18n.sbiImporting);
+
+            $.ajax({
+                url: bwgIgfAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'bwg_igf_import_smash_balloon',
+                    nonce: bwgIgfAdmin.nonce,
+                    source_ids: sourceIds
+                },
+                success: function(response) {
+                    var data = response.data || {};
+                    if (response.success) {
+                        BWGIGFAdmin.showNotice('success', data.message);
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        BWGIGFAdmin.showNotice('error', data.message || bwgIgfAdmin.i18n.error);
+                        $button.prop('disabled', false).text(bwgIgfAdmin.i18n.sbiImport);
+                    }
+                },
+                error: function() {
+                    BWGIGFAdmin.showNotice('error', bwgIgfAdmin.i18n.error);
+                    $button.prop('disabled', false).text(bwgIgfAdmin.i18n.sbiImport);
                 }
             });
         },

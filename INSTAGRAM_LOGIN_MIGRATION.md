@@ -34,6 +34,17 @@ a **Business or Creator** account.
 `{version}` is `BWG_IGF_GRAPH_API_VERSION`, defined in `bwg-instagram-feed.php`. The token
 endpoints are documented by Meta without a version segment and are called unversioned.
 
+## Importing from Smash Balloon
+
+`includes/class-bwg-igf-smash-balloon-importer.php` reads `{prefix}sbi_sources`, decrypts each
+token the way Smash Balloon does (AES-256-CTR with `LOGGED_IN_KEY`/`LOGGED_IN_SALT`, or the
+`SBI_ENCRYPTION_*` constants), strips its junk marker, and classifies the token by prefix:
+`IG…` tokens came from Instagram Login and work on graph.instagram.com; `EA…` tokens came from
+Facebook Login and only work on graph.facebook.com, so they are not importable. Importable
+tokens are verified with `/me` before being written to our accounts table under our own key.
+The imported token was issued to Smash Balloon's Meta app; it keeps working until the user
+removes that app under Instagram's "Apps and websites", after which a normal Connect is needed.
+
 ## Keeping it healthy
 
 - Meta supports each Graph API version for roughly two years. Check the

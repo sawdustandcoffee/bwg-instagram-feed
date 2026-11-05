@@ -408,6 +408,9 @@ final class BWG_Instagram_Feed {
                     'error'            => __( 'An error occurred. Please try again.', 'bwg-instagram-feed' ),
                     'feedNameRequired' => __( 'Feed name is required.', 'bwg-instagram-feed' ),
                     'feedDeleted'      => __( 'Feed deleted successfully!', 'bwg-instagram-feed' ),
+                    'sbiSelectOne'     => __( 'Select at least one account to import.', 'bwg-instagram-feed' ),
+                    'sbiImporting'     => __( 'Importing...', 'bwg-instagram-feed' ),
+                    'sbiImport'        => __( 'Import Selected Accounts', 'bwg-instagram-feed' ),
                 ),
             )
         );

@@ -143,6 +143,68 @@ if ( is_array( $bwg_oauth_result ) && ! empty( $bwg_oauth_result['message'] ) ) 
         <?php endif; ?>
     </div>
 
+    <?php
+    if ( ! class_exists( 'BWG_IGF_Smash_Balloon_Importer' ) ) {
+        require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-smash-balloon-importer.php';
+    }
+    $sbi_candidates = BWG_IGF_Smash_Balloon_Importer::get_candidates();
+    ?>
+    <?php if ( ! empty( $sbi_candidates ) ) : ?>
+        <div class="bwg-igf-widget bwg-igf-sbi-import" style="margin-top: 20px;">
+            <h2><?php esc_html_e( 'Import from Smash Balloon', 'bwg-instagram-feed' ); ?></h2>
+            <p class="description">
+                <?php esc_html_e( 'This site has Instagram accounts connected through the Smash Balloon Instagram Feed plugin. Accounts connected with Instagram Login can be imported here without authorizing again. Accounts connected through Facebook Login cannot be reused; connect those with the button above.', 'bwg-instagram-feed' ); ?>
+            </p>
+            <table class="wp-list-table widefat fixed striped" style="margin-top: 10px;">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th><?php esc_html_e( 'Username', 'bwg-instagram-feed' ); ?></th>
+                        <th><?php esc_html_e( 'Type', 'bwg-instagram-feed' ); ?></th>
+                        <th><?php esc_html_e( 'Smash Balloon expiry', 'bwg-instagram-feed' ); ?></th>
+                        <th><?php esc_html_e( 'Import status', 'bwg-instagram-feed' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $sbi_candidates as $sbi_row ) : ?>
+                        <?php $sbi_importable = BWG_IGF_Smash_Balloon_Importer::STATUS_IMPORTABLE === $sbi_row['status']; ?>
+                        <tr>
+                            <td>
+                                <?php if ( $sbi_importable ) : ?>
+                                    <input type="checkbox" class="bwg-igf-sbi-source" value="<?php echo esc_attr( $sbi_row['source_id'] ); ?>" checked>
+                                <?php endif; ?>
+                            </td>
+                            <td><strong>@<?php echo esc_html( $sbi_row['username'] ); ?></strong></td>
+                            <td><?php echo esc_html( ucfirst( $sbi_row['account_type'] ) ); ?></td>
+                            <td>
+                                <?php
+                                $sbi_exp = $sbi_row['expires'] ? strtotime( $sbi_row['expires'] ) : false;
+                                echo $sbi_exp ? esc_html( date_i18n( get_option( 'date_format' ), $sbi_exp ) ) : esc_html__( 'Unknown', 'bwg-instagram-feed' );
+                                ?>
+                            </td>
+                            <td>
+                                <?php if ( $sbi_importable ) : ?>
+                                    <span class="dashicons dashicons-yes-alt" style="color: #46b450; font-size: 14px; width: 14px; height: 14px; vertical-align: middle;"></span>
+                                <?php elseif ( BWG_IGF_Smash_Balloon_Importer::STATUS_ALREADY_CONNECTED === $sbi_row['status'] ) : ?>
+                                    <span class="dashicons dashicons-saved" style="color: #46b450; font-size: 14px; width: 14px; height: 14px; vertical-align: middle;"></span>
+                                <?php else : ?>
+                                    <span class="dashicons dashicons-warning" style="color: #dba617; font-size: 14px; width: 14px; height: 14px; vertical-align: middle;"></span>
+                                <?php endif; ?>
+                                <?php echo esc_html( $sbi_row['status_label'] ); ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px;">
+                <button type="button" class="button button-primary" id="bwg-igf-sbi-import-btn">
+                    <?php esc_html_e( 'Import Selected Accounts', 'bwg-instagram-feed' ); ?>
+                </button>
+                <span class="description" style="margin-left: 10px;"><?php esc_html_e( 'Each token is checked with Instagram before it is saved.', 'bwg-instagram-feed' ); ?></span>
+            </p>
+        </div>
+    <?php endif; ?>
+
     <div class="bwg-igf-widget" style="margin-top: 20px;">
         <h2><?php esc_html_e( 'Connected Accounts', 'bwg-instagram-feed' ); ?></h2>
 

@@ -47,6 +47,9 @@ class BWG_IGF_Admin_Ajax {
         // Disconnect Instagram account.
         add_action( 'wp_ajax_bwg_igf_disconnect_account', array( $this, 'disconnect_account' ) );
 
+        // Import connected accounts left behind by Smash Balloon Instagram Feed.
+        add_action( 'wp_ajax_bwg_igf_import_smash_balloon', array( $this, 'import_smash_balloon' ) );
+
         // Verify token encryption (for testing/admin).
         add_action( 'wp_ajax_bwg_igf_verify_token_encryption', array( $this, 'verify_token_encryption' ) );
 
@@ -1468,6 +1471,55 @@ class BWG_IGF_Admin_Ajax {
         }
 
         wp_send_json_success( array( 'message' => __( 'Account disconnected successfully!', 'bwg-instagram-feed' ) ) );
+    }
+
+    /**
+     * Import selected Smash Balloon accounts into our accounts table.
+     */
+    public function import_smash_balloon() {
+        $this->verify_request();
+
+        if ( ! class_exists( 'BWG_IGF_Smash_Balloon_Importer' ) ) {
+            require_once BWG_IGF_PLUGIN_DIR . 'includes/class-bwg-igf-smash-balloon-importer.php';
+        }
+
+        $source_ids = isset( $_POST['source_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['source_ids'] ) ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $source_ids = array_filter( $source_ids );
+
+        if ( empty( $source_ids ) ) {
+            wp_send_json_error( array( 'message' => __( 'Select at least one account to import.', 'bwg-instagram-feed' ) ) );
+        }
+
+        $result = BWG_IGF_Smash_Balloon_Importer::import( $source_ids );
+
+        $parts = array();
+        if ( ! empty( $result['imported'] ) ) {
+            $parts[] = sprintf(
+                /* translators: %s: comma-separated list of @usernames */
+                __( 'Imported: %s.', 'bwg-instagram-feed' ),
+                '@' . implode( ', @', $result['imported'] )
+            );
+        }
+        foreach ( $result['skipped'] as $username => $reason ) {
+            $parts[] = sprintf(
+                /* translators: 1: username, 2: reason */
+                __( 'Skipped @%1$s: %2$s', 'bwg-instagram-feed' ),
+                $username,
+                $reason
+            );
+        }
+
+        $payload = array(
+            'message'  => implode( ' ', $parts ),
+            'imported' => count( $result['imported'] ),
+            'skipped'  => count( $result['skipped'] ),
+        );
+
+        if ( empty( $result['imported'] ) ) {
+            wp_send_json_error( $payload );
+        }
+
+        wp_send_json_success( $payload );
     }
 
     /**
