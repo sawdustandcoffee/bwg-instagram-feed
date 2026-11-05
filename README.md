@@ -54,12 +54,9 @@ Or use the feed slug:
 3. Add the **BWG Instagram Feed** block
 4. Select your feed from the dropdown
 
-## Development Setup
+## Development
 
-1. Clone this repository
-2. Run `./init.sh` to set up the development environment
-3. For Docker: Access WordPress at `http://localhost:8080`
-4. Activate the plugin in WordPress admin
+There is no local development environment for this plugin. Changes are verified with `php -l` and a code review, then pushed to `main`. The release workflow cuts a GitHub release, and client sites pick it up through the Plugin Update Checker. See `CLAUDE.md` for the full rollout model.
 
 ## Configuration
 

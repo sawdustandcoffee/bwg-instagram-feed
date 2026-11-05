@@ -67,6 +67,28 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.46 =
+* Background refresh logs now name each feed (with its ID) and record every feed's outcome, including feeds that return no posts, so a feed that was skipped is distinguishable from one refreshed on another run.
+* Feeds left in an "error" status by a failed manual refresh are now included in background refresh, and the status is cleared on the next successful refresh. Previously a single transient failure removed a feed from background refresh permanently.
+
+= 1.3.45 =
+* Fixed background cache refresh failing on connected-account feeds. On PHP 8 the cron refresher passed the wrong value to the fetcher and crashed silently, so connected feeds were never refreshed in the background and their images eventually expired.
+* One failing feed can no longer abort the whole refresh run; failures are caught and logged per feed.
+* Previously silent bail-outs (missing or inactive account, token retrieval failure, no feeds due) are now logged.
+* The refresh cron event is re-scheduled on load if it was dropped.
+* Rate-limit backoff is now evaluated via transients, so an expired-but-uncollected backoff can no longer suppress refreshes indefinitely.
+
+= 1.3.44 =
+* Fixed feeds serving expired Instagram CDN image URLs. The cache now respects the signed URL expiry, so a cached feed never outlives its images, and the stale-cache fallback refetches once image URLs are dead instead of rendering "Image unavailable" placeholders.
+* Image proxy failures are now logged to the plugin Logs page, with expired-signature 403s distinguished from rate limiting and transport errors. An expired-signature 403 invalidates the affected cache.
+
+= 1.3.43 =
+* All frontend data attributes are now prefixed with data-bwgigf- to avoid collisions with theme CSS and JavaScript.
+
+= 1.3.42 =
+* Fixed the feed's post count not applying to cached feeds. Lowering the count now takes effect immediately, and raising it is no longer capped by the old cache.
+* Hardened frontend CSS against theme rules that target bare img, figure, and a tags inside the feed. Renamed the bare .active class on slider dots and the lightbox to .bwg-igf-is-active.
+
 = 1.3.41 =
 * Added an optional Instagram Webhooks receiver so you can complete Meta's "Configure webhooks" setup step. The Settings page now provides a webhook Callback URL and a Verify Token to paste into your Meta app. This is only needed to satisfy Meta's setup; displaying feeds does not require it.
 
