@@ -790,7 +790,8 @@ class BWG_IGF_Instagram_API {
         }
 
         $api_url = sprintf(
-            'https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count&access_token=%s&limit=%d',
+            'https://graph.instagram.com/%s/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count&access_token=%s&limit=%d',
+            BWG_IGF_GRAPH_API_VERSION,
             rawurlencode( $access_token ),
             $count
         );

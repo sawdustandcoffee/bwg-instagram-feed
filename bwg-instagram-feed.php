@@ -27,6 +27,8 @@ define( 'BWG_IGF_PLUGIN_FILE', __FILE__ );
 define( 'BWG_IGF_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BWG_IGF_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'BWG_IGF_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+// Instagram Graph API version used for versioned graph.instagram.com calls (Meta supports each version ~2 years).
+define( 'BWG_IGF_GRAPH_API_VERSION', 'v27.0' );
 
 /**
  * Main plugin class.

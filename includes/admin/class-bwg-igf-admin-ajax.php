@@ -374,7 +374,8 @@ class BWG_IGF_Admin_Ajax {
 
         // Step 3: Get user info.
         $user_url = sprintf(
-            'https://graph.instagram.com/me?fields=id,username,account_type&access_token=%s',
+            'https://graph.instagram.com/%s/me?fields=id,username,account_type&access_token=%s',
+            BWG_IGF_GRAPH_API_VERSION,
             rawurlencode( $access_token )
         );
 
