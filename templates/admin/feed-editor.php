@@ -294,8 +294,9 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                             </div>
 
                             <div class="bwg-igf-field">
-                                <label for="bwg-igf-gap"><?php esc_html_e( 'Gap (px)', 'bwg-instagram-feed' ); ?></label>
-                                <input type="number" id="bwg-igf-gap" name="gap" value="<?php echo esc_attr( $gap ); ?>" min="0" max="50">
+                                <label for="bwg-igf-gap"><?php esc_html_e( 'Space Between Images (px)', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-gap" name="gap" value="<?php echo esc_attr( $gap ); ?>" min="0" max="100">
+                                <p class="description"><?php esc_html_e( 'Gap between grid images, horizontally and vertically. Set to 0 for edge-to-edge tiles. Space around the whole feed is "Feed Padding" on the Styling tab.', 'bwg-instagram-feed' ); ?></p>
                             </div>
                         </div>
 
@@ -307,9 +308,9 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                             </div>
 
                             <div class="bwg-igf-field">
-                                <label for="bwg-igf-slide-gap"><?php esc_html_e( 'Space Between Slides (px)', 'bwg-instagram-feed' ); ?></label>
-                                <input type="number" id="bwg-igf-slide-gap" name="slide_gap" value="<?php echo esc_attr( $slide_gap ); ?>" min="0" max="50">
-                                <p class="description"><?php esc_html_e( 'Gap between slides. Image shape is set on the Styling tab.', 'bwg-instagram-feed' ); ?></p>
+                                <label for="bwg-igf-slide-gap"><?php esc_html_e( 'Space Between Images (px)', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-slide-gap" name="slide_gap" value="<?php echo esc_attr( $slide_gap ); ?>" min="0" max="100">
+                                <p class="description"><?php esc_html_e( 'Gap between slides. Set to 0 for edge-to-edge. Image shape is on the Styling tab; space around the whole feed is "Feed Padding" there.', 'bwg-instagram-feed' ); ?></p>
                             </div>
 
                             <div class="bwg-igf-field">

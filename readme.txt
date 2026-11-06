@@ -67,6 +67,9 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.51 =
+* Renamed the grid "Gap" and slider "Space Between Slides" settings to "Space Between Images" with clearer help text, and raised the maximum to 100px. Both control the gap between images; space around the whole feed remains "Feed Padding" on the Styling tab.
+
 = 1.3.50 =
 * Fixed sliders taking each image's natural height. The image shape setting now applies to slider slides as well as grid items, so a single tall post no longer blows out the slider.
 * Added Portrait (4:5), Landscape (4:3), and Wide (16:9) image shapes alongside Square, Original, and Fixed Height, for both grid and slider layouts.

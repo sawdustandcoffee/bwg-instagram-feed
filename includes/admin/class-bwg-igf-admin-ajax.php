@@ -766,7 +766,7 @@ class BWG_IGF_Admin_Ajax {
         $show_dots = isset( $_POST['show_dots'] ) ? 1 : 0;
         $infinite_loop = isset( $_POST['infinite_loop'] ) ? 1 : 0;
         $slide_gap = isset( $_POST['slide_gap'] ) ? absint( $_POST['slide_gap'] ) : 0;
-        $slide_gap = max( 0, min( 50, $slide_gap ) );
+        $slide_gap = max( 0, min( 100, $slide_gap ) );
 
         // Get responsive settings (Feature #52).
         $mobile_columns = isset( $_POST['mobile_columns'] ) ? absint( $_POST['mobile_columns'] ) : 2;
