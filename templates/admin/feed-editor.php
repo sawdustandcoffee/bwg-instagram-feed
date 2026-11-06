@@ -270,6 +270,7 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                         $show_arrows = isset( $layout_settings['show_arrows'] ) ? $layout_settings['show_arrows'] : true;
                         $show_dots = isset( $layout_settings['show_dots'] ) ? $layout_settings['show_dots'] : true;
                         $infinite_loop = isset( $layout_settings['infinite_loop'] ) ? $layout_settings['infinite_loop'] : true;
+                        $slide_gap = isset( $layout_settings['slide_gap'] ) ? absint( $layout_settings['slide_gap'] ) : 0;
 
                         // Responsive settings
                         $mobile_columns = isset( $layout_settings['mobile_columns'] ) ? $layout_settings['mobile_columns'] : 2;
@@ -303,6 +304,12 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                             <div class="bwg-igf-field">
                                 <label for="bwg-igf-slides-to-show"><?php esc_html_e( 'Slides to Show', 'bwg-instagram-feed' ); ?></label>
                                 <input type="number" id="bwg-igf-slides-to-show" name="slides_to_show" value="<?php echo esc_attr( $slides_to_show ); ?>" min="1" max="5">
+                            </div>
+
+                            <div class="bwg-igf-field">
+                                <label for="bwg-igf-slide-gap"><?php esc_html_e( 'Space Between Slides (px)', 'bwg-instagram-feed' ); ?></label>
+                                <input type="number" id="bwg-igf-slide-gap" name="slide_gap" value="<?php echo esc_attr( $slide_gap ); ?>" min="0" max="50">
+                                <p class="description"><?php esc_html_e( 'Gap between slides. Image shape is set on the Styling tab.', 'bwg-instagram-feed' ); ?></p>
                             </div>
 
                             <div class="bwg-igf-field">
@@ -498,17 +505,20 @@ if ( ! $is_new && $feed && 'connected' === $feed->feed_type && ! empty( $feed->c
                         <div class="bwg-igf-field">
                             <label for="bwg-igf-image-height-mode"><?php esc_html_e( 'Image Height Mode', 'bwg-instagram-feed' ); ?></label>
                             <select id="bwg-igf-image-height-mode" name="image_height_mode">
-                                <option value="square" <?php selected( $image_height_mode, 'square' ); ?>><?php esc_html_e( 'Square (1:1 aspect ratio)', 'bwg-instagram-feed' ); ?></option>
+                                <option value="square" <?php selected( $image_height_mode, 'square' ); ?>><?php esc_html_e( 'Square (1:1)', 'bwg-instagram-feed' ); ?></option>
+                                <option value="portrait" <?php selected( $image_height_mode, 'portrait' ); ?>><?php esc_html_e( 'Portrait (4:5, Instagram portrait)', 'bwg-instagram-feed' ); ?></option>
+                                <option value="landscape" <?php selected( $image_height_mode, 'landscape' ); ?>><?php esc_html_e( 'Landscape (4:3)', 'bwg-instagram-feed' ); ?></option>
+                                <option value="wide" <?php selected( $image_height_mode, 'wide' ); ?>><?php esc_html_e( 'Wide (16:9)', 'bwg-instagram-feed' ); ?></option>
                                 <option value="original" <?php selected( $image_height_mode, 'original' ); ?>><?php esc_html_e( 'Original (preserve aspect ratio)', 'bwg-instagram-feed' ); ?></option>
                                 <option value="fixed" <?php selected( $image_height_mode, 'fixed' ); ?>><?php esc_html_e( 'Fixed Height', 'bwg-instagram-feed' ); ?></option>
                             </select>
-                            <p class="description"><?php esc_html_e( 'How images should be displayed in the grid.', 'bwg-instagram-feed' ); ?></p>
+                            <p class="description"><?php esc_html_e( 'Image shape for grid items and slider slides. Images are cropped to fit. "Original" lets each image keep its own height, which in a slider makes the slider as tall as the tallest post.', 'bwg-instagram-feed' ); ?></p>
                         </div>
 
                         <div class="bwg-igf-field bwg-igf-fixed-height-field" id="bwg-igf-fixed-height-field" style="<?php echo 'fixed' !== $image_height_mode ? 'display: none;' : ''; ?>">
                             <label for="bwg-igf-image-fixed-height"><?php esc_html_e( 'Fixed Image Height (px)', 'bwg-instagram-feed' ); ?></label>
                             <input type="number" id="bwg-igf-image-fixed-height" name="image_fixed_height" value="<?php echo esc_attr( $image_fixed_height ); ?>" min="50" max="800">
-                            <p class="description"><?php esc_html_e( 'Set a fixed height for all images in the grid.', 'bwg-instagram-feed' ); ?></p>
+                            <p class="description"><?php esc_html_e( 'Set a fixed height for all images in the grid or slider.', 'bwg-instagram-feed' ); ?></p>
                         </div>
 
                         <h4 style="margin-top: 25px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #ddd;"><?php esc_html_e( 'Appearance', 'bwg-instagram-feed' ); ?></h4>

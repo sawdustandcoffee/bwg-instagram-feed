@@ -67,6 +67,11 @@ Feeds are cached based on your settings (default: 1 hour). You can configure thi
 
 == Changelog ==
 
+= 1.3.50 =
+* Fixed sliders taking each image's natural height. The image shape setting now applies to slider slides as well as grid items, so a single tall post no longer blows out the slider.
+* Added Portrait (4:5), Landscape (4:3), and Wide (16:9) image shapes alongside Square, Original, and Fixed Height, for both grid and slider layouts.
+* Added a "Space Between Slides" setting for the slider layout.
+
 = 1.3.49 =
 * New: Import connected accounts from Smash Balloon Instagram Feed. When that plugin's data is present on the site, the Accounts page lists its connected accounts and lets you import the ones connected through Instagram Login without authorizing again. Each token is verified with Instagram before it is saved, then stored encrypted with this plugin's key. Accounts connected through Facebook Login cannot be reused and are flagged for a normal reconnect.
 

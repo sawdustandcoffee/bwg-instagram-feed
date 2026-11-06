@@ -765,6 +765,8 @@ class BWG_IGF_Admin_Ajax {
         $show_arrows = isset( $_POST['show_arrows'] ) ? 1 : 0;
         $show_dots = isset( $_POST['show_dots'] ) ? 1 : 0;
         $infinite_loop = isset( $_POST['infinite_loop'] ) ? 1 : 0;
+        $slide_gap = isset( $_POST['slide_gap'] ) ? absint( $_POST['slide_gap'] ) : 0;
+        $slide_gap = max( 0, min( 50, $slide_gap ) );
 
         // Get responsive settings (Feature #52).
         $mobile_columns = isset( $_POST['mobile_columns'] ) ? absint( $_POST['mobile_columns'] ) : 2;
@@ -800,6 +802,9 @@ class BWG_IGF_Admin_Ajax {
         $feed_max_width = isset( $_POST['feed_max_width'] ) ? sanitize_text_field( wp_unslash( $_POST['feed_max_width'] ) ) : '';
         $feed_padding = isset( $_POST['feed_padding'] ) ? absint( $_POST['feed_padding'] ) : 0;
         $image_height_mode = isset( $_POST['image_height_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['image_height_mode'] ) ) : 'square';
+        if ( ! in_array( $image_height_mode, array( 'square', 'portrait', 'landscape', 'wide', 'original', 'fixed' ), true ) ) {
+            $image_height_mode = 'square';
+        }
         $image_fixed_height = isset( $_POST['image_fixed_height'] ) ? absint( $_POST['image_fixed_height'] ) : 200;
 
         // Get popup settings.
@@ -830,6 +835,7 @@ class BWG_IGF_Admin_Ajax {
             'show_arrows'      => (bool) $show_arrows,
             'show_dots'        => (bool) $show_dots,
             'infinite_loop'    => (bool) $infinite_loop,
+            'slide_gap'        => $slide_gap,
             // Responsive settings (Feature #52).
             'mobile_columns'   => $mobile_columns,
             'mobile_rows'      => $mobile_rows,

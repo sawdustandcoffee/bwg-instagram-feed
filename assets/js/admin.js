@@ -616,8 +616,9 @@
             // Update classes
             $preview.attr('class', classes.join(' '));
 
-            // Update gap
-            $preview.css('--bwg-igf-gap', settings.gap + 'px');
+            // Update gap (slider preview spacing uses its own setting)
+            var previewGap = settings.layoutType === 'slider' ? settings.slideGap : settings.gap;
+            $preview.css('--bwg-igf-gap', previewGap + 'px');
 
             // Update border radius
             $preview.find('.bwg-igf-item').css('border-radius', settings.borderRadius + 'px');
@@ -824,10 +825,11 @@
 
             // Apply new height mode based on settings (unless captions are shown, which overrides)
             if (!settings.showCaption) {
-                if (settings.imageHeightMode === 'square') {
-                    // Square: 1:1 aspect ratio
+                var shapeRatios = { square: '1 / 1', portrait: '4 / 5', landscape: '4 / 3', wide: '16 / 9' };
+                if (shapeRatios[settings.imageHeightMode]) {
+                    // Fixed shape: crop to the chosen aspect ratio
                     $preview.addClass('bwg-igf-height-square');
-                    $preview.find('.bwg-igf-item').css('aspect-ratio', '1 / 1');
+                    $preview.find('.bwg-igf-item').css('aspect-ratio', shapeRatios[settings.imageHeightMode]);
                     $preview.find('.bwg-igf-item img').css({
                         'width': '100%',
                         'height': '100%',
@@ -961,6 +963,7 @@
                 gap: $('#bwg-igf-gap').val() || 10,
                 slidesToShow: $('#bwg-igf-slides-to-show').val() || 3,
                 slidesToScroll: $('#bwg-igf-slides-to-scroll').val() || 1,
+                slideGap: parseInt($('#bwg-igf-slide-gap').val(), 10) || 0,
                 autoplay: $('#bwg-igf-autoplay').is(':checked'),
                 autoplaySpeed: $('#bwg-igf-autoplay-speed').val() || 3000,
                 showArrows: $('#bwg-igf-show-arrows').is(':checked'),

@@ -137,15 +137,40 @@ a.bwg-igf-item:focus {
     color: inherit;
 }
 
-/* Grid items maintain square 1:1 aspect ratio for consistent layout */
-.bwg-igf-feed.bwg-igf-grid .bwg-igf-item {
-    aspect-ratio: 1 / 1;
+/* Image shape: one ratio variable drives both grid items and slider slides.
+   Without this on the slider, slides took each image's natural height and a
+   single tall post blew the slider out. */
+.bwg-igf-feed {
+    --bwg-igf-image-ratio: 1 / 1;
+}
+
+.bwg-igf-feed.bwg-igf-image-portrait {
+    --bwg-igf-image-ratio: 4 / 5;
+}
+
+.bwg-igf-feed.bwg-igf-image-landscape {
+    --bwg-igf-image-ratio: 4 / 3;
+}
+
+.bwg-igf-feed.bwg-igf-image-wide {
+    --bwg-igf-image-ratio: 16 / 9;
+}
+
+.bwg-igf-feed.bwg-igf-grid .bwg-igf-item,
+.bwg-igf-feed.bwg-igf-slider .bwg-igf-slider-slide {
+    aspect-ratio: var(--bwg-igf-image-ratio);
 }
 
 /* Image Height Modes (Feature #165) */
 /* Original aspect ratio - let images display naturally */
-.bwg-igf-feed.bwg-igf-image-original .bwg-igf-item {
+.bwg-igf-feed.bwg-igf-image-original .bwg-igf-item,
+.bwg-igf-feed.bwg-igf-image-original .bwg-igf-slider-slide {
     aspect-ratio: auto;
+}
+
+/* In a slider, original-height slides are top-aligned rather than stretched. */
+.bwg-igf-feed.bwg-igf-image-original .bwg-igf-slider-track {
+    align-items: flex-start;
 }
 
 .bwg-igf-feed.bwg-igf-image-original .bwg-igf-item img {
@@ -154,7 +179,8 @@ a.bwg-igf-item:focus {
 }
 
 /* Fixed height mode - use CSS variable for height */
-.bwg-igf-feed.bwg-igf-image-fixed .bwg-igf-item {
+.bwg-igf-feed.bwg-igf-image-fixed .bwg-igf-item,
+.bwg-igf-feed.bwg-igf-image-fixed .bwg-igf-slider-slide {
     aspect-ratio: auto;
     height: var(--bwg-igf-image-height, 200px);
 }
@@ -272,7 +298,7 @@ a.bwg-igf-item:focus {
 }
 
 .bwg-igf-feed .bwg-igf-item:has(.bwg-igf-caption) img {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: var(--bwg-igf-image-ratio);
     height: auto;
 }
 
@@ -357,6 +383,20 @@ a.bwg-igf-item:focus {
 
 .bwg-igf-feed .bwg-igf-slider-slide {
     flex-shrink: 0;
+    /* Slide spacing is padding, not margin, so the JS width/offset math
+       (100% / slidesToShow) stays exact. clip-path trims the slide to its
+       content box with the configured corner radius, which also keeps hover
+       zoom and overlays inside the visible image rather than the gap. */
+    box-sizing: border-box;
+    padding-left: calc(var(--bwg-igf-slide-gap, 0px) / 2);
+    padding-right: calc(var(--bwg-igf-slide-gap, 0px) / 2);
+    border-radius: 0;
+    clip-path: inset(0 calc(var(--bwg-igf-slide-gap, 0px) / 2) round var(--bwg-igf-border-radius, 0px));
+}
+
+/* Slider height: with a shape set, every slide is the same height. */
+.bwg-igf-feed.bwg-igf-slider .bwg-igf-slider-track {
+    align-items: stretch;
 }
 
 /* Slider navigation */

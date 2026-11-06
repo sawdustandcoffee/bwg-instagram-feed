@@ -79,6 +79,7 @@ $transition_duration = isset( $layout_settings['transition_duration'] ) ? absint
 $infinite = isset( $layout_settings['infinite'] ) ? (bool) $layout_settings['infinite'] : true;
 $show_arrows = isset( $layout_settings['show_arrows'] ) ? (bool) $layout_settings['show_arrows'] : true;
 $show_dots = isset( $layout_settings['show_dots'] ) ? (bool) $layout_settings['show_dots'] : true;
+$slide_gap = isset( $layout_settings['slide_gap'] ) ? absint( $layout_settings['slide_gap'] ) : 0;
 
 // Check if we have cached posts - ALWAYS serve cached content if available.
 // The frontend should NEVER fail to show content if ANY cached data exists.
@@ -413,6 +414,10 @@ if ( 'fixed' === $image_height_mode && $image_fixed_height > 0 ) {
     $custom_styles[] = '--bwg-igf-image-height: auto';
 }
 
+if ( 'slider' === $feed->layout_type && $slide_gap > 0 ) {
+    $custom_styles[] = '--bwg-igf-slide-gap: ' . absint( $slide_gap ) . 'px';
+}
+
 if ( ! empty( $background_color ) ) {
     $custom_styles[] = 'background-color: ' . esc_attr( $background_color );
     // Only add padding if not already set by feed_padding
@@ -439,11 +444,9 @@ if ( 'none' !== $hover_effect ) {
     $feed_classes[] = 'bwg-igf-hover-' . $hover_effect;
 }
 
-// Add image height mode class (Feature #165)
-if ( 'original' === $image_height_mode ) {
-    $feed_classes[] = 'bwg-igf-image-original';
-} elseif ( 'fixed' === $image_height_mode ) {
-    $feed_classes[] = 'bwg-igf-image-fixed';
+// Add image shape / height mode class (Feature #165). Square is the CSS default.
+if ( in_array( $image_height_mode, array( 'portrait', 'landscape', 'wide', 'original', 'fixed' ), true ) ) {
+    $feed_classes[] = 'bwg-igf-image-' . $image_height_mode;
 }
 
 // Output custom CSS if provided
